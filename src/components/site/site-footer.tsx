@@ -41,11 +41,12 @@ export function SiteFooter() {
           </div>
 
           <nav className="flex flex-wrap items-center gap-x-5 gap-y-2 font-mono text-[11px]">
-            <a href="#home" className="text-muted-foreground hover:text-primary">Home</a>
-            <a href="#archive" className="text-muted-foreground hover:text-primary">Archive</a>
-            <a href="#top" className="text-muted-foreground hover:text-primary">Top Defacers</a>
-            <a href="#submit" className="text-muted-foreground hover:text-primary">Submit</a>
-            <a href="#about" className="text-muted-foreground hover:text-primary">About</a>
+            <a href="#/" className="text-muted-foreground hover:text-primary">Home</a>
+            <a href="#/archive" className="text-muted-foreground hover:text-primary">Archive</a>
+            <a href="#/special" className="text-muted-foreground hover:text-primary">Archive Special</a>
+            <a href="#/ranking" className="text-muted-foreground hover:text-primary">Ranking</a>
+            <a href="#/submit" className="text-muted-foreground hover:text-primary">Submit</a>
+            <a href="#/about" className="text-muted-foreground hover:text-primary">About</a>
           </nav>
 
           <div className="flex items-center gap-3 font-mono text-[10px] text-muted-foreground">

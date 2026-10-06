@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils'
 const NAV: { route: Route; hash: string; label: string }[] = [
   { route: 'home', hash: '#/', label: 'Home' },
   { route: 'archive', hash: '#/archive', label: 'Archive' },
+  { route: 'special', hash: '#/special', label: 'Archive Special' },
   { route: 'ranking', hash: '#/ranking', label: 'Ranking' },
   { route: 'submit', hash: '#/submit', label: 'Submit' },
   { route: 'about', hash: '#/about', label: 'About' },

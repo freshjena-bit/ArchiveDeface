@@ -2,7 +2,6 @@
 
 import { ArchiveTable } from '@/components/site/archive-table'
 import { Sidebar } from '@/components/site/sidebar'
-import { SpecialArchiveTable } from '@/components/site/special-archive-table'
 import { PageHeader } from './page-header'
 
 export function ArchiveView() {
@@ -21,11 +20,6 @@ export function ArchiveView() {
         <div className="min-w-0 lg:col-span-4">
           <Sidebar />
         </div>
-      </div>
-
-      {/* special archive — dedicated, only special records */}
-      <div className="mt-8">
-        <SpecialArchiveTable />
       </div>
     </div>
   )

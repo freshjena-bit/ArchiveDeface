@@ -264,3 +264,22 @@ Stage Summary:
 - Recent Defacements: SEMUA record (420), tanpa tabs ALL/GOID/GOV/ACID/EDU, search only.
 - Special Archive (section terpisah di bawah): cuma record special. ALL=204 (isSpecial), GOV=72, ACID=98, GOID/EDU sesuai. Tab ACID verified 15 rows "showing 15 of 98 special records".
 - Browser-verified: recentTabs=[], specialTabs=[ALL,GOID,GOV,ACID,EDU], hasSpecialSection=true. Lint clean.
+
+---
+Task ID: N1-N7
+Agent: Main (Z.ai Code)
+Task: Archive Special jadi nav item + route sendiri (#/special)
+
+Work Log:
+- use-hash-route.ts: tambah route 'special' ke Route type + HEAD_MAP.
+- site-header.tsx: nav tambah "Archive Special" antara Archive & Ranking. Urutan: Home / Archive / Archive Special / Ranking / Submit / About.
+- views/special-archive-view.tsx (baru): page SpecialArchiveView = PageHeader "Archive Special" + SpecialArchiveTable (full-width).
+- views/archive-view.tsx: hapus SpecialArchiveTable section (dipindah ke page sendiri). Archive page sekarang cuma all-records + sidebar.
+- page.tsx: render SpecialArchiveView saat route=special.
+- site-footer.tsx: nav footer ditambah "Archive Special" + perbaiki href ke #/ format (sebelumnya #home/#top yang salah).
+
+Stage Summary:
+- Nav sekarang: Home / Archive / Archive Special / Ranking / Submit / About.
+- Archive (/#/archive) = semua record + sidebar (tanpa special section).
+- Archive Special (/#/special) = page khusus, cuma record special, tabs ALL/GOID/GOV/ACID/EDU.
+- Browser-verified: nav order benar; klik Archive Special → #/special, h1 "Archive Special", tabs [ALL,GOID,GOV,ACID,EDU]; archive page tidak lagi ada special section; ACID tab → 15 rows "showing 15 of 98 special records". Lint clean.
