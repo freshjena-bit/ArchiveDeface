@@ -64,7 +64,11 @@ export function HomeRecent({ onViewAll }: { onViewAll: () => void }) {
                         <span className={`inline-block h-1.5 w-1.5 rounded-full ${sev.dot}`} />
                       </td>
                       <td className="px-2 py-2 align-middle">
-                        <div className="flex items-center gap-2">
+                        <a
+                          href={`#/defacer/${encodeURIComponent(d.attacker.handle)}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="flex items-center gap-2 hover:opacity-90"
+                        >
                           <span
                             className="grid h-5 w-5 shrink-0 place-items-center rounded-sm font-mono text-[9px] font-bold text-black"
                             style={{ background: d.attacker.color }}
@@ -74,7 +78,7 @@ export function HomeRecent({ onViewAll }: { onViewAll: () => void }) {
                           <span className="truncate font-mono text-[11px] font-semibold text-foreground">
                             {d.attacker.handle}
                           </span>
-                        </div>
+                        </a>
                       </td>
                       <td className="px-2 py-2 align-middle">
                         <div className="truncate font-mono text-[11px] text-foreground" title={d.targetName}>

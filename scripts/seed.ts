@@ -134,7 +134,10 @@ async function main() {
       mirrorUrl: `https://mirror.archive-demo.test/snap-${Math.random().toString(36).slice(2, 10)}`,
       poc: rand(POCS),
       reason: rand(REASONS),
-      status: Math.random() > 0.3 ? "archived" : "restored",
+      status: (() => {
+        const r = Math.random()
+        return r < 0.6 ? "archived" : r < 0.85 ? "restored" : "onhold"
+      })(),
       severity,
       ...deriveMarks(category, severity),
       createdAt,

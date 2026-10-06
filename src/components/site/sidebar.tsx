@@ -57,16 +57,20 @@ export function Sidebar() {
                       String(e.rank).padStart(2, '0')
                     )}
                   </span>
-                  <span
+                  <a
+                    href={`#/defacer/${encodeURIComponent(e.handle)}`}
                     className="grid h-5 w-5 shrink-0 place-items-center rounded-sm font-mono text-[9px] font-bold text-black"
                     style={{ background: e.color }}
                   >
                     {e.handle.slice(0, 2).toUpperCase()}
-                  </span>
+                  </a>
                   <div className="min-w-0 flex-1">
-                    <div className="truncate font-mono text-[11px] text-foreground">
+                    <a
+                      href={`#/defacer/${encodeURIComponent(e.handle)}`}
+                      className="block truncate font-mono text-[11px] text-foreground hover:text-primary"
+                    >
                       {e.handle}
-                    </div>
+                    </a>
                     <div className="truncate font-mono text-[9px] text-muted-foreground">
                       {e.team ?? 'INDEPENDENT'} · {countryFlag(e.country)}
                     </div>

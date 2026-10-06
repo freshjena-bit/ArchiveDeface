@@ -2,34 +2,39 @@
 
 import * as React from 'react'
 
-export type Route = 'home' | 'archive' | 'ranking' | 'submit' | 'about'
+export type Route = 'home' | 'archive' | 'ranking' | 'submit' | 'about' | 'defacer'
 
-const MAP: Record<string, Route> = {
+const HEAD_MAP: Record<string, Route> = {
   '': 'home',
-  '/': 'home',
-  '/archive': 'archive',
-  '/ranking': 'ranking',
-  '/submit': 'submit',
-  '/about': 'about',
+  archive: 'archive',
+  ranking: 'ranking',
+  submit: 'submit',
+  about: 'about',
+  defacer: 'defacer',
 }
 
-function parse(): Route {
-  if (typeof window === 'undefined') return 'home'
+function parse(): { route: Route; param: string | null } {
+  if (typeof window === 'undefined') return { route: 'home', param: null }
+  // hash looks like "#/defacer/n0vakane" → strip "#", split on "/"
   const h = window.location.hash.replace(/^#/, '')
-  return MAP[h] ?? 'home'
+  const parts = h.split('/').filter(Boolean)
+  const head = parts[0] ?? ''
+  const route = HEAD_MAP[head] ?? 'home'
+  const param = route === 'defacer' ? decodeURIComponent(parts[1] ?? '') || null : null
+  return { route, param }
 }
 
 export function useHashRoute() {
-  const [route, setRoute] = React.useState<Route>(parse)
+  const [state, setState] = React.useState<{ route: Route; param: string | null }>(parse)
 
   React.useEffect(() => {
-    const on = () => setRoute(parse())
+    const on = () => setState(parse())
     window.addEventListener('hashchange', on)
     // normalize empty hash to #/ on first load
     if (!window.location.hash) {
       window.history.replaceState(null, '', '#/')
     }
-    setRoute(parse())
+    setState(parse())
     return () => window.removeEventListener('hashchange', on)
   }, [])
 
@@ -43,5 +48,5 @@ export function useHashRoute() {
     window.location.hash = target
   }, [])
 
-  return { route, navigate }
+  return { route: state.route, param: state.param, navigate }
 }

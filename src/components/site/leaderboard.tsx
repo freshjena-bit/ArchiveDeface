@@ -74,9 +74,12 @@ export function FullLeaderboard() {
                           `#${i + 1}`
                         )}
                       </span>
-                      <span className="truncate font-mono text-xs font-bold text-foreground">
+                      <a
+                        href={`#/defacer/${encodeURIComponent(p.handle)}`}
+                        className="truncate font-mono text-xs font-bold text-foreground hover:text-primary"
+                      >
                         {p.handle}
-                      </span>
+                      </a>
                     </div>
                     <div className="truncate font-mono text-[10px] text-muted-foreground">
                       {p.team ?? 'INDEPENDENT'} · {countryFlag(p.country)} {countryName(p.country)}
@@ -128,9 +131,12 @@ export function FullLeaderboard() {
                       >
                         {e.handle.slice(0, 2).toUpperCase()}
                       </span>
-                      <span className="truncate font-mono text-[11px] font-semibold text-foreground">
+                      <a
+                        href={`#/defacer/${encodeURIComponent(e.handle)}`}
+                        className="truncate font-mono text-[11px] font-semibold text-foreground hover:text-primary"
+                      >
                         {e.handle}
-                      </span>
+                      </a>
                     </div>
                     <div className="col-span-3 truncate font-mono text-[10px] text-muted-foreground">
                       {e.team ?? 'INDEPENDENT'}

@@ -8,15 +8,16 @@ import { ArchiveView } from '@/components/site/views/archive-view'
 import { RankingView } from '@/components/site/views/ranking-view'
 import { SubmitView } from '@/components/site/views/submit-view'
 import { AboutView } from '@/components/site/views/about-view'
+import { DefacerView } from '@/components/site/views/defacer-view'
 import { useHashRoute } from '@/lib/use-hash-route'
 
 export default function Home() {
-  const { route } = useHashRoute()
+  const { route, param } = useHashRoute()
 
   // scroll to top on every route change → feels like a real page redirect
   React.useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'auto' })
-  }, [route])
+  }, [route, param])
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -27,6 +28,7 @@ export default function Home() {
         {route === 'ranking' && <RankingView />}
         {route === 'submit' && <SubmitView />}
         {route === 'about' && <AboutView />}
+        {route === 'defacer' && param && <DefacerView handle={param} />}
       </main>
       <SiteFooter />
     </div>

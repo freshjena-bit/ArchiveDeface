@@ -214,3 +214,22 @@ Work Log:
 Stage Summary:
 - Tanda sekarang H M R S (4 kotak) di archive table, home recent, mirror viewer. Country tetap tampil di kolom tersendiri.
 - Browser-verified: 4 mark boxes per row (Homepage defaced / Mass deface / Redeface / Special archive). Lint clean.
+
+---
+Task ID: P1-P7
+Agent: Main (Z.ai Code)
+Task: Status onhold + halaman profil defacer (archive user, total/special/onhold)
+
+Work Log:
+- Seed: status sekarang archived ~60% / restored ~25% / onhold ~15% (sebelumnya hanya archived/restored). Reseed.
+- use-hash-route.ts: support route 'defacer' + param handle. parse hash "#/defacer/handle" → {route:'defacer', param:'handle'}. return {route, param, navigate}.
+- /api/defacer?handle=: endpoint baru — return hacker profile + counts (total, special, onhold, archived, restored, mass, redeface, homepage) + items (100 defacement terbaru milik handle).
+- defacer-view.tsx: halaman profil — header (avatar/handle/team/country/bio/joined/total hits) + 8 stat cards (Total Archive, Special, On Hold, Mass, Redeface, Homepage, Archived, Restored) + tabel defacement milik defacer (kolom #/Target/Cat/Country/Status/Marks/Date/View, status berwarna, row clickable buka mirror viewer). Skeleton + not-found state.
+- page.tsx: render DefacerView saat route=defacer & param ada; scroll-to-top on route/param change.
+- Handle clickable: archive-table Row (defacer cell), home-recent, FullLeaderboard (podium + table), sidebar Top Defacers, home-top-defacers — semua jadi <a href="#/defacer/handle"> stopPropagation.
+
+Stage Summary:
+- onhold sekarang status valid; seeded ~15% record onhold.
+- Halaman profil defacer /#/defacer/<handle>: total archive + total special + total onhold (+ mass/redeface/homepage/archived/restored) + tabel arsip milik user.
+- Browser-verified: API /api/defacer?handle=n0vakane → counts {total:29, special:13, onhold:4...}; /#/defacer/d4rkw0lf render 8 stat cards (Total Archive 040, Special 024, Onhold 006...) + 40-row table; klik handle di archive → /#/defacer/kr1pton; klik handle di ranking juga jalan.
+- Lint clean (0 error).
