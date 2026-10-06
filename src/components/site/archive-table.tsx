@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { countryFlag, countryName, severityMeta, categoryMeta, timeAgo } from '@/lib/site'
+import { MirrorViewer } from '@/components/site/mirror-viewer'
 import type { Defacement } from '@/lib/types'
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
@@ -30,6 +31,7 @@ export function ArchiveTable() {
   const [q, setQ] = React.useState('')
   const [category, setCategory] = React.useState<string>('')
   const [page, setPage] = React.useState(0)
+  const [selected, setSelected] = React.useState<Defacement | null>(null)
   const pageSize = 25
 
   const debounced = React.useDeferredValue(q)
@@ -130,7 +132,7 @@ export function ArchiveTable() {
               ))
             : !data?.items?.length
             ? <EmptyRow />
-            : data.items.map((d, i) => <Row key={d.id} d={d} index={i + page * pageSize} />)}
+            : data.items.map((d, i) => <Row key={d.id} d={d} index={i + page * pageSize} onOpen={setSelected} />)}
         </div>
 
         {/* footer / pagination */}
@@ -165,11 +167,17 @@ export function ArchiveTable() {
           </div>
         </div>
       </div>
+
+      <MirrorViewer
+        record={selected}
+        open={!!selected}
+        onOpenChange={(v) => !v && setSelected(null)}
+      />
     </section>
   )
 }
 
-function Row({ d, index }: { d: Defacement; index: number }) {
+function Row({ d, index, onOpen }: { d: Defacement; index: number; onOpen: (d: Defacement) => void }) {
   const sev = severityMeta(d.severity)
   const cat = categoryMeta(d.category)
   const StatusIcon = d.status === 'restored' ? RotateCcw : ShieldCheck
@@ -179,7 +187,8 @@ function Row({ d, index }: { d: Defacement; index: number }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.2 }}
-      className="group grid grid-cols-12 gap-2 px-3 py-2.5 transition-colors hover:bg-primary/[0.04]"
+      onClick={() => onOpen(d)}
+      className="group grid cursor-pointer grid-cols-12 gap-2 px-3 py-2.5 transition-colors hover:bg-primary/[0.06]"
     >
       {/* # */}
       <div className="col-span-1 font-mono text-[11px] text-muted-foreground tabular-nums">
@@ -215,6 +224,7 @@ function Row({ d, index }: { d: Defacement; index: number }) {
           href={d.targetUrl}
           target="_blank"
           rel="noreferrer"
+          onClick={(e) => e.stopPropagation()}
           className="block max-w-full truncate font-mono text-[9px] text-muted-foreground hover:text-primary"
         >
           {d.targetUrl.replace(/^https?:\/\//, '')}
@@ -250,15 +260,15 @@ function Row({ d, index }: { d: Defacement; index: number }) {
             {timeAgo(d.createdAt)}
           </div>
         </div>
-        <a
-          href={d.mirrorUrl ?? '#'}
-          target="_blank"
-          rel="noreferrer"
-          className="grid h-6 w-6 shrink-0 place-items-center rounded-sm border border-border/50 text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary"
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onOpen(d) }}
+          className="grid h-6 w-6 shrink-0 place-items-center rounded-sm border border-border/50 text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary group-hover:border-primary/40"
           title="view mirror snapshot"
+          aria-label="view mirror snapshot"
         >
           <ExternalLink className="h-3 w-3" />
-        </a>
+        </button>
       </div>
     </motion.div>
   )

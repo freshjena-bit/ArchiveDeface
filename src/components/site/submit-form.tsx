@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import { useSWRConfig } from 'swr'
 import { Upload, Send, ShieldCheck, Lock, KeyRound } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -17,6 +18,7 @@ const SEVERITIES = ['low', 'medium', 'high', 'critical']
 
 export function SubmitForm() {
   const { toast } = useToast()
+  const { mutate } = useSWRConfig()
   const [submitting, setSubmitting] = React.useState(false)
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -43,6 +45,13 @@ export function SubmitForm() {
       if (!res.ok || !data.ok) throw new Error(data.error || 'submit failed')
       toast({ title: 'Record archived', description: `Incident logged (id ${String(data.id).slice(0, 8)}…)` })
       ;(e.target as HTMLFormElement).reset()
+      // live revalidation: new record appears in archive + ticker,
+      // counters update, submitter's rank recalculates
+      await Promise.all([
+        mutate((key) => typeof key === 'string' && key.startsWith('/api/defacements')),
+        mutate('/api/stats'),
+        mutate('/api/leaderboard'),
+      ])
     } catch (err) {
       toast({ title: 'Submission rejected', description: (err as Error).message, variant: 'destructive' })
     } finally {

@@ -61,3 +61,23 @@ Stage Summary:
 - Lint clean (0 error). Dev server sehat, API 200.
 - Browser-verified: header + stats bar + live ticker + tabel arsip (search/filter/pagination) + sidebar (Top Defacers/Today/Countries) + full leaderboard + inline submit (POST 200, record "Demo Customs Gate" by smokeTester2 muncul di tabel) + sticky footer.
 - Tetap original: branding "DEFACEID archive", data fiktif (.archive-demo.test), tidak menyalin desain/konten berhak cipta spesifik.
+
+---
+Task ID: F1-F5
+Agent: Main (Z.ai Code)
+Task: Lengkapi fungsi (submit + lainnya) agar bekerja end-to-end, tampilan tetap
+
+Work Log:
+- /api/stats: "todayAttacks" & "thisMonth" jadi dinamis (count record hari ini / bulan ini), bukan angka statik seed.
+- mirror-viewer.tsx: dialog snapshot mock halaman di-deface (toolbar + meta strip + mock defaced page body "OWNED BY" + note + signature + captured time + footer disclaimer). Signature deterministik dari id+handle.
+- archive-table.tsx: row sekarang clickable (cursor-pointer + onClick) membuka mirror viewer; tombol View buka viewer (stopPropagation); link target URL stopPropagation supaya tetap navigasi.
+- submit-form.tsx: setelah POST sukses, panggil mutate() untuk revalidate semua key /api/defacements* + /api/stats + /api/leaderboard supaya record baru, counter, dan rank attacker langsung muncul.
+- Fix lint literal "//" di mirror-viewer.
+
+Stage Summary:
+- Tampilan tetap (flat archive). Fungsi sekarang lengkap & konsisten.
+- Browser-verified end-to-end:
+  - Submit handle "liveRevalid8" + target "Demo Edge Gateway" → POST 200.
+  - Live revalidation: Total 422→423, Today 008→009 (dinamis), record muncul di archive + live ticker, liveRevalid8 muncul di Top Defacers.
+  - Mirror viewer: klik row/tombol View → dialog buka, render target/defacer/country/captured/severity/status + mock defaced page "OWNED BY smokeTester2 // QA CREW" + note + signature 7A8E8B94 + timestamp + disclaimer.
+- Lint clean (0 error). Dev server sehat.

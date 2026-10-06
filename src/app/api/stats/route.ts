@@ -15,6 +15,21 @@ export async function GET() {
     select: { country: true },
   })
 
+  // dynamic "today" = records created since 00:00 today (local server time)
+  const startOfToday = new Date()
+  startOfToday.setHours(0, 0, 0, 0)
+  const todayCount = await db.defacement.count({
+    where: { createdAt: { gte: startOfToday } },
+  })
+
+  // dynamic "this month" = records in the current calendar month
+  const monthStart = new Date()
+  monthStart.setDate(1)
+  monthStart.setHours(0, 0, 0, 0)
+  const monthCount = await db.defacement.count({
+    where: { createdAt: { gte: monthStart } },
+  })
+
   // 14-day timeseries
   const days: { date: string; count: number }[] = []
   const now = new Date()
@@ -50,7 +65,8 @@ export async function GET() {
       totalDefacements,
       totalAttackers,
       totalCountries: distinctCountries.length,
-      todayAttacks: statMap['today_attacks'] ?? 0,
+      todayAttacks: todayCount,
+      thisMonth: monthCount,
     },
     timeseries: days,
     categories,
