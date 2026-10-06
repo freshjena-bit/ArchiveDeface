@@ -458,3 +458,19 @@ Stage Summary:
 - Special sekarang = domain pattern *.gov.* / *.go.* / *.ac.* (country-specific: ac.in/ac.fr/ac.mx/ac.de...) / *.edu.*. com/org/mil/fin BUKAN special. Severity critical tidak lagi otomatis special.
 - Special count 116 (verified-only). Sample: .gov.tr, .go.ru, .go.pl, .edu.us, .ac.in, .ac.fr, .ac.mx, .ac.de.
 - Browser: Special Archive 25 rows, semua sample URL match pola gov/go/edu. Lint clean.
+
+---
+Task ID: LH1
+Agent: Main (Z.ai Code)
+Task: Latest Activity + Top 10 Attacker cuma di homepage; page lain bersih
+
+Work Log:
+- sidebar.tsx rewrite: hapus panel "Top Defacers" (top 10 attacker) + fetch leaderboard-nya + import Trophy/Flame/Crown/LeaderEntry. Sidebar sekarang cuma Today + Top Countries.
+- HomeView tetap punya HomeRecent (Latest Activity) + HomeTopDefacers (Top 10 Attacker).
+- RankingView tetap cuma ranking (PageHeader + FullLeaderboard/TeamsLeaderboard), no latest activity / top10.
+
+Stage Summary:
+- Latest Activity + Top 10 Attacker HANYA di homepage.
+- Archive page sidebar: Today + Top Countries (tanpa Top Defacers).
+- Ranking page: hanya ranking.
+- Browser-verified: Home hasLatestActivity+hasTopDefacers true; Archive hasTopDefacers=false+hasLatestActivity=false (Today+TopCountries tetap); Ranking hasRanking=true+hasLatestActivity=false. Lint clean.
