@@ -13,11 +13,12 @@
     "db:reset": "prisma migrate reset",
     "// Cloudflare Pages (D1)": "",
     "build:cf": "npx opennextjs-cloudflare build",
-    "preview:cf": "bun run build:cf && npx wrangler pages dev",
-    "deploy:cf": "bun run build:cf && npx wrangler pages deploy",
+    "preview:cf": "npx opennextjs-cloudflare build && npx wrangler pages dev",
+    "deploy:cf": "npx opennextjs-cloudflare build && npx wrangler pages deploy",
     "db:d1:apply": "npx wrangler d1 execute zonedefacer --remote --file=migrations/0001_init.sql",
     "db:d1:apply:local": "npx wrangler d1 execute zonedefacer --local --file=migrations/0001_init.sql",
-    "db:d1:seed": "bun run scripts/seed.ts"
+    "db:d1:seed": "npx tsx scripts/seed.ts",
+    "db:seed": "npx tsx scripts/seed.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
