@@ -1,0 +1,53 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// A security researcher / attacker who has claimed defacements
+model Hacker {
+  id          String   @id @default(cuid())
+  handle      String   @unique // display name / alias
+  team        String?  // group / crew affiliation
+  country     String?  // origin country (ISO code)
+  avatarColor String   @default("#22c55e")
+  rank        Int      @default(0) // computed score
+  totalHits   Int      @default(0)
+  badges      String   @default("[]") // JSON array of badge ids
+  bio         String?
+  joinedAt    DateTime @default(now())
+  defacements Defacement[]
+}
+
+// A single recorded website defacement incident
+model Defacement {
+  id         String   @id @default(cuid())
+  targetUrl  String   // e.g. https://gov.example.gov.id
+  targetName String   // human label
+  country    String   // target country ISO code
+  category   String   // gov / edu / com / org / mil / fin
+  attackerId String
+  attacker   Hacker   @relation(fields: [attackerId], references: [id])
+  mirrorUrl  String?  // archived snapshot link
+  note       String?  // message left by attacker
+  status     String   @default("archived") // archived / restored / live
+  severity   String   @default("medium") // low / medium / high / critical
+  createdAt  DateTime @default(now())
+
+  @@index([attackerId])
+  @@index([country])
+  @@index([createdAt])
+}
+
+// Aggregate counter for the dashboard
+model Stat {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Int      @default(0)
+}

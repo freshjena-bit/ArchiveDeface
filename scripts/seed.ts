@@ -1,0 +1,139 @@
+import { db } from "../src/lib/db"
+
+// Original, fictional mock data for the defacement archive.
+// Hacker handles, team names and target URLs are invented and do not
+// reference real persons, real organisations, or real incidents.
+
+const HACKERS = [
+  { handle: "n0vakane", team: "PHANTOM CREW", country: "ID", color: "#22c55e", bio: "White-hat by day, archive contributor by night." },
+  { handle: "gh0stbyte", team: "NULLSEC", country: "RU", color: "#ef4444", bio: "Unauthorised literature enthusiast." },
+  { handle: "kr1pton", team: "PHANTOM CREW", country: "BR", color: "#eab308", bio: "Loves a good misconfigured nginx." },
+  { handle: "v0idwalker", team: "SPECTRE", country: "US", color: "#06b6d4", bio: "Read the source, then read it again." },
+  { handle: "byteWraith", team: "NULLSEC", country: "CN", color: "#a855f7", bio: "Logs don't lie, but they do omit." },
+  { handle: "r00tless", team: "OUTLAWS", country: "IN", color: "#f97316", bio: "If it ships with default creds, it ships with me." },
+  { handle: "s1lentshade", team: "SPECTRE", country: "DE", color: "#14b8a6", bio: "Quiet hands, loud impact." },
+  { handle: "cyb3rKaos", team: "OUTLAWS", country: "MX", color: "#ec4899", bio: "Documenting the chaos, one snapshot at a time." },
+  { handle: "h3xPrincess", team: "PHANTOM CREW", country: "FR", color: "#84cc16", bio: "Deserves the crown." },
+  { handle: "d4rkw0lf", team: "NULLSEC", country: "TR", color: "#f43f5e", bio: "Howls at exposed .env files." },
+  { handle: "zer0c00l", team: "OUTLAWS", country: "PL", color: "#22d3ee", bio: "Cooler than zero." },
+  { handle: "m1ssing", team: "SPECTRE", country: "JP", color: "#a3e635", bio: "Not found, like the patches." },
+  { handle: "br0k3nKey", team: "PHANTOM CREW", country: "EG", color: "#fb923c", bio: "Your auth token was base64. That's not encryption." },
+  { handle: "n3m3sis", team: "NULLSEC", country: "GB", color: "#c084fc", bio: "Revenge is a dish best served cached." },
+  { handle: "p4radox", team: "OUTLAWS", country: "ID", color: "#2dd4bf", bio: "Defending by demonstrating." },
+]
+
+const COUNTRIES = ["ID", "US", "RU", "BR", "CN", "IN", "DE", "MX", "FR", "TR", "PL", "JP", "EG", "GB"]
+const CATEGORIES = ["gov", "edu", "com", "org", "mil", "fin"]
+const SEVERITIES = ["low", "medium", "high", "critical"]
+
+const TARGET_NAMES = [
+  "Ministry of Trade Portal", "State Water Authority", "University Library System",
+  "Municipal Gazette", "National Tourism Board", "Public Records Archive",
+  "Regional Power Operator", "City Council Dashboard", "Customs Declaration Service",
+  "Election Commission Site", "Agricultural Cooperative Hub", "Transport Authority API",
+  "Civil Registry Gateway", "Sports Federation Portal", "Maritime Authority Hub",
+  "Statistics Bureau Portal", "Health Department Intranet", "Veterinary Services Site",
+  "Cultural Heritage Archive", "Postal Logistics Tracker",
+]
+
+const NOTES = [
+  "Your security is a costume. Patched for the archive.",
+  "Area secured. Consider this a free pentest report.",
+  "Default credentials are not a strategy.",
+  "Logged, mirrored, reported. You're welcome.",
+  "Exposed .env -> database -> root. Three steps.",
+  "Update your CMS. Then update it again.",
+  "Security through obscurity failed again.",
+  "The robots.txt was more informative than your docs.",
+  "Mirrored for the historical record.",
+  "Friendly reminder: change the admin password.",
+]
+
+function rand<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)]
+}
+
+function fakeDomain(country: string, category: string) {
+  // clearly fictional TLD so nothing resolves to a real target
+  const slug = ["portal", "archive", "node", "gateway", "edge", "core", "station", "hub"][
+    Math.floor(Math.random() * 8)
+  ]
+  const id = Math.floor(1000 + Math.random() * 9000)
+  return `https://${slug}-${id}.${category}.${country.toLowerCase()}.archive-demo.test`
+}
+
+async function main() {
+  console.log("Seeding database...")
+  // wipe
+  await db.defacement.deleteMany()
+  await db.hacker.deleteMany()
+  await db.stat.deleteMany()
+
+  // create hackers
+  const hackers = await Promise.all(
+    HACKERS.map((h) =>
+      db.hacker.create({
+        data: {
+          handle: h.handle,
+          team: h.team,
+          country: h.country,
+          avatarColor: h.color,
+          bio: h.bio,
+        },
+      })
+    )
+  )
+
+  // create defacements across the past 30 days
+  const now = Date.now()
+  const TOTAL = 420
+  const records = []
+  for (let i = 0; i < TOTAL; i++) {
+    const attacker = rand(hackers)
+    const country = rand(COUNTRIES)
+    const category = rand(CATEGORIES)
+    const createdAt = new Date(now - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000))
+    records.push({
+      targetUrl: fakeDomain(country, category),
+      targetName: rand(TARGET_NAMES),
+      country,
+      category,
+      attackerId: attacker.id,
+      mirrorUrl: `https://mirror.archive-demo.test/snap-${Math.random().toString(36).slice(2, 10)}`,
+      note: rand(NOTES),
+      status: Math.random() > 0.3 ? "archived" : "restored",
+      severity: rand(SEVERITIES),
+      createdAt,
+    })
+  }
+  await db.defacement.createMany({ data: records })
+
+  // compute hacker ranks/totalHits
+  for (const h of hackers) {
+    const total = await db.defacement.count({ where: { attackerId: h.id } })
+    await db.hacker.update({ where: { id: h.id }, data: { totalHits: total, rank: total } })
+  }
+
+  // stats
+  const totalDef = await db.defacement.count()
+  const totalHackers = await db.hacker.count()
+  const distinctCountries = await db.defacement.findMany({ distinct: ["country"], select: { country: true } })
+  await db.stat.createMany({
+    data: [
+      { key: "total_defacements", value: totalDef },
+      { key: "total_attackers", value: totalHackers },
+      { key: "total_countries", value: distinctCountries.length },
+      { key: "today_attacks", value: Math.floor(Math.random() * 18) + 6 },
+    ],
+  })
+
+  console.log(`Seeded ${totalDef} defacements across ${totalHackers} hackers.`)
+}
+
+main()
+  .then(() => db.$disconnect())
+  .catch(async (e) => {
+    console.error(e)
+    await db.$disconnect()
+    process.exit(1)
+  })
