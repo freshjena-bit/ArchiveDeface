@@ -19,7 +19,7 @@ function fmtDate(iso: string) {
 
 export function HomeRecent({ onViewAll }: { onViewAll: () => void }) {
   const { data, isLoading } = useSWR<{ items: Defacement[] }>(
-    '/api/defacements?limit=8',
+    '/api/defacements?limit=10',
     fetcher,
     { refreshInterval: 15000 }
   )

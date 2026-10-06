@@ -155,3 +155,25 @@ Stage Summary:
 - Back/forward browser bekerja: #/about → #/archive → #/ .
 - Tetap satu route file / (sesuai constraint environment), URL pakai hash (/#/submit dsb) supaya deep-link + back/forward jalan.
 - Lint clean (0 error).
+
+---
+Task ID: H1-H7
+Agent: Main (Z.ai Code)
+Task: Home 10+10, live 1 latest, ranking defacers+teams, archive special (goid/gov/acid/edu)
+
+Work Log:
+- /api/leaderboard: tambah ?mode=defacers|teams. mode=teams pakai prisma groupBy by team, _sum totalHits, _count members, orderBy sum desc.
+- /api/defacements: tambah ?special=all|gov|edu|goid|acid. goid=category gov+country ID; acid=severity critical; gov/edu=by category. search OR sekarang include poc+reason.
+- home-recent: limit 8→10.
+- home-top-defacers.tsx baru: preview top 10 defacers (fetch leaderboard?mode=defacers, slice 10), tombol "full ranking →" ke /ranking.
+- home-view: layout 2-col (recent 8kol | top defacers 4kol) di bawah CTA cards.
+- live-ticker: rewrite jadi 1 record terbaru (fetch limit=1), single status line clickable ke /archive, no marquee.
+- teams-leaderboard.tsx baru: podium top-3 + tabel ranking teams (rank/team/members/incidents), color deterministik per team.
+- ranking-view: tambah toggle Defacers/Teams (state mode), render FullLeaderboard atau TeamsLeaderboard.
+- archive-table: tambah state special + tab bar "special: ALL/GOID/GOV/ACID/EDU" di atas search; special masuk ke query param.
+
+Stage Summary:
+- Home: 10 recent + 10 top defacers + 1 latest ticker (bukan marquee cepat).
+- Ranking: toggle Defacers ↔ Teams (teams: PHANTOM CREW 123, OUTLAWS 115, NULLSEC 97, SPECTRE 85...).
+- Archive: tab arsip spesial ALL/GOID/GOV/ACID/EDU — GOV filter semua .gov.*, ACID filter severity=critical (verify via API).
+- Browser-verified semua. Lint clean (0 error).
