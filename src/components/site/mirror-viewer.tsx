@@ -49,6 +49,13 @@ export function MirrorViewer({
   open: boolean
   onOpenChange: (v: boolean) => void
 }) {
+  // shot source: real screenshot via thum.io, falls back to a generated capture
+  const [shotSrc, setShotSrc] = React.useState<string | null>(null)
+  React.useEffect(() => {
+    if (!record) { setShotSrc(null); return }
+    setShotSrc(`https://image.thum.io/get/${record.targetUrl}`)
+  }, [record])
+
   if (!record) return null
   const d = record
   const sev = severityMeta(d.severity)
@@ -57,7 +64,7 @@ export function MirrorViewer({
   const ip = mockIP(d.id)
   const server = mockServer(d.id)
   const sig = mockSig(d.id, d.attacker.handle)
-  const screenshot = pickShot(d.id)
+  const fallbackShot = pickShot(d.id)
   const time = captured.toISOString().slice(11, 19)
   const date = captured.toISOString().slice(0, 10)
 
@@ -150,10 +157,11 @@ export function MirrorViewer({
               </span>
             </div>
             <img
-              src={screenshot}
+              src={shotSrc ?? fallbackShot}
               alt={`defaced page screenshot — ${d.attacker.handle}`}
               className="block w-full"
               loading="lazy"
+              onError={() => setShotSrc(fallbackShot)}
             />
           </div>
           {/* caption tying the capture to the record */}

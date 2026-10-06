@@ -532,3 +532,18 @@ Work Log:
 Stage Summary:
 - Mirror viewer sekarang: metadata panel (mock data deterministik: IP, web server, dll) + DI BAWAHNYA screenshot gambar web target yang di-deface (fake browser chrome + image).
 - Browser-verified: dialog buka, hasImg=true (imgSrc /mirror/defaced-2.png), metadata NOTIFIER GadaLuBau / WEB SERVER cloudflare / TEAM SonicNetwork / IP 116.140.84.217. Lint clean.
+
+---
+Task ID: RS1
+Agent: Main (Z.ai Code)
+Task: Mirror viewer pakai screenshot ASLI web target (thum.io), bukan AI-generated
+
+Work Log:
+- Test screenshot service: thum.io (https://image.thum.io/get/<url>) → 200 PNG. mShots → 403 (skip).
+- Seed rewrite: hapus fakeDomain/TARGET_NAMES/COUNTRIES/CATEGORIES. Tambah REAL_TARGETS pool (27 URL real, safe, reachable: example.*, wikipedia, iana, kernel, gnu, w3, iso, ripe, apnic, nic.br, jprs.jp, registry.in, nic.fr, dns.de, cctld.ru, idnic.or.id, gov.uk, gov.au, mit.edu, stanford.edu, berkeley.edu, cam.ac.uk). Record loop: pick rand(REAL_TARGETS) + deriveMeta(url) untuk country/category/targetName. Import deriveMeta.
+- mirror-viewer.tsx: shotSrc state (init thum.io URL of targetUrl), useEffect reset saat record ganti. <img src={shotSrc ?? fallbackShot} onError={() => setShotSrc(fallbackShot)}>. Fallback ke generated defaced-*.png kalau URL unreachable (mis. user submit .test fiktif).
+
+Stage Summary:
+- Mirror viewer sekarang nampilin SCREENSHOT ASLI webpage target via thum.io (real capture, bukan AI-generated). Untuk URL unreachable → fallback generated image.
+- Seed pakai URL real (gnu.org, nic.fr, cam.ac.uk, dns.de, nic.br, ...). Country/category derive dari URL real (ccTLD → BR/JP/IN/FR/DE/RU/ID/GB/AU; segment gov/edu → special).
+- Browser-verified: img src = https://image.thum.io/get/https://www.gnu.org, naturalW=600 complete=true (real screenshot loaded, on-demand capture ~10s). Lint clean.

@@ -1,8 +1,41 @@
 import { db } from "../src/lib/db"
+import { deriveMeta } from "../src/lib/site"
 
 // Original, fictional mock data for the defacement archive.
-// Hacker handles, team names and target URLs are invented and do not
-// reference real persons, real organisations, or real incidents.
+// Hacker handles and team names are invented. Target URLs point to real,
+// public, non-controversial domains (standards bodies, registries, reserved
+// example domains) so the mirror viewer can capture a real webpage screenshot.
+
+// pool of real, reachable, safe target URLs (standards / registries / reserved)
+const REAL_TARGETS = [
+  "https://example.com",
+  "https://example.org",
+  "https://example.net",
+  "https://example.edu",
+  "https://example.gov",
+  "https://en.wikipedia.org",
+  "https://www.iana.org",
+  "https://archive.org",
+  "https://www.kernel.org",
+  "https://www.gnu.org",
+  "https://www.w3.org",
+  "https://www.iso.org",
+  "https://www.ripe.net",
+  "https://www.apnic.net",
+  "https://www.nic.br",
+  "https://www.jprs.jp",
+  "https://www.registry.in",
+  "https://www.nic.fr",
+  "https://www.dns.de",
+  "https://www.cctld.ru",
+  "https://www.idnic.or.id",
+  "https://www.gov.uk",
+  "https://www.gov.au",
+  "https://www.mit.edu",
+  "https://www.stanford.edu",
+  "https://www.berkeley.edu",
+  "https://www.cam.ac.uk",
+]
 
 const HACKERS = [
   { handle: "n0vakane", team: "PHANTOM CREW", country: "ID", color: "#22c55e", bio: "White-hat by day, archive contributor by night." },
@@ -22,19 +55,7 @@ const HACKERS = [
   { handle: "p4radox", team: "OUTLAWS", country: "ID", color: "#2dd4bf", bio: "Defending by demonstrating." },
 ]
 
-const COUNTRIES = ["ID", "US", "RU", "BR", "CN", "IN", "DE", "MX", "FR", "TR", "PL", "JP", "EG", "GB"]
-const CATEGORIES = ["gov", "edu", "com", "org", "mil", "fin"]
 const SEVERITIES = ["low", "medium", "high", "critical"]
-
-const TARGET_NAMES = [
-  "Ministry of Trade Portal", "State Water Authority", "University Library System",
-  "Municipal Gazette", "National Tourism Board", "Public Records Archive",
-  "Regional Power Operator", "City Council Dashboard", "Customs Declaration Service",
-  "Election Commission Site", "Agricultural Cooperative Hub", "Transport Authority API",
-  "Civil Registry Gateway", "Sports Federation Portal", "Maritime Authority Hub",
-  "Statistics Bureau Portal", "Health Department Intranet", "Veterinary Services Site",
-  "Cultural Heritage Archive", "Postal Logistics Tracker",
-]
 
 const POCS = [
   'Exposed .env file served by the web root; secrets harvested in <1s.',
@@ -64,26 +85,6 @@ const REASONS = [
 
 function rand<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)]
-}
-
-function fakeDomain(country: string, category: string) {
-  // clearly fictional TLD so nothing resolves to a real target
-  const slug = ["portal", "archive", "node", "gateway", "edge", "core", "station", "hub"][
-    Math.floor(Math.random() * 8)
-  ]
-  const id = Math.floor(1000 + Math.random() * 9000)
-  // government category: sometimes use the alt ".go." segment (e.g. go.id)
-  // academic category: sometimes use the ".ac." segment (e.g. ac.id, ac.ru)
-  let catSeg = category
-  if (category === 'gov' && Math.random() < 0.4) catSeg = 'go'
-  else if (category === 'edu' && Math.random() < 0.4) catSeg = 'ac'
-  const base = `https://${slug}-${id}.${catSeg}.${country.toLowerCase()}.archive.test`
-  // ~28% of targets are a sub-page (so isHomepage varies), rest are root
-  if (Math.random() < 0.28) {
-    const sub = rand(["en", "news", "about", "login", "blog", "v2", "old", "info"])
-    return `${base}/${sub}`
-  }
-  return base
 }
 
 // derive the H/M/R/S marks for a seeded record
@@ -127,15 +128,15 @@ async function main() {
   const records = []
   for (let i = 0; i < TOTAL; i++) {
     const attacker = rand(hackers)
-    const country = rand(COUNTRIES)
-    const category = rand(CATEGORIES)
+    const url = rand(REAL_TARGETS)
+    const meta = deriveMeta(url) // country / category / targetName / specialDomain from the real URL
     const severity = rand(SEVERITIES)
     const createdAt = new Date(now - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000))
     records.push({
-      targetUrl: fakeDomain(country, category),
-      targetName: rand(TARGET_NAMES),
-      country,
-      category,
+      targetUrl: url,
+      targetName: meta.targetName,
+      country: meta.country,
+      category: meta.category,
       attackerId: attacker.id,
       mirrorUrl: `https://mirror.archive.test/snap-${Math.random().toString(36).slice(2, 10)}`,
       poc: rand(POCS),
@@ -145,7 +146,7 @@ async function main() {
         return r < 0.6 ? "archived" : r < 0.85 ? "restored" : "onhold"
       })(),
       severity,
-      ...deriveMarks(category, severity),
+      ...deriveMarks(meta.category, severity),
       createdAt,
     })
   }
