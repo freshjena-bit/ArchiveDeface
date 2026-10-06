@@ -3,7 +3,7 @@
   "name": "zonedefacer",
   "compatibility_date": "2025-05-01",
   "compatibility_flags": ["nodejs_compat"],
-  "pages_build_output_dir": ".open-next/assets",
+  "pages_build_output_dir": ".open-next",
   "vars": {
     "ADMIN_USERNAME": "GadaLuBau",
     "ADMIN_PASSWORD": "slametwkw"
