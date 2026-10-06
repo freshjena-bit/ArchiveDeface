@@ -314,3 +314,18 @@ Work Log:
 
 Stage Summary:
 - Special Archive (/#/special): tanpa tabs, tampil semua record special (175 total, 25/page). Count + view buttons tetap jalan. Lint clean.
+
+---
+Task ID: DO1
+Agent: Main (Z.ai Code)
+Task: Profil defacer bisa lihat onhold juga (filter All/Verified/On Hold)
+
+Work Log:
+- /api/defacer: bump take 100→200 (cover all records for filtering).
+- defacer-view.tsx: tambah state filter ('all'|'verified'|'onhold'). filteredItems filter client-side: all=tanpa filter, onhold=status onhold, verified=status!=onhold.
+- Tambah filter tabs di atas tabel "{handle}'s Archive": All · {total} / Verified · {archived+restored} / On Hold · {onhold}. On Hold pakai amber theme. Count badge pakai filteredItems.length.
+- Table body map filteredItems (bukan data.items).
+
+Stage Summary:
+- Profil defacer (#/defacer/<handle>) sekarang ada filter All/Verified/On Hold. User bisa lihat record onhold-nya khusus.
+- Browser-verified: d4rkw0lf → ALL·40, VERIFIED·34, ON HOLD·6; klik On Hold → 6 rows semua onhold (allOnhold:true). Lint clean.

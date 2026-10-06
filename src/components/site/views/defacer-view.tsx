@@ -59,6 +59,7 @@ export function DefacerView({ handle }: { handle: string }) {
     { refreshInterval: 30000 }
   )
   const [selected, setSelected] = React.useState<Defacement | null>(null)
+  const [filter, setFilter] = React.useState<'all' | 'verified' | 'onhold'>('all')
 
   if (isLoading) return <DefacerSkeleton />
   if (error || !data || !data.ok) {
@@ -81,6 +82,11 @@ export function DefacerView({ handle }: { handle: string }) {
 
   const h = data.hacker
   const c = data.counts
+
+  // client-side filter: all / verified / onhold
+  const filteredItems = data.items.filter((d) =>
+    filter === 'all' ? true : filter === 'onhold' ? d.status === 'onhold' : d.status !== 'onhold'
+  )
 
   const statCards = [
     { label: 'Total Archive', value: c.total, icon: Database, tone: 'green' as const },
@@ -180,14 +186,38 @@ export function DefacerView({ handle }: { handle: string }) {
       </div>
 
       {/* defacements table */}
-      <div className="mb-3 flex items-center gap-2">
-        <Database className="h-4 w-4 text-primary" />
-        <h2 className="font-mono text-sm font-bold uppercase tracking-wider">
-          {h.handle}&apos;s Archive
-        </h2>
-        <span className="rounded-sm bg-primary/10 px-1.5 py-0.5 font-mono text-[10px] text-primary">
-          {data.items.length}
-        </span>
+      <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2">
+          <Database className="h-4 w-4 text-primary" />
+          <h2 className="font-mono text-sm font-bold uppercase tracking-wider">
+            {h.handle}&apos;s Archive
+          </h2>
+          <span className="rounded-sm bg-primary/10 px-1.5 py-0.5 font-mono text-[10px] text-primary">
+            {filteredItems.length}
+          </span>
+        </div>
+        {/* status filter: all / verified / onhold */}
+        <div className="flex items-center gap-1.5 overflow-x-auto thin-scroll pb-1">
+          {([
+            { key: 'all', label: 'All', count: c.total },
+            { key: 'verified', label: 'Verified', count: c.archived + c.restored },
+            { key: 'onhold', label: 'On Hold', count: c.onhold },
+          ] as const).map((f) => (
+            <button
+              key={f.key}
+              onClick={() => setFilter(f.key)}
+              className={`shrink-0 rounded-sm border px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider transition-colors ${
+                filter === f.key
+                  ? f.key === 'onhold'
+                    ? 'border-amber-500/50 bg-amber-500/15 text-amber-400'
+                    : 'border-primary/50 bg-primary/15 text-primary'
+                  : 'border-border/50 bg-card/40 text-muted-foreground hover:border-primary/30 hover:text-foreground'
+              }`}
+            >
+              {f.label} · {f.count}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="overflow-hidden rounded-md border border-border/70 bg-card/40">
@@ -206,7 +236,7 @@ export function DefacerView({ handle }: { handle: string }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-border/40">
-              {data.items.map((d, i) => {
+              {filteredItems.map((d, i) => {
                 const sev = severityMeta(d.severity)
                 const cat = categoryMeta(d.category)
                 const statusTone =

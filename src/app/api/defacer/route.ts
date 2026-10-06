@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
       where,
       include: { attacker: true },
       orderBy: { createdAt: 'desc' },
-      take: 100,
+      take: 200,
     }),
   ])
 
