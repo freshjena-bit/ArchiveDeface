@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "deface-archive",
+  "name": "zonedefacer",
   "main": ".open-next/worker/index.js",
   "compatibility_date": "2025-05-01",
   "compatibility_flags": ["nodejs_compat"],
@@ -9,12 +9,12 @@
     "binding": "ASSETS"
   },
   // Cloudflare D1 (edge SQLite) — provision with:
-  //   npx wrangler d1 create deface-archive
+  //   npx wrangler d1 create zonedefacer
   // then paste the returned database_id below.
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "deface-archive",
+      "database_name": "zonedefacer",
       "database_id": "REPLACE_WITH_YOUR_D1_DATABASE_ID",
       "migrations_dir": "migrations"
     }

@@ -11,7 +11,7 @@ using the local SQLite file, so local development is unchanged.
 ### 1. Provision a D1 database
 
 ```bash
-npx wrangler d1 create deface-archive
+npx wrangler d1 create zonedefacer
 ```
 
 This prints a `database_id`. Paste it into `wrangler.jsonc` (replace
@@ -32,7 +32,7 @@ The seed script uses `getDb()`, which auto-detects D1 when running under
 `wrangler`. To seed the remote D1:
 
 ```bash
-npx wrangler d1 execute deface-archive --remote --file=migrations/seed.sql
+npx wrangler d1 execute zonedefacer --remote --file=migrations/seed.sql
 ```
 
 (Generate a seed SQL with `bunx prisma db seed` style tooling, or run the

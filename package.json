@@ -1,6 +1,6 @@
 {
-  "name": "nextjs_tailwind_shadcn_ts",
-  "version": "0.2.1",
+  "name": "zonedefacer",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev -p 3000 2>&1 | tee dev.log",
@@ -15,8 +15,8 @@
     "build:cf": "npx opennextjs-cloudflare build",
     "preview:cf": "bun run build:cf && npx wrangler pages dev",
     "deploy:cf": "bun run build:cf && npx wrangler pages deploy",
-    "db:d1:apply": "npx wrangler d1 execute deface-archive --remote --file=migrations/0001_init.sql",
-    "db:d1:apply:local": "npx wrangler d1 execute deface-archive --local --file=migrations/0001_init.sql",
+    "db:d1:apply": "npx wrangler d1 execute zonedefacer --remote --file=migrations/0001_init.sql",
+    "db:d1:apply:local": "npx wrangler d1 execute zonedefacer --local --file=migrations/0001_init.sql",
     "db:d1:seed": "bun run scripts/seed.ts"
   },
   "dependencies": {

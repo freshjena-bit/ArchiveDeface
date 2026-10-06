@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "DEFACEID — Defacement Archive",
+  title: "ZONEDEFACER — Defacement Archive",
   description:
     "Open archive of website defacement incidents, mirror snapshots and attacker attribution. Top defacers, recent records, live stats.",
   keywords: [
@@ -27,19 +27,19 @@ export const metadata: Metadata = {
     "cybersecurity",
     "web security",
   ],
-  authors: [{ name: "Deface Archive Project" }],
+  authors: [{ name: "ZONEDEFACER Project" }],
   icons: {
     icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
   },
   openGraph: {
-    title: "DEFACEID — Defacement Archive",
+    title: "ZONEDEFACER — Defacement Archive",
     description: "Open archive of website defacement incidents and top defacers leaderboard.",
-    siteName: "DEFACEID",
+    siteName: "ZONEDEFACER",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "DEFACEID — Defacement Archive",
+    title: "ZONEDEFACER — Defacement Archive",
     description: "Open archive of website defacement incidents and top defacers.",
   },
 };

@@ -14,8 +14,7 @@ export function SiteFooter() {
             </span>
             <div>
               <div className="font-mono text-xs font-bold">
-                DEFACE<span className="text-primary">ID</span>{' '}
-                <span className="font-normal text-muted-foreground">archive</span>
+                ZONE<span className="text-primary">DEFACER</span>
               </div>
               <div className="font-mono text-[10px] text-muted-foreground">
                 the open record · v3.14
@@ -52,7 +51,7 @@ export function SiteFooter() {
         </div>
 
         <div className="mt-5 flex flex-col items-center justify-between gap-2 border-t border-border/40 pt-4 font-mono text-[10px] text-muted-foreground/70 sm:flex-row">
-          <span>© {new Date().getFullYear()} Deface Archive Project · CC BY-NC 4.0</span>
+          <span>© {new Date().getFullYear()} ZONEDEFACER · CC BY-NC 4.0</span>
           <span className="inline-flex items-center gap-1.5">
             built for the record
             <Heart className="h-3 w-3 text-destructive/70" />
