@@ -77,7 +77,7 @@ function fakeDomain(country: string, category: string) {
   let catSeg = category
   if (category === 'gov' && Math.random() < 0.4) catSeg = 'go'
   else if (category === 'edu' && Math.random() < 0.4) catSeg = 'ac'
-  const base = `https://${slug}-${id}.${catSeg}.${country.toLowerCase()}.archive-demo.test`
+  const base = `https://${slug}-${id}.${catSeg}.${country.toLowerCase()}.archive.test`
   // ~28% of targets are a sub-page (so isHomepage varies), rest are root
   if (Math.random() < 0.28) {
     const sub = rand(["en", "news", "about", "login", "blog", "v2", "old", "info"])
@@ -137,7 +137,7 @@ async function main() {
       country,
       category,
       attackerId: attacker.id,
-      mirrorUrl: `https://mirror.archive-demo.test/snap-${Math.random().toString(36).slice(2, 10)}`,
+      mirrorUrl: `https://mirror.archive.test/snap-${Math.random().toString(36).slice(2, 10)}`,
       poc: rand(POCS),
       reason: rand(REASONS),
       status: (() => {

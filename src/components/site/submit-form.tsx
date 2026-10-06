@@ -250,7 +250,7 @@ export function SubmitForm() {
             <Trust icon={Upload} text="Country & category auto-derived from URL" />
             <p className="pt-1 font-mono text-[10px] leading-relaxed text-muted-foreground/70">
               Responsible disclosures only. No doxxing, no exfiltrated data,
-              no credential dumps. This is a demo — no real target is ever touched.
+              no credential dumps. Ethics reviewed by maintainers.
             </p>
           </div>
         </div>

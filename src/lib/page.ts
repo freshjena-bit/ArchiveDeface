@@ -5,7 +5,7 @@
 //  - try a real HTTP fetch (5s timeout, follow redirects)
 //  - if it succeeds (2xx) → return the real page text
 //  - if it fails (unreachable / non-2xx / timeout):
-//      * for clearly-fictional DEMO URLs (archive-demo.test, test.com,
+//      * for clearly-fictional DEMO URLs (archive.test, test.com,
 //        example.*, localhost, 127.0.0.1) → simulate a defaced page whose
 //        content is derived from the URL string (so handles embedded in the
 //        URL appear on the simulated page, keeping the demo testable)

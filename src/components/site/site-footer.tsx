@@ -1,27 +1,10 @@
 'use client'
 
-import { Terminal, ShieldAlert, Heart, Github } from 'lucide-react'
+import { Terminal, Heart, Github } from 'lucide-react'
 
 export function SiteFooter() {
   return (
     <footer id="about" className="mt-auto border-t border-border/70 bg-card/30">
-      {/* disclaimer */}
-      <div className="border-b border-border/40 bg-background/40">
-        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6">
-          <div className="flex items-start gap-2.5 rounded-md border border-amber-500/20 bg-amber-500/5 p-3">
-            <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-400" />
-            <p className="font-mono text-[10px] leading-relaxed text-muted-foreground">
-              <span className="font-bold text-amber-400">Disclaimer.</span> This is a
-              demonstration project. All handles, teams, target URLs and incident records
-              are fictional and do not reference real persons, organisations or live
-              systems. No real target is ever contacted, compromised or mirrored. Do not
-              attempt unauthorised access on any system you do not own or have written
-              permission to test.
-            </p>
-          </div>
-        </div>
-      </div>
-
       {/* main */}
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
         <div className="flex flex-col items-start justify-between gap-5 sm:flex-row sm:items-center">

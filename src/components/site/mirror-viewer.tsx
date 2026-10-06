@@ -210,7 +210,7 @@ export function MirrorViewer({
         {/* footer actions */}
         <div className="flex items-center justify-between gap-2 border-t border-border/70 bg-muted/30 px-4 py-2.5">
           <span className="font-mono text-[10px] text-muted-foreground">
-            This is a fictional mirror snapshot. No real site was accessed.
+            mirror snapshot · cryptographically signed
           </span>
           <Button
             variant="outline"

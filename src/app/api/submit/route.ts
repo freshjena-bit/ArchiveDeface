@@ -154,7 +154,7 @@ export async function POST(req: NextRequest) {
           severity: meta.severity,
           status: 'onhold',
           pendingUntil: recordPending,
-          mirrorUrl: `https://mirror.archive-demo.test/snap-${Math.random().toString(36).slice(2, 10)}`,
+          mirrorUrl: `https://mirror.archive.test/snap-${Math.random().toString(36).slice(2, 10)}`,
         },
       })
       created.push(record.id)

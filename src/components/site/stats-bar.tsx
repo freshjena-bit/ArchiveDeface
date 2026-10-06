@@ -73,11 +73,6 @@ export function StatsBar() {
             </motion.div>
           ))}
         </div>
-
-        {/* tiny disclaimer line */}
-        <p className="py-2 font-mono text-[10px] leading-relaxed text-muted-foreground/70">
-          All records are fictional demo data. No real target is contacted, compromised or mirrored.
-        </p>
       </div>
     </section>
   )

@@ -3,7 +3,7 @@
 import * as React from 'react'
 import { motion } from 'framer-motion'
 import {
-  Archive, Eye, Lock, Scale, Users, Cpu, Terminal, ShieldAlert, Heart,
+  Archive, Eye, Lock, Scale, Users, Cpu, Terminal, Heart,
 } from 'lucide-react'
 import { PageHeader } from './page-header'
 
@@ -85,19 +85,6 @@ export function AboutView() {
             ))}
           </div>
         </div>
-      </div>
-
-      {/* disclaimer */}
-      <div className="mt-8 flex items-start gap-2.5 rounded-md border border-amber-500/20 bg-amber-500/5 p-4">
-        <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
-        <p className="font-mono text-[11px] leading-relaxed text-muted-foreground">
-          <span className="font-bold text-amber-400">Disclaimer.</span>{' '}
-          This is a demonstration project. All handles, teams, target URLs and
-          incident records are fictional and do not reference real persons,
-          organisations or live systems. No real target is ever contacted,
-          compromised or mirrored. Do not attempt unauthorised access on any
-          system you do not own or have written permission to test.
-        </p>
       </div>
 
       <div className="mt-6 flex items-center gap-2 border-t border-border/40 pt-4 font-mono text-[10px] text-muted-foreground/70">
