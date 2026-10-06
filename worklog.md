@@ -36,3 +36,28 @@ Stage Summary:
 - Lint clean (0 errors). Dev server healthy, APIs returning 200.
 - Browser-verified: page renders, live ticker loads data, search+category filters work, pagination works, leaderboard podium renders, submit dialog opens, POST /api/submit returns 200 and new record appears in feed, sticky footer present.
 - All data is clearly fictional (.archive-demo.test TLD, invented handles). No real targets, persons, or copyrighted designs reproduced.
+
+---
+Task ID: R1-R9
+Agent: Main (Z.ai Code)
+Task: Rombak ke layout genre arsip defacement (lebih dekat ke konvensi umum, tanpa menyalin desain berhak cipta)
+
+Work Log:
+- globals.css: flat dark theme, hapus matrix-rain/scanlines/glow berat, pertahankan marquee + blink + thin-scroll.
+- site-header: logo "DEFACEID archive" + nav teks (Home/Archive/Top Defacers/Submit/About) + mobile menu, tanpa status bar.
+- stats-bar: ganti hero jadi strip 6 KPI (Total/Today/This Month/Defacers/Countries/Servers Mirrored).
+- archive-table: tabel padat jadi pusat halaman, kolom standar #/Defacer/Target/Cat/Country/Date/View, search + filter kategori + pagination.
+- sidebar: Top Defacers (10) + Today (24h + delta vs yesterday) + Top Countries (8) dengan bar progress.
+- live-ticker: disederhanakan jadi marquee tipis.
+- leaderboard: Hall of Fame full ranking (podium 3 + tabel lengkap).
+- submit-form: form inline (bukan dialog) + panel policy.
+- site-footer: disederhanakan, sticky, disclaimer + nav + legal.
+- page.tsx: layout 2-kolom (arsip 8 + sidebar 4).
+- Hapus komponen lama yang tak terpakai (hero, matrix-rain, stats-grid, defacements-feed, submit-report, manifesto).
+- Update metadata layout ke "DEFACEID — Defacement Archive".
+
+Stage Summary:
+- Tampilan sekarang datar, padat, tabel-driven — sesuai konvensi genre arsip defacement.
+- Lint clean (0 error). Dev server sehat, API 200.
+- Browser-verified: header + stats bar + live ticker + tabel arsip (search/filter/pagination) + sidebar (Top Defacers/Today/Countries) + full leaderboard + inline submit (POST 200, record "Demo Customs Gate" by smokeTester2 muncul di tabel) + sticky footer.
+- Tetap original: branding "DEFACEID archive", data fiktif (.archive-demo.test), tidak menyalin desain/konten berhak cipta spesifik.

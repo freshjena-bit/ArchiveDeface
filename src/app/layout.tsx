@@ -15,15 +15,16 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "DEFACE ARCHIVE — Cybersecurity Defacement Registry",
+  title: "DEFACEID — Defacement Archive",
   description:
-    "An open archive of website defacement incidents, attacker leaderboards, and mirror snapshots. Built for security research and historical record.",
+    "Open archive of website defacement incidents, mirror snapshots and attacker attribution. Top defacers, recent records, live stats.",
   keywords: [
     "defacement archive",
-    "cybersecurity",
+    "defacer",
     "hall of fame",
-    "security research",
+    "top defacers",
     "mirror",
+    "cybersecurity",
     "web security",
   ],
   authors: [{ name: "Deface Archive Project" }],
@@ -31,15 +32,15 @@ export const metadata: Metadata = {
     icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
   },
   openGraph: {
-    title: "DEFACE ARCHIVE",
-    description: "An open archive of website defacement incidents and security researcher leaderboards.",
-    siteName: "Deface Archive",
+    title: "DEFACEID — Defacement Archive",
+    description: "Open archive of website defacement incidents and top defacers leaderboard.",
+    siteName: "DEFACEID",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "DEFACE ARCHIVE",
-    description: "An open archive of website defacement incidents.",
+    title: "DEFACEID — Defacement Archive",
+    description: "Open archive of website defacement incidents and top defacers.",
   },
 };
 
