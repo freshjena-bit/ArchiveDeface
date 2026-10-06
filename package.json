@@ -12,7 +12,7 @@
     "db:migrate": "prisma migrate dev",
     "db:reset": "prisma migrate reset",
     "// Cloudflare Pages (D1)": "",
-    "build:cf": "npx opennextjs-cloudflare build && cp -r .open-next/assets/* .open-next/ && mv .open-next/worker.js .open-next/_worker.js",
+    "build:cf": "npx prisma generate && npx opennextjs-cloudflare build && cp -r .open-next/assets/* .open-next/ && mv .open-next/worker.js .open-next/_worker.js",
     "preview:cf": "npx opennextjs-cloudflare build && mv .open-next/worker.js .open-next/_worker.js && npx wrangler pages dev .open-next",
     "deploy:cf": "npx opennextjs-cloudflare build && mv .open-next/worker.js .open-next/_worker.js && npx wrangler pages deploy .open-next",
     "db:d1:apply": "npx wrangler d1 execute zonedefacer --remote --file=migrations/0001_init.sql",
