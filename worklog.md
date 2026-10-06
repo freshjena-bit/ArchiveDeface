@@ -474,3 +474,17 @@ Stage Summary:
 - Archive page sidebar: Today + Top Countries (tanpa Top Defacers).
 - Ranking page: hanya ranking.
 - Browser-verified: Home hasLatestActivity+hasTopDefacers true; Archive hasTopDefacers=false+hasLatestActivity=false (Today+TopCountries tetap); Ranking hasRanking=true+hasLatestActivity=false. Lint clean.
+
+---
+Task ID: LV1
+Agent: Main (Z.ai Code)
+Task: Leaderboard cuma hitung verified (bukan onhold)
+
+Work Log:
+- /api/leaderboard: import + call promoteDueOnhold() di awal GET. where base = { status: { not: 'onhold' } } (verified only). Year filter tetap digabung. allDates (untuk years selector) juga filter status!=onhold.
+
+Stage Summary:
+- Leaderboard (Defacers & Teams, all-time + per-year) sekarang CUMA menghitung record verified (archived/restored). Onhold dikecualikan.
+- Verified: d4rkw0lf leaderboard totalHits=26 (profile total=29, onhold=3 → 29-3=26 verified). ✓
+- promoteDueOnhold jalan dulu supaya onhold yang sudah lewat 10 menit dipromote & dihitung.
+- Browser: Ranking page render d4rkw0lf 26. Lint clean.

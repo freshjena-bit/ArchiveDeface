@@ -1,28 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { promoteDueOnhold } from '@/lib/promote'
 
 export const dynamic = 'force-dynamic'
 
 // GET /api/leaderboard?mode=defacers|teams&year=all|2026
-// Aggregates from the Defacement table. When a year is given, only incidents
-// whose createdAt falls in that calendar year are counted.
+// Aggregates from the Defacement table. Only VERIFIED records
+// (archived / restored) are counted — on-hold records are excluded.
+// When a year is given, only incidents whose createdAt falls in that
+// calendar year are counted.
 export async function GET(req: NextRequest) {
+  await promoteDueOnhold()
   const { searchParams } = new URL(req.url)
   const mode = searchParams.get('mode') ?? 'defacers'
   const yearParam = searchParams.get('year') ?? 'all'
 
-  // available years (distinct, desc) for the selector
-  const allDates = await db.defacement.findMany({ select: { createdAt: true } })
+  // available years (distinct, desc) for the selector — from verified records
+  const allDates = await db.defacement.findMany({
+    where: { status: { not: 'onhold' } },
+    select: { createdAt: true },
+  })
   const yearSet = new Set<number>()
   for (const d of allDates) yearSet.add(d.createdAt.getFullYear())
   const years = [...yearSet].sort((a, b) => b - a)
 
-  // year filter
-  let where: Record<string, unknown> = {}
+  // base filter: verified records only (exclude on-hold)
+  const where: Record<string, unknown> = { status: { not: 'onhold' } }
   if (yearParam && yearParam !== 'all') {
     const y = parseInt(yearParam, 10)
     if (!Number.isNaN(y)) {
-      where = { createdAt: { gte: new Date(y, 0, 1), lt: new Date(y + 1, 0, 1) } }
+      where.createdAt = { gte: new Date(y, 0, 1), lt: new Date(y + 1, 0, 1) }
     }
   }
 
