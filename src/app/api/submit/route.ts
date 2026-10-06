@@ -66,12 +66,38 @@ export async function POST(req: NextRequest) {
     const cleanPoc = poc?.trim() || null
     const cleanReason = reason?.trim() || null
 
-    // every accepted submission is held for a 10-minute verification window
-    // before being promoted to verified (archived). pendingUntil = now + 10m.
-    const pendingUntil = new Date(Date.now() + 10 * 60 * 1000)
+    // fetch every registered handle so we can scan each target URL for one.
+    // the target URL must contain a registered attacker's name (the signature
+    // left on the defaced page). no name → reject outright.
+    const ownHandle = String(attacker).trim().toLowerCase()
+    const allHackers = await db.hacker.findMany({ select: { handle: true } })
+    const handles = allHackers.map((h) => h.handle).filter(Boolean)
+    const lowerHandles = handles.map((h) => h.toLowerCase())
+
+    // pre-validate: each URL must contain at least one registered handle
+    for (const url of list) {
+      const u = url.toLowerCase()
+      const found = lowerHandles.some((h) => u.includes(h))
+      if (!found) {
+        return NextResponse.json(
+          {
+            ok: false,
+            error: `Target URL must contain a registered attacker's name. Rejected: ${url}`,
+          },
+          { status: 400 }
+        )
+      }
+    }
+
+    // every accepted submission starts on hold.
+    // - URL contains the submitter's OWN handle → held 10 min, then auto-verified.
+    // - URL contains a DIFFERENT registered handle → held indefinitely (needs review).
+    const ownPending = new Date(Date.now() + 10 * 60 * 1000)
 
     // create one record per URL, deriving display metadata + HMRLS marks from each URL
     const created: string[] = []
+    let ownName = 0
+    let otherName = 0
     const isMass = list.length > 1 // multi-URL submit = mass-deface campaign
     for (const url of list) {
       const meta = deriveMeta(url)
@@ -95,6 +121,12 @@ export async function POST(req: NextRequest) {
         meta.category === 'edu' ||
         meta.severity === 'critical'
 
+      // does the URL contain the submitter's own handle?
+      const hasOwn = url.toLowerCase().includes(ownHandle)
+      const recordPending = hasOwn ? ownPending : null
+      if (hasOwn) ownName += 1
+      else otherName += 1
+
       const record = await db.defacement.create({
         data: {
           targetUrl: url,
@@ -110,7 +142,7 @@ export async function POST(req: NextRequest) {
           isSpecial,
           severity: meta.severity,
           status: 'onhold',
-          pendingUntil,
+          pendingUntil: recordPending,
           mirrorUrl: `https://mirror.archive-demo.test/snap-${Math.random().toString(36).slice(2, 10)}`,
         },
       })
@@ -128,6 +160,8 @@ export async function POST(req: NextRequest) {
       created: created.length,
       ids: created,
       status: 'onhold',
+      ownName,
+      otherName,
       pendingMinutes: 10,
     })
   } catch (e) {

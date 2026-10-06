@@ -389,3 +389,22 @@ Stage Summary:
 - Submit dengan handle terdaftar → record onhold + pendingUntil now+10min. Submit handle tidak terdaftar → 400 reject.
 - Lazy promotion: onhold record dgn pendingUntil<now auto-promote ke archived saat data dibaca (verified via backdate test).
 - Browser-verified: unregistered handle "fakeUnregistered123" → POST 400 reject (toast rejection); registered "n0vakane" → POST 200 redirect home; record verify-flow.gov.id muncul di On Hold (count 62) tapi TIDAK di Archive (count 360 verified-only). Backdate test: onhold→archived setelah promoteDueOnhold. Lint clean.
+
+---
+Task ID: UN1-UN3
+Agent: Main (Z.ai Code)
+Task: Validasi: nama attacker harus ada di URL target (bukan di field attacker doang)
+
+Work Log:
+- /api/submit: fetch semua handle terdaftar. Pre-validate tiap URL: harus mengandung minimal 1 handle terdaftar. Kalau tidak ada → 400 reject "Target URL must contain a registered attacker's name. Rejected: <url>".
+- Per URL: kalau URL mengandung handle attacker sendiri (own) → onhold + pendingUntil=now+10min (auto-verify). Kalau URL mengandung handle terdaftar LAIN (bukan attacker sendiri) → onhold + pendingUntil=null (stays onhold, perlu review).
+- Response tambah ownName + otherName count.
+- submit-form.tsx: toast dinamis ("N with your name (verify in ~10 min) · M attributed to another handle (held for review)"). URL hint: "Each URL must contain a registered attacker's name — your own → verified in ~10 min; another handle → held for review; no name → rejected."
+
+Stage Summary:
+- 3 kasus verified via API + browser:
+  1) URL no-name (https://no-attacker-name.gov.id) → 400 reject.
+  2) URL own-name (https://n0vakane-owns-this.gov.id, attacker n0vakane) → onhold, ownName:1, pendingUntil set → backdate → promote ke archived.
+  3) URL other-name (https://gh0stbyte-was-here.gov.id, attacker n0vakane) → onhold, otherName:1, pendingUntil null → stays onhold setelah promote (perlu review).
+- Promote test: own-name onhold→archived; other-name stays onhold (pendingUntil null).
+- Browser: own-name submit → 200 + redirect; no-name submit → 400 + toast "Target URL must contain...". Lint clean.

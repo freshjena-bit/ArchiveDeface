@@ -92,9 +92,14 @@ export function SubmitForm() {
       })
       const data = await res.json()
       if (!res.ok || !data.ok) throw new Error(data.error || 'submit failed')
+      const own = data.ownName ?? 0
+      const other = data.otherName ?? 0
+      const parts: string[] = []
+      if (own) parts.push(`${own} with your name (verify in ~10 min)`)
+      if (other) parts.push(`${other} attributed to another handle (held for review)`)
       toast({
         title: 'Submitted — on hold',
-        description: `${data.created} incident${data.created === 1 ? '' : 's'} queued for verification. Promoted to verified in ~10 min. Redirecting…`,
+        description: `${data.created} incident${data.created === 1 ? '' : 's'} queued. ${parts.join(' · ') || 'pending verification'}. Redirecting…`,
       })
       ;(e.target as HTMLFormElement).reset()
       setUrlCount(0)
@@ -156,7 +161,7 @@ export function SubmitForm() {
                 className="font-mono text-xs"
               />
               <p className="font-mono text-[10px] text-muted-foreground/70">
-                One URL per line. Each line becomes its own archived incident.
+                One URL per line. Each URL <span className="text-amber-400/80">must contain a registered attacker's name</span> — your own name → verified in ~10 min; another handle → held for review. No name → rejected.
               </p>
             </div>
 
