@@ -3,51 +3,85 @@ import { db } from '@/lib/db'
 
 export const dynamic = 'force-dynamic'
 
-// GET /api/leaderboard?mode=defacers|teams
+// GET /api/leaderboard?mode=defacers|teams&year=all|2026
+// Aggregates from the Defacement table. When a year is given, only incidents
+// whose createdAt falls in that calendar year are counted.
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const mode = searchParams.get('mode') ?? 'defacers'
+  const yearParam = searchParams.get('year') ?? 'all'
 
-  if (mode === 'teams') {
-    // aggregate per team from the hacker table (totalHits = per-hacker incident count)
-    const groups = await db.hacker.groupBy({
-      by: ['team'],
-      _sum: { totalHits: true },
-      _count: { _all: true },
-      orderBy: { _sum: { totalHits: 'desc' } },
-      take: 50,
-    })
+  // available years (distinct, desc) for the selector
+  const allDates = await db.defacement.findMany({ select: { createdAt: true } })
+  const yearSet = new Set<number>()
+  for (const d of allDates) yearSet.add(d.createdAt.getFullYear())
+  const years = [...yearSet].sort((a, b) => b - a)
 
-    const items = groups
-      .filter((g) => g.team && g.team.trim() !== '')
-      .map((g, i) => ({
-        team: g.team as string,
-        members: g._count._all,
-        totalHits: g._sum.totalHits ?? 0,
-        rank: i + 1,
-      }))
-
-    return NextResponse.json({ mode: 'teams', items })
+  // year filter
+  let where: Record<string, unknown> = {}
+  if (yearParam && yearParam !== 'all') {
+    const y = parseInt(yearParam, 10)
+    if (!Number.isNaN(y)) {
+      where = { createdAt: { gte: new Date(y, 0, 1), lt: new Date(y + 1, 0, 1) } }
+    }
   }
 
-  // default: defacers
-  const hackers = await db.hacker.findMany({
-    orderBy: { totalHits: 'desc' },
-    take: 50,
+  // fetch incidents (with attacker) for the window
+  const records = await db.defacement.findMany({
+    where,
+    select: {
+      attackerId: true,
+      attacker: {
+        select: { id: true, handle: true, team: true, country: true, avatarColor: true, bio: true, joinedAt: true },
+      },
+    },
+    orderBy: { createdAt: 'desc' },
   })
 
-  const ranked = hackers.map((h, i) => ({
-    id: h.id,
-    handle: h.handle,
-    team: h.team,
-    country: h.country,
-    color: h.avatarColor,
-    bio: h.bio,
-    totalHits: h.totalHits,
-    rank: i + 1,
-    joinedAt: h.joinedAt.toISOString(),
-    badges: [] as string[],
-  }))
+  if (mode === 'teams') {
+    const teams = new Map<string, { count: number; members: Set<string> }>()
+    for (const r of records) {
+      const team = (r.attacker.team || 'INDEPENDENT').trim() || 'INDEPENDENT'
+      const entry = teams.get(team) ?? { count: 0, members: new Set<string>() }
+      entry.count += 1
+      entry.members.add(r.attackerId)
+      teams.set(team, entry)
+    }
+    const items = [...teams.entries()]
+      .map(([team, e], i) => ({
+        team,
+        members: e.members.size,
+        totalHits: e.count,
+        rank: i + 1,
+      }))
+      .sort((a, b) => b.totalHits - a.totalHits)
+      .map((t, i) => ({ ...t, rank: i + 1 }))
 
-  return NextResponse.json({ mode: 'defacers', items: ranked })
+    return NextResponse.json({ mode: 'teams', year: yearParam, years, items })
+  }
+
+  // defacers
+  const defacers = new Map<string, { attacker: typeof records[number]['attacker']; count: number }>()
+  for (const r of records) {
+    const entry = defacers.get(r.attackerId) ?? { attacker: r.attacker, count: 0 }
+    entry.count += 1
+    defacers.set(r.attackerId, entry)
+  }
+  const items = [...defacers.entries()]
+    .map(([id, e], i) => ({
+      id,
+      handle: e.attacker.handle,
+      team: e.attacker.team,
+      country: e.attacker.country,
+      color: e.attacker.avatarColor,
+      bio: e.attacker.bio,
+      totalHits: e.count,
+      rank: i + 1,
+      joinedAt: e.attacker.joinedAt.toISOString(),
+      badges: [] as string[],
+    }))
+    .sort((a, b) => b.totalHits - a.totalHits)
+    .map((d, i) => ({ ...d, rank: i + 1 }))
+
+  return NextResponse.json({ mode: 'defacers', year: yearParam, years, items })
 }

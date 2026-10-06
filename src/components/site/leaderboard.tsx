@@ -1,36 +1,26 @@
 'use client'
 
 import * as React from 'react'
-import useSWR from 'swr'
 import { motion } from 'framer-motion'
 import { Trophy, Flame, Crown } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { countryFlag, countryName } from '@/lib/site'
 import type { LeaderEntry } from '@/lib/types'
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json())
-
-export function FullLeaderboard() {
-  const { data, isLoading } = useSWR<{ items: LeaderEntry[] }>(
-    '/api/leaderboard',
-    fetcher,
-    { refreshInterval: 30000 }
-  )
-  const items = data?.items ?? []
+export function FullLeaderboard({ items, isLoading }: { items: LeaderEntry[]; isLoading: boolean }) {
   const podium = items.slice(0, 3)
 
   return (
-    <section id="leaderboard-full" className="scroll-mt-14 border-t border-border/70 py-10">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6">
-        <div className="mb-4 flex items-center gap-2">
-          <Trophy className="h-4 w-4 text-primary" />
-          <h2 className="font-mono text-sm font-bold uppercase tracking-wider">
-            Hall of Fame · Full Ranking
-          </h2>
-          <span className="rounded-sm bg-primary/10 px-1.5 py-0.5 font-mono text-[10px] text-primary">
-            {items.length}
-          </span>
-        </div>
+    <section id="leaderboard-full" className="scroll-mt-14">
+      <div className="mb-4 flex items-center gap-2">
+        <Trophy className="h-4 w-4 text-primary" />
+        <h2 className="font-mono text-sm font-bold uppercase tracking-wider">
+          Hall of Fame · Full Ranking
+        </h2>
+        <span className="rounded-sm bg-primary/10 px-1.5 py-0.5 font-mono text-[10px] text-primary">
+          {items.length}
+        </span>
+      </div>
 
         {/* podium */}
         <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
@@ -150,7 +140,6 @@ export function FullLeaderboard() {
                     </div>
                   </motion.div>
                 ))}
-          </div>
         </div>
       </div>
     </section>

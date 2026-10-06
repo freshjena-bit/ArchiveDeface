@@ -340,3 +340,18 @@ Work Log:
 
 Stage Summary:
 - Profil defacer filter sekarang cuma Verified + On Hold (default Verified). Browser-verified: VERIFIED·34 (default, 34 rows), ON HOLD·6. Lint clean.
+
+---
+Task ID: Y1-Y3
+Agent: Main (Z.ai Code)
+Task: Ranking (Defacers & Teams) tambah filter tahun (All Time / 2026 / ...)
+
+Work Log:
+- /api/leaderboard rewrite: agregasi dari tabel Defacement (bukan Hacker.totalHits). Param year=all|<tahun>. year filter: createdAt gte year-start, lt (year+1)-start. Return juga years (distinct years desc) untuk selector. mode=teams group by attacker.team (count + member set); mode=defacers group by attackerId.
+- leaderboard.tsx (FullLeaderboard) & teams-leaderboard.tsx (TeamsLeaderboard) dijadikan presentational: terima { items, isLoading } (fetch diangkat ke RankingView). Hapus SWR internal + helper RankingEmpty yang kena lint.
+- ranking-view.tsx rewrite: own SWR fetch /api/leaderboard?mode=&year=. State mode + year. Render year selector (native select: All Time + years) + mode toggle (Defacers/Teams). Pass items ke FullLeaderboard/TeamsLeaderboard.
+
+Stage Summary:
+- Ranking page ada year selector (All Time + tahun-tahun dari data) untuk Defacers & Teams.
+- Browser-verified: selector render (All Time + 2026); Teams mode PHANTOM CREW 99 (2026); API year=2025 → items:[] (empty), year=2026 → data (d4rkw0lf...). All Time = 2026 di UI karena semua seed data di 2026.
+- Lint clean.

@@ -1,14 +1,11 @@
 'use client'
 
 import * as React from 'react'
-import useSWR from 'swr'
 import { motion } from 'framer-motion'
-import { Trophy, Users, Flame, Crown } from 'lucide-react'
+import { Users, Flame, Crown } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 
-type TeamEntry = { team: string; members: number; totalHits: number; rank: number }
-
-const fetcher = (url: string) => fetch(url).then((r) => r.json())
+export type TeamEntry = { team: string; members: number; totalHits: number; rank: number }
 
 // deterministic accent color per team name
 const COLORS = ['#22c55e', '#eab308', '#ef4444', '#06b6d4', '#a855f7', '#f97316', '#14b8a6', '#ec4899', '#84cc16', '#fb923c']
@@ -18,13 +15,7 @@ function teamColor(name: string) {
   return COLORS[h % COLORS.length]
 }
 
-export function TeamsLeaderboard() {
-  const { data, isLoading } = useSWR<{ items: TeamEntry[] }>(
-    '/api/leaderboard?mode=teams',
-    fetcher,
-    { refreshInterval: 30000 }
-  )
-  const items = data?.items ?? []
+export function TeamsLeaderboard({ items, isLoading }: { items: TeamEntry[]; isLoading: boolean }) {
   const podium = items.slice(0, 3)
 
   return (
@@ -136,14 +127,5 @@ export function TeamsLeaderboard() {
         </div>
       </div>
     </section>
-  )
-}
-
-export function RankingEmpty() {
-  return (
-    <div className="flex items-center gap-2 font-mono text-[10px] text-muted-foreground">
-      <Trophy className="h-3.5 w-3.5 text-primary" />
-      no teams yet
-    </div>
   )
 }
