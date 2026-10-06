@@ -11,6 +11,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
+import { useHashRoute } from '@/lib/use-hash-route'
 
 const POC_OPTIONS = [
   'Known vulnerability (i.e. unpatched system)',
@@ -59,6 +60,7 @@ const REASON_OPTIONS = [
 export function SubmitForm() {
   const { toast } = useToast()
   const { mutate } = useSWRConfig()
+  const { navigate } = useHashRoute()
   const [submitting, setSubmitting] = React.useState(false)
   const [urlCount, setUrlCount] = React.useState(0)
 
@@ -83,7 +85,7 @@ export function SubmitForm() {
       if (!res.ok || !data.ok) throw new Error(data.error || 'submit failed')
       toast({
         title: 'Records archived',
-        description: `${data.created} incident${data.created === 1 ? '' : 's'} mirrored & logged.`,
+        description: `${data.created} incident${data.created === 1 ? '' : 's'} mirrored & logged. Redirecting…`,
       })
       ;(e.target as HTMLFormElement).reset()
       setUrlCount(0)
@@ -92,6 +94,8 @@ export function SubmitForm() {
         mutate('/api/stats'),
         mutate('/api/leaderboard'),
       ])
+      // redirect to home after a short delay so the toast is readable
+      setTimeout(() => navigate('/'), 900)
     } catch (err) {
       toast({ title: 'Submission rejected', description: (err as Error).message, variant: 'destructive' })
     } finally {

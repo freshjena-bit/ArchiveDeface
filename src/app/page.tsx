@@ -2,40 +2,31 @@
 
 import * as React from 'react'
 import { SiteHeader } from '@/components/site/site-header'
-import { StatsBar } from '@/components/site/stats-bar'
-import { LiveTicker } from '@/components/site/live-ticker'
-import { ArchiveTable } from '@/components/site/archive-table'
-import { Sidebar } from '@/components/site/sidebar'
-import { FullLeaderboard } from '@/components/site/leaderboard'
-import { SubmitForm } from '@/components/site/submit-form'
 import { SiteFooter } from '@/components/site/site-footer'
+import { HomeView } from '@/components/site/views/home-view'
+import { ArchiveView } from '@/components/site/views/archive-view'
+import { RankingView } from '@/components/site/views/ranking-view'
+import { SubmitView } from '@/components/site/views/submit-view'
+import { AboutView } from '@/components/site/views/about-view'
+import { useHashRoute } from '@/lib/use-hash-route'
 
 export default function Home() {
-  const scrollToSubmit = React.useCallback(() => {
-    document.getElementById('submit')?.scrollIntoView({ behavior: 'smooth' })
-  }, [])
+  const { route } = useHashRoute()
+
+  // scroll to top on every route change → feels like a real page redirect
+  React.useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'auto' })
+  }, [route])
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <SiteHeader onOpenSubmit={scrollToSubmit} />
+      <SiteHeader />
       <main className="flex-1">
-        <StatsBar />
-        <LiveTicker />
-
-        {/* main 2-column: archive table + sidebar */}
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
-          <div className="grid gap-5 lg:grid-cols-12">
-            <div className="min-w-0 lg:col-span-8">
-              <ArchiveTable />
-            </div>
-            <div className="min-w-0 lg:col-span-4">
-              <Sidebar />
-            </div>
-          </div>
-        </div>
-
-        <FullLeaderboard />
-        <SubmitForm />
+        {route === 'home' && <HomeView />}
+        {route === 'archive' && <ArchiveView />}
+        {route === 'ranking' && <RankingView />}
+        {route === 'submit' && <SubmitView />}
+        {route === 'about' && <AboutView />}
       </main>
       <SiteFooter />
     </div>

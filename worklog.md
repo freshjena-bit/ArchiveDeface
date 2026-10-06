@@ -135,3 +135,23 @@ Stage Summary:
 - Mobile (390px): container 356px, table 720px, scrollable=true, pageScrollable=false → bisa digeser kiri-kanan, kolom rapi sejajar, halaman tidak overflow.
 - Desktop (1280px): container 813px, table fit, scrollable=false → rapi tanpa scroll.
 - Browser-verified: swipe horizontal bekerja (scrollLeft 300/720), no console errors, lint clean.
+
+---
+Task ID: M1-M7
+Agent: Main (Z.ai Code)
+Task: Multi-page via hash routing (submit → /submit, ranking → /ranking, dst) dengan redirect
+
+Work Log:
+- src/lib/use-hash-route.ts: hook useHashRoute → parse hash ke route (home/archive/ranking/submit/about), listen hashchange, navigate(to) set window.location.hash, normalize empty → #/.
+- site-header.tsx dirombak: nav berbasis route (Home/Archive/Ranking/Submit/About) pakai tombol navigate; brand & tombol Submit juga navigasi; mobile menu. Active state dari route aktif.
+- views/: page-header (shared), home-recent (compact table limit 8, swipe horizontal), home-view (StatsBar + LiveTicker + 3 CTA cards + HomeRecent), archive-view (PageHeader + ArchiveTable + Sidebar 2-col), ranking-view (PageHeader + FullLeaderboard), submit-view (PageHeader + SubmitForm), about-view (manifesto + 6 prinsip + disclaimer).
+- submit-form.tsx: setelah POST sukses → toast "Redirecting…" → setTimeout 900ms navigate('/') balik ke home (route-aware via useHashRoute).
+- page.tsx: useHashRoute + switch view per route; useEffect scroll-to-top on route change (rasa redirect halaman sungguhan).
+
+Stage Summary:
+- Sekarang multi-halaman: #/ (home dashboard), #/archive (full table+sidebar), #/ranking (leaderboard), #/submit (form), #/about (manifesto).
+- Browser-verified: Home → #/ , nav Ranking → #/ranking (full leaderboard), nav Submit → #/submit (form), nav Archive → #/archive, nav About → #/about.
+- Submit flow: isi 2 URL (redirect-1.gov.id, redirect-2.com) + attacker redirectTester + PoC SQL Injection + Reason As a challenge → POST 200 → toast → redirect balik ke #/ → record muncul di home latest activity.
+- Back/forward browser bekerja: #/about → #/archive → #/ .
+- Tetap satu route file / (sesuai constraint environment), URL pakai hash (/#/submit dsb) supaya deep-link + back/forward jalan.
+- Lint clean (0 error).
