@@ -17,6 +17,10 @@ export type Defacement = {
   poc: string | null
   reason: string | null
   mirrorUrl: string | null
+  isHomepage: boolean
+  isMass: boolean
+  isRedeface: boolean
+  isSpecial: boolean
   createdAt: string
   attacker: Attacker
 }

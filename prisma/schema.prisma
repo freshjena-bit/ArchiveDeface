@@ -27,20 +27,24 @@ model Hacker {
 
 // A single recorded website defacement incident
 model Defacement {
-  id         String   @id @default(cuid())
-  targetUrl  String   // e.g. https://gov.example.gov.id
-  targetName String   // human label (auto-derived from hostname)
-  country    String   // target country ISO code (auto-derived from URL TLD)
-  category   String   // gov / edu / com / org / mil / fin (auto-derived from URL)
-  attackerId String
-  attacker   Hacker   @relation(fields: [attackerId], references: [id])
-  mirrorUrl  String?  // archived snapshot link
-  note       String?  // legacy single message (seeded records)
-  poc        String?  // proof of concept — how the compromise was demonstrated
-  reason     String?  // motivation / message from the attacker
-  status     String   @default("archived") // archived / restored / live
-  severity   String   @default("medium") // low / medium / high / critical
-  createdAt  DateTime @default(now())
+  id          String   @id @default(cuid())
+  targetUrl   String   // e.g. https://gov.example.gov.id
+  targetName  String   // human label (auto-derived from hostname)
+  country     String   // target country ISO code (auto-derived from URL TLD) — L mark
+  category    String   // gov / edu / com / org / mil / fin (auto-derived from URL)
+  attackerId  String
+  attacker    Hacker   @relation(fields: [attackerId], references: [id])
+  mirrorUrl   String?  // archived snapshot link
+  note        String?  // legacy single message (seeded records)
+  poc         String?  // proof of concept — how the compromise was demonstrated
+  reason      String?  // motivation / message from the attacker
+  isHomepage  Boolean  @default(false) // H mark — homepage/root was defaced
+  isMass      Boolean  @default(false) // M mark — part of a mass-deface campaign
+  isRedeface  Boolean  @default(false) // R mark — target was defaced before
+  isSpecial   Boolean  @default(false) // S mark — belongs to a special archive
+  status      String   @default("archived") // archived / restored / live
+  severity    String   @default("medium") // low / medium / high / critical
+  createdAt   DateTime @default(now())
 
   @@index([attackerId])
   @@index([country])

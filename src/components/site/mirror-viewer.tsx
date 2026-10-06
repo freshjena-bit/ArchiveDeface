@@ -11,6 +11,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { countryFlag, countryName, severityMeta, categoryMeta } from '@/lib/site'
+import { DefacementMarks } from '@/components/site/marks'
 import type { Defacement } from '@/lib/types'
 
 export function MirrorViewer({
@@ -90,6 +91,25 @@ export function MirrorViewer({
               {captured.toISOString().replace('T', ' ').slice(0, 16)} UTC
             </span>
           </Meta>
+        </div>
+
+        {/* marks row: H M R L S */}
+        <div className="flex items-center gap-2 border-b border-border/70 bg-background/40 px-4 py-2">
+          <span className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
+            marks
+          </span>
+          <DefacementMarks
+            marks={{
+              isHomepage: d.isHomepage,
+              isMass: d.isMass,
+              isRedeface: d.isRedeface,
+              hasLocation: !!d.country,
+              isSpecial: d.isSpecial,
+            }}
+          />
+          <span className="ml-auto hidden font-mono text-[9px] text-muted-foreground/60 sm:inline">
+            H homepage · M mass · R redeface · L location · S special
+          </span>
         </div>
 
         {/* the mock defaced page */}

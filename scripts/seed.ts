@@ -72,7 +72,25 @@ function fakeDomain(country: string, category: string) {
     Math.floor(Math.random() * 8)
   ]
   const id = Math.floor(1000 + Math.random() * 9000)
-  return `https://${slug}-${id}.${category}.${country.toLowerCase()}.archive-demo.test`
+  const base = `https://${slug}-${id}.${category}.${country.toLowerCase()}.archive-demo.test`
+  // ~28% of targets are a sub-page (so isHomepage varies), rest are root
+  if (Math.random() < 0.28) {
+    const sub = rand(["en", "news", "about", "login", "blog", "v2", "old", "info"])
+    return `${base}/${sub}`
+  }
+  return base
+}
+
+// derive the H/M/R/L/S marks for a seeded record
+function deriveMarks(category: string, severity: string) {
+  // S — belongs to a special archive (gov / edu / critical)
+  const isSpecial = category === "gov" || category === "edu" || severity === "critical"
+  return {
+    isHomepage: Math.random() < 0.72, // H — most hit the homepage
+    isMass: Math.random() < 0.35, // M — part of a mass campaign
+    isRedeface: Math.random() < 0.12, // R — re-defaced after a prior incident
+    isSpecial, // S
+  }
 }
 
 async function main() {
@@ -105,6 +123,7 @@ async function main() {
     const attacker = rand(hackers)
     const country = rand(COUNTRIES)
     const category = rand(CATEGORIES)
+    const severity = rand(SEVERITIES)
     const createdAt = new Date(now - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000))
     records.push({
       targetUrl: fakeDomain(country, category),
@@ -116,7 +135,8 @@ async function main() {
       poc: rand(POCS),
       reason: rand(REASONS),
       status: Math.random() > 0.3 ? "archived" : "restored",
-      severity: rand(SEVERITIES),
+      severity,
+      ...deriveMarks(category, severity),
       createdAt,
     })
   }

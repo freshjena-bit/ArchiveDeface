@@ -177,3 +177,25 @@ Stage Summary:
 - Ranking: toggle Defacers ↔ Teams (teams: PHANTOM CREW 123, OUTLAWS 115, NULLSEC 97, SPECTRE 85...).
 - Archive: tab arsip spesial ALL/GOID/GOV/ACID/EDU — GOV filter semua .gov.*, ACID filter severity=critical (verify via API).
 - Browser-verified semua. Lint clean (0 error).
+
+---
+Task ID: MK1-MK6
+Agent: Main (Z.ai Code)
+Task: Tanda HMRLS (H homepage, M mass, R redeface, L location, S special/star box)
+
+Work Log:
+- Prisma schema: tambah isHomepage/isMass/isRedeface/isSpecial (Boolean default false). L = country (field lama). db:push.
+- Seed: deriveMarks(category,severity) — isHomepage ~72%, isMass ~35%, isRedeface ~12%, isSpecial = gov||edu||critical. fakeDomain kadang tambah path (sub-page) supaya isHomepage bervariasi. Reseed 420 records.
+- /api/defacements: sertakan 4 boolean marks di response.
+- /api/submit: derive marks per URL — isHomepage dari URL path (empty/"/"), isMass = list.length>1 (multi-URL = mass campaign), isRedeface = cek targetUrl sudah ada di DB, isSpecial = gov||edu||critical.
+- types.ts: tambah 4 boolean ke Defacement.
+- marks.tsx: DefacementMarks component — 5 kotak H M R L S, active = accent border+bg+text, idle = dim; S pakai icon Star (filled saat special).
+- archive-table: kolom Marks baru (w-36) antara Country & Date, min-w table 720→840, colSpan 7→8, legend bawah tabel (H homepage, M mass deface, R redeface, L location, ★ special).
+- home-recent: tambah kolom marks, min-w 640→760.
+- mirror-viewer: row "MARKS" di meta strip + DefacementMarks + legend inline.
+- Restart dev server (setsid) supaya load Prisma client fresh yang tahu 4 boolean baru.
+
+Stage Summary:
+- Tanda HMRLS tampil di archive table, home recent, mirror viewer. S = bintang ★ di kotak.
+- Browser-verified: API return marks (isHomepage/isMass/isRedeface/isSpecial); archive table 25 rows × 5 boxes (69 active, 8 filled stars); Marks column header + legend; mirror viewer MARKS row (H M R L boxes + legend).
+- Lint clean (0 error). Dev server sehat.

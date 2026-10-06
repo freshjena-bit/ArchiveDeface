@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { countryFlag, countryName, severityMeta, categoryMeta, timeAgo } from '@/lib/site'
 import { MirrorViewer } from '@/components/site/mirror-viewer'
+import { DefacementMarks } from '@/components/site/marks'
 import type { Defacement } from '@/lib/types'
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
@@ -135,7 +136,7 @@ export function ArchiveTable() {
       {/* table — horizontally scrollable on small screens */}
       <div className="overflow-hidden rounded-md border border-border/70 bg-card/40">
         <div className="overflow-x-auto thin-scroll">
-          <table className="w-full min-w-[720px] border-collapse text-left">
+          <table className="w-full min-w-[840px] border-collapse text-left">
             <thead>
               <tr className="border-b border-border/70 bg-muted/40 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
                 <th className="w-10 px-3 py-2 text-center">#</th>
@@ -143,6 +144,7 @@ export function ArchiveTable() {
                 <th className="px-2 py-2 font-medium">Target</th>
                 <th className="w-16 px-2 py-2 font-medium">Cat</th>
                 <th className="w-28 px-2 py-2 font-medium">Country</th>
+                <th className="w-36 px-2 py-2 font-medium">Marks</th>
                 <th className="w-36 px-2 py-2 font-medium">Date</th>
                 <th className="w-12 px-2 py-2 text-center font-medium">View</th>
               </tr>
@@ -151,7 +153,7 @@ export function ArchiveTable() {
               {isLoading
                 ? Array.from({ length: 12 }).map((_, i) => (
                     <tr key={i}>
-                      <td colSpan={7} className="px-3 py-2.5">
+                      <td colSpan={8} className="px-3 py-2.5">
                         <Skeleton className="h-4 w-full" />
                       </td>
                     </tr>
@@ -159,7 +161,7 @@ export function ArchiveTable() {
                 : !data?.items?.length
                 ? (
                   <tr>
-                    <td colSpan={7}>
+                    <td colSpan={8}>
                       <EmptyRow />
                     </td>
                   </tr>
@@ -174,6 +176,16 @@ export function ArchiveTable() {
         {/* hint on mobile */}
         <div className="border-t border-border/40 bg-muted/20 px-3 py-1 text-center font-mono text-[9px] uppercase tracking-wider text-muted-foreground/60 sm:hidden">
           ← swipe to see all columns →
+        </div>
+
+        {/* marks legend */}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border/40 bg-muted/20 px-3 py-2 font-mono text-[9px] uppercase tracking-wider text-muted-foreground/70">
+          <span>marks:</span>
+          <span><span className="text-primary">H</span> homepage</span>
+          <span><span className="text-primary">M</span> mass deface</span>
+          <span><span className="text-primary">R</span> redeface</span>
+          <span><span className="text-primary">L</span> location</span>
+          <span><span className="text-primary">★</span> special</span>
         </div>
 
         {/* footer / pagination */}
@@ -293,6 +305,19 @@ function Row({ d, index, onOpen }: { d: Defacement; index: number; onOpen: (d: D
             {d.country}
           </span>
         </span>
+      </td>
+
+      {/* marks: H M R L S */}
+      <td className="px-2 py-2.5 align-middle">
+        <DefacementMarks
+          marks={{
+            isHomepage: d.isHomepage,
+            isMass: d.isMass,
+            isRedeface: d.isRedeface,
+            hasLocation: !!d.country,
+            isSpecial: d.isSpecial,
+          }}
+        />
       </td>
 
       {/* date */}

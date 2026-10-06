@@ -77,6 +77,10 @@ export async function GET(req: NextRequest) {
       poc: d.poc,
       reason: d.reason,
       mirrorUrl: d.mirrorUrl,
+      isHomepage: d.isHomepage,
+      isMass: d.isMass,
+      isRedeface: d.isRedeface,
+      isSpecial: d.isSpecial,
       createdAt: d.createdAt.toISOString(),
       attacker: {
         handle: d.attacker.handle,

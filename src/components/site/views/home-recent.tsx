@@ -4,6 +4,7 @@ import * as React from 'react'
 import useSWR from 'swr'
 import { ArrowRight, ExternalLink } from 'lucide-react'
 import { countryFlag, severityMeta, categoryMeta, timeAgo } from '@/lib/site'
+import { DefacementMarks } from '@/components/site/marks'
 import type { Defacement } from '@/lib/types'
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
@@ -40,7 +41,7 @@ export function HomeRecent({ onViewAll }: { onViewAll: () => void }) {
         </button>
       </div>
       <div className="overflow-x-auto thin-scroll">
-        <table className="w-full min-w-[640px] border-collapse text-left">
+        <table className="w-full min-w-[760px] border-collapse text-left">
           <tbody className="divide-y divide-border/40">
             {isLoading
               ? Array.from({ length: 6 }).map((_, i) => (
@@ -99,6 +100,17 @@ export function HomeRecent({ onViewAll }: { onViewAll: () => void }) {
                             {cat.label.slice(0, 3)}
                           </span>
                         </span>
+                      </td>
+                      <td className="w-36 px-2 py-2 align-middle">
+                        <DefacementMarks
+                          marks={{
+                            isHomepage: d.isHomepage,
+                            isMass: d.isMass,
+                            isRedeface: d.isRedeface,
+                            hasLocation: !!d.country,
+                            isSpecial: d.isSpecial,
+                          }}
+                        />
                       </td>
                       <td className="w-28 px-2 py-2 text-right align-middle">
                         <div className="font-mono text-[10px] text-muted-foreground tabular-nums">

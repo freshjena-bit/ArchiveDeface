@@ -63,10 +63,31 @@ export async function POST(req: NextRequest) {
     const cleanPoc = poc?.trim() || null
     const cleanReason = reason?.trim() || null
 
-    // create one record per URL, deriving display metadata from each URL
+    // create one record per URL, deriving display metadata + HMRLS marks from each URL
     const created: string[] = []
+    const isMass = list.length > 1 // multi-URL submit = mass-deface campaign
     for (const url of list) {
       const meta = deriveMeta(url)
+      // H — homepage defaced if the URL has no path (or just "/")
+      let isHomepage = true
+      try {
+        const u = new URL(url)
+        isHomepage = u.pathname === '/' || u.pathname === ''
+      } catch {
+        isHomepage = true
+      }
+      // R — redeface if this target URL was already archived before
+      const prior = await db.defacement.findFirst({
+        where: { targetUrl: url },
+        select: { id: true },
+      })
+      const isRedeface = !!prior
+      // S — special if it belongs to a special archive (gov / edu / critical)
+      const isSpecial =
+        meta.category === 'gov' ||
+        meta.category === 'edu' ||
+        meta.severity === 'critical'
+
       const record = await db.defacement.create({
         data: {
           targetUrl: url,
@@ -76,6 +97,10 @@ export async function POST(req: NextRequest) {
           attackerId: hacker.id,
           poc: cleanPoc,
           reason: cleanReason,
+          isHomepage,
+          isMass,
+          isRedeface,
+          isSpecial,
           severity: meta.severity,
           status: 'archived',
           mirrorUrl: `https://mirror.archive-demo.test/snap-${Math.random().toString(36).slice(2, 10)}`,
