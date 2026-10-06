@@ -16,7 +16,6 @@ import type { Defacement } from '@/lib/types'
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
-const CATEGORIES = ['gov', 'edu', 'com', 'org', 'mil', 'fin']
 const SPECIALS = [
   { key: 'all', label: 'ALL' },
   { key: 'goid', label: 'GOID' },
@@ -37,21 +36,19 @@ function fmtDate(iso: string) {
 
 export function ArchiveTable() {
   const [q, setQ] = React.useState('')
-  const [category, setCategory] = React.useState<string>('')
   const [special, setSpecial] = React.useState<string>('all')
   const [page, setPage] = React.useState(0)
   const [selected, setSelected] = React.useState<Defacement | null>(null)
   const pageSize = 25
 
   const debounced = React.useDeferredValue(q)
-  React.useEffect(() => setPage(0), [debounced, category, special])
+  React.useEffect(() => setPage(0), [debounced, special])
 
   const params = new URLSearchParams({
     limit: String(pageSize),
     offset: String(page * pageSize),
   })
   if (debounced) params.set('q', debounced)
-  if (category) params.set('category', category)
   if (special && special !== 'all') params.set('special', special)
 
   const { data, isLoading } = useSWR<{ items: Defacement[]; total: number }>(
@@ -65,27 +62,7 @@ export function ArchiveTable() {
 
   return (
     <section id="archive" className="scroll-mt-14">
-      {/* special archives tabs */}
-      <div className="mb-3 flex items-center gap-1.5 overflow-x-auto thin-scroll pb-1">
-        <span className="mr-1 shrink-0 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-          special:
-        </span>
-        {SPECIALS.map((s) => (
-          <button
-            key={s.key}
-            onClick={() => setSpecial(s.key)}
-            className={`shrink-0 rounded-sm border px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider transition-colors ${
-              special === s.key
-                ? 'border-primary/50 bg-primary/15 text-primary'
-                : 'border-border/50 bg-card/40 text-muted-foreground hover:border-primary/30 hover:text-foreground'
-            }`}
-          >
-            {s.label}
-          </button>
-        ))}
-      </div>
-
-      {/* header row */}
+      {/* header row: title + count + special archives filter */}
       <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
           <h2 className="font-mono text-sm font-bold uppercase tracking-wider">
@@ -96,27 +73,17 @@ export function ArchiveTable() {
           </span>
         </div>
         <div className="flex items-center gap-1.5 overflow-x-auto thin-scroll pb-1">
-          <button
-            onClick={() => setCategory('')}
-            className={`shrink-0 rounded-sm px-2 py-1 font-mono text-[10px] uppercase tracking-wider transition-colors ${
-              !category
-                ? 'bg-primary/15 text-primary'
-                : 'text-muted-foreground hover:bg-accent hover:text-foreground'
-            }`}
-          >
-            all
-          </button>
-          {CATEGORIES.map((c) => (
+          {SPECIALS.map((s) => (
             <button
-              key={c}
-              onClick={() => setCategory(category === c ? '' : c)}
-              className={`shrink-0 rounded-sm px-2 py-1 font-mono text-[10px] uppercase tracking-wider transition-colors ${
-                category === c
-                  ? 'bg-primary/15 text-primary'
-                  : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+              key={s.key}
+              onClick={() => setSpecial(s.key)}
+              className={`shrink-0 rounded-sm border px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider transition-colors ${
+                special === s.key
+                  ? 'border-primary/50 bg-primary/15 text-primary'
+                  : 'border-border/50 bg-card/40 text-muted-foreground hover:border-primary/30 hover:text-foreground'
               }`}
             >
-              {c}
+              {s.label}
             </button>
           ))}
         </div>

@@ -233,3 +233,18 @@ Stage Summary:
 - Halaman profil defacer /#/defacer/<handle>: total archive + total special + total onhold (+ mass/redeface/homepage/archived/restored) + tabel arsip milik user.
 - Browser-verified: API /api/defacer?handle=n0vakane → counts {total:29, special:13, onhold:4...}; /#/defacer/d4rkw0lf render 8 stat cards (Total Archive 040, Special 024, Onhold 006...) + 40-row table; klik handle di archive → /#/defacer/kr1pton; klik handle di ranking juga jalan.
 - Lint clean (0 error).
+
+---
+Task ID: F1
+Agent: Main (Z.ai Code)
+Task: Gabung filter special ke satu baris, hapus chip kategori di Recent Defacements
+
+Work Log:
+- archive-table.tsx: hapus state `category` + konstanta CATEGORIES + chip kategori (all/gov/edu/com/org/mil/fin).
+- Hapus baris "special:" terpisah di atas search.
+- Pindah tab special archives (ALL/GOID/GOV/ACID/EDU) ke baris header sebelah kanan "Recent Defacements [count]" — jadi SATU baris filter.
+- Query param: hanya `special` (param `category` dihapus dari client; API /defacements tetap dukung `category` untuk backward-compat).
+
+Stage Summary:
+- Recent Defacements sekarang cuma 1 baris filter: ALL/GOID/GOV/ACID/EDU. Chip kategori & baris "special:" terpisah dihapus.
+- Browser-verified: filter buttons = [ALL,GOID,GOV,ACID,EDU]; klik GOV → 25 record semua .gov.* (allGov:true). Lint clean.
