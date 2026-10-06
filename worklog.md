@@ -283,3 +283,23 @@ Stage Summary:
 - Archive (/#/archive) = semua record + sidebar (tanpa special section).
 - Archive Special (/#/special) = page khusus, cuma record special, tabs ALL/GOID/GOV/ACID/EDU.
 - Browser-verified: nav order benar; klik Archive Special → #/special, h1 "Archive Special", tabs [ALL,GOID,GOV,ACID,EDU]; archive page tidak lagi ada special section; ACID tab → 15 rows "showing 15 of 98 special records". Lint clean.
+
+---
+Task ID: OH1-OH7
+Agent: Main (Z.ai Code)
+Task: Nav On Hold + Archive verified-only (onhold di page sendiri)
+
+Work Log:
+- /api/defacements: tambah param onhold. onhold=true → status=onhold. else (default) → status NOT onhold (verified: archived+restored). Berlaku ke semua consumer (archive, special, home recent, ticker).
+- use-hash-route.ts: tambah route 'onhold'.
+- site-header nav: tambah "On Hold" setelah Archive Special. Urutan: Home / Archive / Archive Special / On Hold / Ranking / Submit / About.
+- site-footer nav: tambah "On Hold".
+- archive-table.tsx: tambah prop mode ('archive' | 'onhold'). mode=onhold → fetch dengan onhold=true, header "On Hold Records", accent amber, label "pending verification". section id dinamis.
+- views/onhold-view.tsx (baru): PageHeader + ArchiveTable mode=onhold.
+- page.tsx: render OnHoldView saat route=onhold.
+
+Stage Summary:
+- Archive (/#/archive) & Archive Special (/#/special): CUMA verified records (359 total), onhold dikecualikan.
+- On Hold (/#/onhold): page khusus, cuma record onhold (61 total), amber theme, "pending verification".
+- Counts: verified 359 + onhold 61 = 420 total.
+- Browser-verified: nav order benar (On Hold ada); klik On Hold → #/onhold, h1 "On Hold Records", count 61, 25 rows; Archive page count 359 (verified). Lint clean.

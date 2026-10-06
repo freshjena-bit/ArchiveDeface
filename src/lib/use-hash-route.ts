@@ -2,12 +2,13 @@
 
 import * as React from 'react'
 
-export type Route = 'home' | 'archive' | 'special' | 'ranking' | 'submit' | 'about' | 'defacer'
+export type Route = 'home' | 'archive' | 'special' | 'onhold' | 'ranking' | 'submit' | 'about' | 'defacer'
 
 const HEAD_MAP: Record<string, Route> = {
   '': 'home',
   archive: 'archive',
   special: 'special',
+  onhold: 'onhold',
   ranking: 'ranking',
   submit: 'submit',
   about: 'about',

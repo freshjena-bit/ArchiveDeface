@@ -6,6 +6,7 @@ import { SiteFooter } from '@/components/site/site-footer'
 import { HomeView } from '@/components/site/views/home-view'
 import { ArchiveView } from '@/components/site/views/archive-view'
 import { SpecialArchiveView } from '@/components/site/views/special-archive-view'
+import { OnHoldView } from '@/components/site/views/onhold-view'
 import { RankingView } from '@/components/site/views/ranking-view'
 import { SubmitView } from '@/components/site/views/submit-view'
 import { AboutView } from '@/components/site/views/about-view'
@@ -27,6 +28,7 @@ export default function Home() {
         {route === 'home' && <HomeView />}
         {route === 'archive' && <ArchiveView />}
         {route === 'special' && <SpecialArchiveView />}
+        {route === 'onhold' && <OnHoldView />}
         {route === 'ranking' && <RankingView />}
         {route === 'submit' && <SubmitView />}
         {route === 'about' && <AboutView />}

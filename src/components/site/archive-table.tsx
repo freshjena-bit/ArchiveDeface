@@ -26,20 +26,22 @@ function fmtDate(iso: string) {
   return `${dd}-${mm}-${yy} ${hh}:${mi}`
 }
 
-export function ArchiveTable() {
+export function ArchiveTable({ mode = 'archive' }: { mode?: 'archive' | 'onhold' }) {
   const [q, setQ] = React.useState('')
   const [page, setPage] = React.useState(0)
   const [selected, setSelected] = React.useState<Defacement | null>(null)
   const pageSize = 25
+  const isOnhold = mode === 'onhold'
 
   const debounced = React.useDeferredValue(q)
-  React.useEffect(() => setPage(0), [debounced])
+  React.useEffect(() => setPage(0), [debounced, mode])
 
   const params = new URLSearchParams({
     limit: String(pageSize),
     offset: String(page * pageSize),
   })
   if (debounced) params.set('q', debounced)
+  if (isOnhold) params.set('onhold', 'true')
 
   const { data, isLoading } = useSWR<{ items: Defacement[]; total: number }>(
     `/api/defacements?${params}`,
@@ -49,19 +51,21 @@ export function ArchiveTable() {
 
   const total = data?.total ?? 0
   const totalPages = Math.max(1, Math.ceil(total / pageSize))
+  const accentText = isOnhold ? 'text-amber-400' : 'text-primary'
+  const accentBg = isOnhold ? 'bg-amber-500/10' : 'bg-primary/10'
 
   return (
-    <section id="archive" className="scroll-mt-14">
+    <section id={isOnhold ? 'onhold' : 'archive'} className="scroll-mt-14">
       {/* header row: title + count */}
       <div className="mb-3 flex items-center gap-2">
         <h2 className="font-mono text-sm font-bold uppercase tracking-wider">
-          Recent Defacements
+          {isOnhold ? 'On Hold Records' : 'Recent Defacements'}
         </h2>
-        <span className="rounded-sm bg-primary/10 px-1.5 py-0.5 font-mono text-[10px] text-primary">
+        <span className={`rounded-sm px-1.5 py-0.5 font-mono text-[10px] ${accentBg} ${accentText}`}>
           {total}
         </span>
         <span className="ml-auto font-mono text-[10px] uppercase tracking-wider text-muted-foreground/60">
-          all records · normal + special
+          {isOnhold ? 'pending verification' : 'all records · normal + special'}
         </span>
       </div>
 

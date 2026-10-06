@@ -44,6 +44,7 @@ export function SiteFooter() {
             <a href="#/" className="text-muted-foreground hover:text-primary">Home</a>
             <a href="#/archive" className="text-muted-foreground hover:text-primary">Archive</a>
             <a href="#/special" className="text-muted-foreground hover:text-primary">Archive Special</a>
+            <a href="#/onhold" className="text-muted-foreground hover:text-primary">On Hold</a>
             <a href="#/ranking" className="text-muted-foreground hover:text-primary">Ranking</a>
             <a href="#/submit" className="text-muted-foreground hover:text-primary">Submit</a>
             <a href="#/about" className="text-muted-foreground hover:text-primary">About</a>

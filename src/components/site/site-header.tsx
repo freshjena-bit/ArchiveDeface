@@ -11,6 +11,7 @@ const NAV: { route: Route; hash: string; label: string }[] = [
   { route: 'home', hash: '#/', label: 'Home' },
   { route: 'archive', hash: '#/archive', label: 'Archive' },
   { route: 'special', hash: '#/special', label: 'Archive Special' },
+  { route: 'onhold', hash: '#/onhold', label: 'On Hold' },
   { route: 'ranking', hash: '#/ranking', label: 'Ranking' },
   { route: 'submit', hash: '#/submit', label: 'Submit' },
   { route: 'about', hash: '#/about', label: 'About' },
