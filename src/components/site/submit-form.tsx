@@ -161,7 +161,7 @@ export function SubmitForm() {
                 className="font-mono text-xs"
               />
               <p className="font-mono text-[10px] text-muted-foreground/70">
-                One URL per line. Each URL <span className="text-amber-400/80">must contain a registered attacker's name</span> — your own name → verified in ~10 min; another handle → held for review. No name → rejected.
+                One URL per line. The system <span className="text-amber-400/80">fetches each target page</span> and checks for the attacker's signature: unreachable → rejected; no defacement on the page → rejected; your name → verified in ~10 min; another handle → held for review.
               </p>
             </div>
 

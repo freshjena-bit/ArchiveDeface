@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { deriveMeta } from '@/lib/site'
+import { resolvePage } from '@/lib/page'
 
 export const dynamic = 'force-dynamic'
 
@@ -64,23 +65,35 @@ export async function POST(req: NextRequest) {
     const cleanPoc = poc?.trim() || null
     const cleanReason = reason?.trim() || null
 
-    // fetch every registered handle so we can scan each target URL for one.
-    // the target URL must contain a registered attacker's name (the signature
-    // left on the defaced page). no name → reject outright.
+    // the system FETCHES each target page and scans its content for an attacker's
+    // signature (defacement activity), not the URL string.
     const ownHandle = ownHandleRaw.toLowerCase()
     const allHackers = await db.hacker.findMany({ select: { handle: true } })
-    const handles = allHackers.map((h) => h.handle).filter(Boolean)
-    const lowerHandles = handles.map((h) => h.toLowerCase())
+    const lowerHandles = allHackers.map((h) => h.handle.toLowerCase()).filter(Boolean)
 
-    // pre-validate: each URL must contain at least one registered handle
-    for (const url of list) {
-      const u = url.toLowerCase()
-      const found = lowerHandles.some((h) => u.includes(h))
+    // resolve every target page in parallel (real fetch with 5s timeout;
+    // fictional demo URLs fall back to a simulated page)
+    const pages = await Promise.all(list.map((u) => resolvePage(u)))
+
+    // pre-validate each page:
+    //  - unreachable (real URL that couldn't be fetched) → reject
+    //  - no defacement activity (no registered handle on the page) → reject
+    for (let i = 0; i < list.length; i++) {
+      const url = list[i]
+      const page = pages[i]
+      if (!page.reachable) {
+        return NextResponse.json(
+          { ok: false, error: page.reason || `URL cannot be accessed: ${url}` },
+          { status: 400 }
+        )
+      }
+      const content = page.content.toLowerCase()
+      const found = lowerHandles.some((h) => content.includes(h))
       if (!found) {
         return NextResponse.json(
           {
             ok: false,
-            error: `Target URL must contain a registered attacker's name. Rejected: ${url}`,
+            error: `No defacement activity (no attacker name) found on the page. Rejected: ${url}`,
           },
           { status: 400 }
         )
@@ -88,8 +101,8 @@ export async function POST(req: NextRequest) {
     }
 
     // every accepted submission starts on hold.
-    // - URL contains the submitter's OWN handle → held 10 min, then auto-verified.
-    // - URL contains a DIFFERENT registered handle → held indefinitely (needs review).
+    // - page contains the submitter's OWN handle → held 10 min, then auto-verified.
+    // - page contains a DIFFERENT registered handle → held indefinitely (needs review).
     const ownPending = new Date(Date.now() + 10 * 60 * 1000)
 
     // create one record per URL, deriving display metadata + HMRLS marks from each URL
@@ -97,7 +110,9 @@ export async function POST(req: NextRequest) {
     let ownName = 0
     let otherName = 0
     const isMass = list.length > 1 // multi-URL submit = mass-deface campaign
-    for (const url of list) {
+    for (let i = 0; i < list.length; i++) {
+      const url = list[i]
+      const page = pages[i]
       const meta = deriveMeta(url)
       // H — homepage defaced if the URL has no path (or just "/")
       let isHomepage = true
@@ -119,8 +134,8 @@ export async function POST(req: NextRequest) {
         meta.category === 'edu' ||
         meta.severity === 'critical'
 
-      // does the URL contain the submitter's own handle?
-      const hasOwn = url.toLowerCase().includes(ownHandle)
+      // does the PAGE contain the submitter's own handle?
+      const hasOwn = page.content.toLowerCase().includes(ownHandle)
       const recordPending = hasOwn ? ownPending : null
       if (hasOwn) ownName += 1
       else otherName += 1
