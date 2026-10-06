@@ -14,6 +14,8 @@ export type Defacement = {
   severity: 'low' | 'medium' | 'high' | 'critical'
   status: 'archived' | 'restored' | 'live'
   note: string | null
+  poc: string | null
+  reason: string | null
   mirrorUrl: string | null
   createdAt: string
   attacker: Attacker

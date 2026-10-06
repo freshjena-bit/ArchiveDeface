@@ -151,6 +151,31 @@ export function MirrorViewer({
                 </div>
               )}
 
+              {(d.poc || d.reason) && (
+                <div className="mx-auto mt-6 grid max-w-lg gap-2 text-left">
+                  {d.poc && (
+                    <div className="rounded-sm border border-term-green/20 bg-term-green/5 px-3 py-2">
+                      <div className="font-mono text-[9px] uppercase tracking-widest text-term-green/50">
+                        {'// proof of concept'}
+                      </div>
+                      <div className="mt-0.5 font-mono text-[12px] leading-relaxed text-term-green/80">
+                        {d.poc}
+                      </div>
+                    </div>
+                  )}
+                  {d.reason && (
+                    <div className="rounded-sm border border-term-amber/20 bg-term-amber/5 px-3 py-2">
+                      <div className="font-mono text-[9px] uppercase tracking-widest text-term-amber/50">
+                        {'// reason'}
+                      </div>
+                      <div className="mt-0.5 font-mono text-[12px] leading-relaxed text-term-amber/80">
+                        {d.reason}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="mt-8 flex items-center justify-center gap-2 text-[10px] text-term-green/40">
                 <Fingerprint className="h-3 w-3" />
                 {sig}

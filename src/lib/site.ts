@@ -59,3 +59,49 @@ export function timeAgo(iso: string): string {
   const mo = Math.floor(day / 30)
   return `${mo}mo ago`
 }
+
+// ccTLD -> ISO-2 country code (subset used by the demo)
+const CCTLD: Record<string, string> = {
+  id: 'ID', ru: 'RU', br: 'BR', cn: 'CN', in: 'IN', de: 'DE', mx: 'MX',
+  fr: 'FR', tr: 'TR', pl: 'PL', jp: 'JP', eg: 'EG', gb: 'GB', uk: 'GB',
+  us: 'US', au: 'AU', ca: 'CA', sa: 'SA', ir: 'IR', kr: 'KR', vn: 'VN',
+  th: 'TH', my: 'MY', ph: 'PH', sg: 'SG', pk: 'PK', bd: 'BD', ng: 'NG',
+  za: 'ZA', ar: 'AR', it: 'IT', es: 'ES', nl: 'NL', se: 'SE', no: 'NO',
+}
+
+/**
+ * Auto-derive display metadata from a target URL so the submit form stays
+ * minimal (urls + attacker + team + poc + reason) while the archive/mirror
+ * still shows country, category and a label.
+ */
+export function deriveMeta(url: string): {
+  country: string
+  category: string
+  severity: 'low' | 'medium' | 'high' | 'critical'
+  targetName: string
+} {
+  let host = ''
+  let path = ''
+  try {
+    const u = new URL(url.trim())
+    host = u.hostname.toLowerCase()
+    path = (u.pathname + u.search).toLowerCase()
+  } catch {
+    // not a valid URL — try to grab the host-ish chunk
+    host = url.trim().toLowerCase().replace(/^[a-z]+:\/\//, '').split('/')[0] || url.trim()
+  }
+  const parts = host.split('.')
+  const last = parts[parts.length - 1]
+  const country = CCTLD[last] ?? 'US'
+
+  const combined = host + ' ' + path
+  let category = 'com'
+  if (combined.includes('gov')) category = 'gov'
+  else if (combined.includes('edu') || combined.includes('ac.') || combined.includes('sch.')) category = 'edu'
+  else if (combined.includes('mil')) category = 'mil'
+  else if (combined.includes('fin') || combined.includes('bank') || combined.includes('pay')) category = 'fin'
+  else if (combined.includes('org')) category = 'org'
+
+  const targetName = host || url
+  return { country, category, severity: 'medium', targetName }
+}

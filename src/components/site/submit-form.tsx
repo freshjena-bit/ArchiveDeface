@@ -2,37 +2,28 @@
 
 import * as React from 'react'
 import { useSWRConfig } from 'swr'
-import { Upload, Send, ShieldCheck, Lock, KeyRound } from 'lucide-react'
+import { Upload, Send, ShieldCheck, Lock, KeyRound, Link2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
-
-const COUNTRIES = ['ID', 'US', 'RU', 'BR', 'CN', 'IN', 'DE', 'MX', 'FR', 'TR', 'PL', 'JP', 'EG', 'GB']
-const CATEGORIES = ['gov', 'edu', 'com', 'org', 'mil', 'fin']
-const SEVERITIES = ['low', 'medium', 'high', 'critical']
 
 export function SubmitForm() {
   const { toast } = useToast()
   const { mutate } = useSWRConfig()
   const [submitting, setSubmitting] = React.useState(false)
+  const [urlCount, setUrlCount] = React.useState(0)
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const fd = new FormData(e.currentTarget)
     const payload = {
-      targetUrl: String(fd.get('url') ?? ''),
-      targetName: String(fd.get('name') ?? ''),
-      country: String(fd.get('country') ?? ''),
-      category: String(fd.get('category') ?? ''),
-      handle: String(fd.get('handle') ?? ''),
+      urls: String(fd.get('urls') ?? ''),
+      attacker: String(fd.get('attacker') ?? ''),
       team: String(fd.get('team') ?? '') || 'INDEPENDENT',
-      note: String(fd.get('note') ?? ''),
-      severity: String(fd.get('severity') ?? 'medium'),
+      poc: String(fd.get('poc') ?? ''),
+      reason: String(fd.get('reason') ?? ''),
     }
     setSubmitting(true)
     try {
@@ -43,10 +34,12 @@ export function SubmitForm() {
       })
       const data = await res.json()
       if (!res.ok || !data.ok) throw new Error(data.error || 'submit failed')
-      toast({ title: 'Record archived', description: `Incident logged (id ${String(data.id).slice(0, 8)}…)` })
+      toast({
+        title: 'Records archived',
+        description: `${data.created} incident${data.created === 1 ? '' : 's'} mirrored & logged.`,
+      })
       ;(e.target as HTMLFormElement).reset()
-      // live revalidation: new record appears in archive + ticker,
-      // counters update, submitter's rank recalculates
+      setUrlCount(0)
       await Promise.all([
         mutate((key) => typeof key === 'string' && key.startsWith('/api/defacements')),
         mutate('/api/stats'),
@@ -57,6 +50,14 @@ export function SubmitForm() {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  const onUrlsChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const v = e.target.value
+      .split(/\r?\n/)
+      .map((s) => s.trim())
+      .filter(Boolean)
+    setUrlCount(v.length)
   }
 
   return (
@@ -75,57 +76,58 @@ export function SubmitForm() {
             onSubmit={onSubmit}
             className="lg:col-span-8 rounded-md border border-border/70 bg-card/40 p-4"
           >
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <Field label="Target URL *">
-                <Input name="url" required placeholder="https://target.archive-demo.test" className="h-9 font-mono text-xs" />
-              </Field>
-              <Field label="Target name">
-                <Input name="name" placeholder="Ministry of …" className="h-9 font-mono text-xs" />
-              </Field>
-              <Field label="Defacer handle *">
-                <Input name="handle" required placeholder="n0vakane" className="h-9 font-mono text-xs" />
+            {/* URLs */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <Label className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                  Target URLs *
+                </Label>
+                <span className="inline-flex items-center gap-1 font-mono text-[10px] text-muted-foreground">
+                  <Link2 className="h-3 w-3" />
+                  {urlCount} url{urlCount === 1 ? '' : 's'}
+                </span>
+              </div>
+              <Textarea
+                name="urls"
+                required
+                onChange={onUrlsChange}
+                rows={5}
+                placeholder={'https://test.com\nhttps://test2.com'}
+                className="font-mono text-xs"
+              />
+              <p className="font-mono text-[10px] text-muted-foreground/70">
+                One URL per line. Each line becomes its own archived incident.
+              </p>
+            </div>
+
+            {/* attacker + team */}
+            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <Field label="Attacker handle *">
+                <Input name="attacker" required placeholder="n0vakane" className="h-9 font-mono text-xs" />
               </Field>
               <Field label="Team / crew">
                 <Input name="team" placeholder="PHANTOM CREW" className="h-9 font-mono text-xs" />
               </Field>
-              <Field label="Country *">
-                <Select name="country" defaultValue="ID">
-                  <SelectTrigger className="h-9 font-mono text-xs"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {COUNTRIES.map((c) => (
-                      <SelectItem key={c} value={c} className="font-mono text-xs">{c}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Field>
-              <Field label="Category *">
-                <Select name="category" defaultValue="gov">
-                  <SelectTrigger className="h-9 font-mono text-xs"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {CATEGORIES.map((c) => (
-                      <SelectItem key={c} value={c} className="font-mono text-xs">{c}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Field>
             </div>
 
-            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <Field label="Severity">
-                <Select name="severity" defaultValue="medium">
-                  <SelectTrigger className="h-9 font-mono text-xs"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {SEVERITIES.map((s) => (
-                      <SelectItem key={s} value={s} className="font-mono text-xs">{s}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            {/* poc + reason */}
+            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <Field label="Proof of Concept">
+                <Textarea
+                  name="poc"
+                  rows={3}
+                  placeholder="Exposed .env served by web root; secrets harvested in <1s."
+                  className="font-mono text-xs"
+                />
               </Field>
-              <div className="sm:col-span-2">
-                <Field label="Note left on target">
-                  <Input name="note" placeholder="Default credentials are not a strategy." className="h-9 font-mono text-xs" />
-                </Field>
-              </div>
+              <Field label="Reason">
+                <Textarea
+                  name="reason"
+                  rows={3}
+                  placeholder="Default credentials are not a strategy. Patched for the archive."
+                  className="font-mono text-xs"
+                />
+              </Field>
             </div>
 
             <div className="mt-4 flex items-center justify-between gap-3">
@@ -144,13 +146,13 @@ export function SubmitForm() {
             <h3 className="font-mono text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
               Submission policy
             </h3>
-            <Trust icon={ShieldCheck} text="Mirror snapshot generated on submission" />
+            <Trust icon={ShieldCheck} text="Mirror snapshot generated per URL" />
             <Trust icon={Lock} text="Routed through an anonymous relay" />
             <Trust icon={KeyRound} text="Attribution bound to your handle, not identity" />
-            <Trust icon={Upload} text="Disclosure ethics reviewed by maintainers" />
+            <Trust icon={Upload} text="Country & category auto-derived from URL" />
             <p className="pt-1 font-mono text-[10px] leading-relaxed text-muted-foreground/70">
               Responsible disclosures only. No doxxing, no exfiltrated data,
-              no credentials dumps. This is a demo — no real target is ever touched.
+              no credential dumps. This is a demo — no real target is ever touched.
             </p>
           </div>
         </div>

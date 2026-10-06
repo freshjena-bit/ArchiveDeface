@@ -29,13 +29,15 @@ model Hacker {
 model Defacement {
   id         String   @id @default(cuid())
   targetUrl  String   // e.g. https://gov.example.gov.id
-  targetName String   // human label
-  country    String   // target country ISO code
-  category   String   // gov / edu / com / org / mil / fin
+  targetName String   // human label (auto-derived from hostname)
+  country    String   // target country ISO code (auto-derived from URL TLD)
+  category   String   // gov / edu / com / org / mil / fin (auto-derived from URL)
   attackerId String
   attacker   Hacker   @relation(fields: [attackerId], references: [id])
   mirrorUrl  String?  // archived snapshot link
-  note       String?  // message left by attacker
+  note       String?  // legacy single message (seeded records)
+  poc        String?  // proof of concept — how the compromise was demonstrated
+  reason     String?  // motivation / message from the attacker
   status     String   @default("archived") // archived / restored / live
   severity   String   @default("medium") // low / medium / high / critical
   createdAt  DateTime @default(now())

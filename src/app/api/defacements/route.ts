@@ -44,6 +44,8 @@ export async function GET(req: NextRequest) {
       severity: d.severity,
       status: d.status,
       note: d.note,
+      poc: d.poc,
+      reason: d.reason,
       mirrorUrl: d.mirrorUrl,
       createdAt: d.createdAt.toISOString(),
       attacker: {

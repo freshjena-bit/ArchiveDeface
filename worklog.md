@@ -81,3 +81,26 @@ Stage Summary:
   - Live revalidation: Total 422→423, Today 008→009 (dinamis), record muncul di archive + live ticker, liveRevalid8 muncul di Top Defacers.
   - Mirror viewer: klik row/tombol View → dialog buka, render target/defacer/country/captured/severity/status + mock defaced page "OWNED BY smokeTester2 // QA CREW" + note + signature 7A8E8B94 + timestamp + disclaimer.
 - Lint clean (0 error). Dev server sehat.
+
+---
+Task ID: S1-S8
+Agent: Main (Z.ai Code)
+Task: Submit form jadi 5 field (URLs multi-baris, attacker, team, poc, reason) + derive meta
+
+Work Log:
+- Prisma schema: tambah kolom poc (String?) + reason (String?) ke Defacement. db:push.
+- Seed: ganti array NOTES → POCS + REASONS, set keduanya per record. Reseed (420 records punya poc+reason).
+- types.ts: tambah poc, reason ke Defacement.
+- site.ts: tambah deriveMeta(url) — country dari ccTLD, category dari hostname/path (gov/edu/mil/fin/org/com), targetName = hostname, severity default medium.
+- /api/submit rewrite: terima {urls (newline-separated), attacker, team, poc, reason}; parse + dedupe URL (max 50); upsert hacker; per URL deriveMeta + create record; bump totalHits sejumlah URL; return {ok, created, ids}.
+- /api/defacements: sertakan poc + reason di response.
+- submit-form.tsx rewrite: 5 field — URLs (Textarea, placeholder https://test.com / https://test2.com, live count "N urls"), Attacker, Team, Proof of Concept (Textarea), Reason (Textarea). Hapus field country/category/severity/name.
+- mirror-viewer.tsx: tambah blok "// proof of concept" (hijau) + "// reason" (amber) di body mock defaced page.
+- Restart dev server (setsid) supaya load Prisma client fresh yang sudah tahu kolom poc/reason.
+
+Stage Summary:
+- Form submit sekarang persis 5 field. Tampilan flat tetap.
+- Browser-verified multi-URL: isi 3 URL (https://test.com / https://gov.test2.id / https://edu.bank.org) + attacker multiUrlTester + team VERIFY CREW + poc + reason → POST 200, 3 INSERT (dengan kolom poc/reason), 3 record muncul di archive + ticker.
+- Derive meta terbukti: edu.bank.org → 🇺🇸 United States + EDUCATION; gov.test2.id → 🇮🇩 Indonesia + GOVERNMENT; test.com → 🇺🇸 + COMMERCIAL.
+- Mirror viewer: klik row → tampil OWNED BY multiUrlTester // VERIFY CREW + // PROOF OF CONCEPT + // REASON + signature + timestamp + disclaimer.
+- Lint clean (0 error).

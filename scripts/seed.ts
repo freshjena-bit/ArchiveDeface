@@ -36,17 +36,30 @@ const TARGET_NAMES = [
   "Cultural Heritage Archive", "Postal Logistics Tracker",
 ]
 
-const NOTES = [
-  "Your security is a costume. Patched for the archive.",
-  "Area secured. Consider this a free pentest report.",
-  "Default credentials are not a strategy.",
-  "Logged, mirrored, reported. You're welcome.",
-  "Exposed .env -> database -> root. Three steps.",
-  "Update your CMS. Then update it again.",
-  "Security through obscurity failed again.",
-  "The robots.txt was more informative than your docs.",
-  "Mirrored for the historical record.",
-  "Friendly reminder: change the admin password.",
+const POCS = [
+  'Exposed .env file served by the web root; secrets harvested in <1s.',
+  'Outdated CMS (v4.x) with known RCE; payload dropped via upload handler.',
+  'Default admin credentials (admin/admin) left enabled on management panel.',
+  'Misconfigured nginx alias traversal exposed /etc/ to the public.',
+  'Reflected XSS chained with a stored token leak to pivot access.',
+  'Unauthenticated SSRF via an image-proxy endpoint reached internal APIs.',
+  'Broken access control let a low-priv session write to the index page.',
+  'Insecure file upload accepted a .php shell under a double extension.',
+  'Debug console left enabled in production; arbitrary eval executed.',
+  'IDOR on the edit endpoint allowed overwriting the landing page.',
+]
+
+const REASONS = [
+  'Your security is a costume. Patched for the archive, not for clout.',
+  'Consider this a free pentest report. Patch the surface, not the ego.',
+  'Default credentials are not a strategy. Change them, then rotate keys.',
+  'Logged, mirrored, reported. You are welcome to do better.',
+  'Three steps from root: exposed config → database → homepage. Fix step one.',
+  'Update your CMS. Then update it again. Then stop shipping defaults.',
+  'Security through obscurity failed, again. The record is now public.',
+  'The robots.txt was more informative than your docs. Read your own logs.',
+  'Mirrored for the historical record. No data was exfiltrated.',
+  'Friendly reminder: the admin password is not "admin".',
 ]
 
 function rand<T>(arr: T[]): T {
@@ -100,7 +113,8 @@ async function main() {
       category,
       attackerId: attacker.id,
       mirrorUrl: `https://mirror.archive-demo.test/snap-${Math.random().toString(36).slice(2, 10)}`,
-      note: rand(NOTES),
+      poc: rand(POCS),
+      reason: rand(REASONS),
       status: Math.random() > 0.3 ? "archived" : "restored",
       severity: rand(SEVERITIES),
       createdAt,
