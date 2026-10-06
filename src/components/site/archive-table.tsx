@@ -16,14 +16,6 @@ import type { Defacement } from '@/lib/types'
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
-const SPECIALS = [
-  { key: 'all', label: 'ALL' },
-  { key: 'goid', label: 'GOID' },
-  { key: 'gov', label: 'GOV' },
-  { key: 'acid', label: 'ACID' },
-  { key: 'edu', label: 'EDU' },
-]
-
 function fmtDate(iso: string) {
   const d = new Date(iso)
   const dd = String(d.getDate()).padStart(2, '0')
@@ -36,20 +28,18 @@ function fmtDate(iso: string) {
 
 export function ArchiveTable() {
   const [q, setQ] = React.useState('')
-  const [special, setSpecial] = React.useState<string>('all')
   const [page, setPage] = React.useState(0)
   const [selected, setSelected] = React.useState<Defacement | null>(null)
   const pageSize = 25
 
   const debounced = React.useDeferredValue(q)
-  React.useEffect(() => setPage(0), [debounced, special])
+  React.useEffect(() => setPage(0), [debounced])
 
   const params = new URLSearchParams({
     limit: String(pageSize),
     offset: String(page * pageSize),
   })
   if (debounced) params.set('q', debounced)
-  if (special && special !== 'all') params.set('special', special)
 
   const { data, isLoading } = useSWR<{ items: Defacement[]; total: number }>(
     `/api/defacements?${params}`,
@@ -62,31 +52,17 @@ export function ArchiveTable() {
 
   return (
     <section id="archive" className="scroll-mt-14">
-      {/* header row: title + count + special archives filter */}
-      <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-2">
-          <h2 className="font-mono text-sm font-bold uppercase tracking-wider">
-            Recent Defacements
-          </h2>
-          <span className="rounded-sm bg-primary/10 px-1.5 py-0.5 font-mono text-[10px] text-primary">
-            {total}
-          </span>
-        </div>
-        <div className="flex items-center gap-1.5 overflow-x-auto thin-scroll pb-1">
-          {SPECIALS.map((s) => (
-            <button
-              key={s.key}
-              onClick={() => setSpecial(s.key)}
-              className={`shrink-0 rounded-sm border px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider transition-colors ${
-                special === s.key
-                  ? 'border-primary/50 bg-primary/15 text-primary'
-                  : 'border-border/50 bg-card/40 text-muted-foreground hover:border-primary/30 hover:text-foreground'
-              }`}
-            >
-              {s.label}
-            </button>
-          ))}
-        </div>
+      {/* header row: title + count */}
+      <div className="mb-3 flex items-center gap-2">
+        <h2 className="font-mono text-sm font-bold uppercase tracking-wider">
+          Recent Defacements
+        </h2>
+        <span className="rounded-sm bg-primary/10 px-1.5 py-0.5 font-mono text-[10px] text-primary">
+          {total}
+        </span>
+        <span className="ml-auto font-mono text-[10px] uppercase tracking-wider text-muted-foreground/60">
+          all records · normal + special
+        </span>
       </div>
 
       {/* search */}

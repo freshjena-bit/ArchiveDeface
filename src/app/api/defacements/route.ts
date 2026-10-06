@@ -49,6 +49,8 @@ export async function GET(req: NextRequest) {
         break
       case 'all':
       default:
+        // special archive "ALL" = every record flagged special
+        where.isSpecial = true
         break
     }
   }

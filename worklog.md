@@ -248,3 +248,19 @@ Work Log:
 Stage Summary:
 - Recent Defacements sekarang cuma 1 baris filter: ALL/GOID/GOV/ACID/EDU. Chip kategori & baris "special:" terpisah dihapus.
 - Browser-verified: filter buttons = [ALL,GOID,GOV,ACID,EDU]; klik GOV → 25 record semua .gov.* (allGov:true). Lint clean.
+
+---
+Task ID: SA1-SA5
+Agent: Main (Z.ai Code)
+Task: Pisahkan: Recent Defacements = semua record (tanpa tabs); Special Archive = section khusus special
+
+Work Log:
+- /api/defacements: special=all sekarang = isSpecial true (semua record special), bukan "semua record".
+- archive-table.tsx: hapus state special + SPECIALS + tabs di header. Sekarang Recent Defacements tampilkan SEMUA record (normal+special), search only. Label "all records · normal + special".
+- special-archive-table.tsx (baru): section "Special Archive" dengan tabs ALL/GOID/GOV/ACID/EDU (amber theme), fetch /api/defacements?special=X&limit=15, tabel padat (★/Defacer/Target/Country/Marks/Date/View), row clickable buka mirror viewer. Desc dinamis per special.
+- archive-view.tsx: tambah SpecialArchiveTable di bawah grid utama (mt-8), full width.
+
+Stage Summary:
+- Recent Defacements: SEMUA record (420), tanpa tabs ALL/GOID/GOV/ACID/EDU, search only.
+- Special Archive (section terpisah di bawah): cuma record special. ALL=204 (isSpecial), GOV=72, ACID=98, GOID/EDU sesuai. Tab ACID verified 15 rows "showing 15 of 98 special records".
+- Browser-verified: recentTabs=[], specialTabs=[ALL,GOID,GOV,ACID,EDU], hasSpecialSection=true. Lint clean.
