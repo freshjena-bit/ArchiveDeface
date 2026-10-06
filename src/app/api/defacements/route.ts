@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { promoteDueOnhold } from '@/lib/promote'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,6 +15,7 @@ export const dynamic = 'force-dynamic'
 //   true → only on-hold records (pending verification)
 //   else → verified records only (exclude on-hold: archived / restored)
 export async function GET(req: NextRequest) {
+  await promoteDueOnhold()
   const { searchParams } = new URL(req.url)
   const limit = Math.min(Number(searchParams.get('limit') ?? 20), 100)
   const offset = Number(searchParams.get('offset') ?? 0)

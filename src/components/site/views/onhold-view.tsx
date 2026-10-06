@@ -9,7 +9,7 @@ export function OnHoldView() {
       <PageHeader
         eyebrow="on hold"
         title="On Hold Records"
-        desc="Records pending verification — not yet promoted into the verified archive. These are excluded from the main Archive and Archive Special until reviewed."
+        desc="Records pending verification — freshly submitted incidents are held here for a 10-minute verification window before being promoted into the verified Archive. Unregistered handles are rejected at submit time."
       />
       <ArchiveTable mode="onhold" />
     </div>

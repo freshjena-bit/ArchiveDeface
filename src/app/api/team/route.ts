@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { promoteDueOnhold } from '@/lib/promote'
 
 export const dynamic = 'force-dynamic'
 
 // GET /api/team?name=PHANTOM%20CREW
 // Returns the team profile + count breakdown + members + their defacements.
 export async function GET(req: NextRequest) {
+  await promoteDueOnhold()
   const { searchParams } = new URL(req.url)
   const name = searchParams.get('name')?.trim()
 

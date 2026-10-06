@@ -371,3 +371,21 @@ Work Log:
 Stage Summary:
 - Halaman profil team /#/team/<name> — sama kayak defacer profile: stat cards (Total Archive/Special/On Hold/Mass/Redeface/Homepage/Archived/Restored) + filter Verified/On Hold + tabel arsip team + member list.
 - Browser-verified: Ranking→Teams→klik OUTLAWS → /#/team/OUTLAWS, stat cards (Total Archive 116, Special 047, Onhold 012...), member list, Verified/On Hold filter (On Hold → 12 rows all onhold). Lint clean.
+
+---
+Task ID: SV1-SV6
+Agent: Main (Z.ai Code)
+Task: Submit validation: reject unregistered, onhold 10-min window, auto-promote
+
+Work Log:
+- Prisma schema: tambah pendingUntil DateTime? ke Defacement. db:push.
+- src/lib/promote.ts: promoteDueOnhold() — updateMany onhold records dgn pendingUntil<now → status=archived, pendingUntil=null. Dipanggil di awal GET /api/defacements, /api/defacer, /api/team, /api/stats (lazy promotion saat data dibaca).
+- /api/submit rewrite: cari hacker by handle (findUnique). Kalau tidak ada → 400 reject "Attacker X is not a registered defacer. Submission rejected." (hapus upsert auto-create). Kalau ada → create record status=onhold + pendingUntil=now+10min. Response tambah status:'onhold', pendingMinutes:10.
+- submit-form.tsx: toast jadi "Submitted — on hold … queued for verification. Promoted to verified in ~10 min." Tambah useSWR fetch handle terdaftar + datalist (list=registered-handles) + hint "must be a registered defacer (N registered · …) — unregistered handles are rejected" + ikon UserCheck.
+- views/onhold-view.tsx: desc mention 10-min verification window + unregistered rejected at submit.
+- Restart dev server (setsid) supaya load Prisma client fresh (pendingUntil).
+
+Stage Summary:
+- Submit dengan handle terdaftar → record onhold + pendingUntil now+10min. Submit handle tidak terdaftar → 400 reject.
+- Lazy promotion: onhold record dgn pendingUntil<now auto-promote ke archived saat data dibaca (verified via backdate test).
+- Browser-verified: unregistered handle "fakeUnregistered123" → POST 400 reject (toast rejection); registered "n0vakane" → POST 200 redirect home; record verify-flow.gov.id muncul di On Hold (count 62) tapi TIDAK di Archive (count 360 verified-only). Backdate test: onhold→archived setelah promoteDueOnhold. Lint clean.

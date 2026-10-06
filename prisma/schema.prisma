@@ -42,7 +42,8 @@ model Defacement {
   isMass      Boolean  @default(false) // M mark — part of a mass-deface campaign
   isRedeface  Boolean  @default(false) // R mark — target was defaced before
   isSpecial   Boolean  @default(false) // S mark — belongs to a special archive
-  status      String   @default("archived") // archived / restored / live
+  pendingUntil DateTime? // when set + status=onhold, auto-promotes to archived after this time (10-min verification window)
+  status      String   @default("archived") // archived / restored / live / onhold
   severity    String   @default("medium") // low / medium / high / critical
   createdAt   DateTime @default(now())
 

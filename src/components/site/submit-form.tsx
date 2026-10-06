@@ -1,8 +1,8 @@
 'use client'
 
 import * as React from 'react'
-import { useSWRConfig } from 'swr'
-import { Upload, Send, ShieldCheck, Lock, KeyRound, Link2 } from 'lucide-react'
+import useSWR, { useSWRConfig } from 'swr'
+import { Upload, Send, ShieldCheck, Lock, KeyRound, Link2, UserCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -12,6 +12,8 @@ import {
 } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
 import { useHashRoute } from '@/lib/use-hash-route'
+
+const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
 const POC_OPTIONS = [
   'Known vulnerability (i.e. unpatched system)',
@@ -63,6 +65,13 @@ export function SubmitForm() {
   const { navigate } = useHashRoute()
   const [submitting, setSubmitting] = React.useState(false)
   const [urlCount, setUrlCount] = React.useState(0)
+  // fetch registered defacer handles for the attacker autocomplete + validation hint
+  const { data: handlesData } = useSWR<{ items: { handle: string }[] }>(
+    '/api/leaderboard?mode=defacers&year=all',
+    fetcher,
+    { refreshInterval: 60000 }
+  )
+  const registeredHandles = (handlesData?.items ?? []).map((i) => i.handle)
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -84,8 +93,8 @@ export function SubmitForm() {
       const data = await res.json()
       if (!res.ok || !data.ok) throw new Error(data.error || 'submit failed')
       toast({
-        title: 'Records archived',
-        description: `${data.created} incident${data.created === 1 ? '' : 's'} mirrored & logged. Redirecting…`,
+        title: 'Submitted — on hold',
+        description: `${data.created} incident${data.created === 1 ? '' : 's'} queued for verification. Promoted to verified in ~10 min. Redirecting…`,
       })
       ;(e.target as HTMLFormElement).reset()
       setUrlCount(0)
@@ -154,7 +163,28 @@ export function SubmitForm() {
             {/* attacker + team */}
             <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
               <Field label="Attacker handle *">
-                <Input name="attacker" required placeholder="n0vakane" className="h-9 font-mono text-xs" />
+                <Input
+                  name="attacker"
+                  required
+                  list="registered-handles"
+                  placeholder="n0vakane (must be registered)"
+                  className="h-9 font-mono text-xs"
+                />
+                <datalist id="registered-handles">
+                  {registeredHandles.map((h) => (
+                    <option key={h} value={h} />
+                  ))}
+                </datalist>
+                <p className="flex items-center gap-1 font-mono text-[10px] text-muted-foreground/70">
+                  <UserCheck className="h-3 w-3" />
+                  must be a registered defacer
+                  {registeredHandles.length > 0 && (
+                    <span className="text-muted-foreground/50">
+                      ({registeredHandles.length} registered · {registeredHandles.slice(0, 3).join(', ')}…)
+                    </span>
+                  )}
+                  — unregistered handles are rejected.
+                </p>
               </Field>
               <Field label="Team / crew">
                 <Input name="team" placeholder="PHANTOM CREW" className="h-9 font-mono text-xs" />

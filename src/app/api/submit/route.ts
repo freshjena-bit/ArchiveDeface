@@ -48,20 +48,27 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // upsert hacker by handle
-    const hacker = await db.hacker.upsert({
+    // the attacker handle MUST be a registered defacer in the registry.
+    // unknown handles → rejected outright (no auto-registration).
+    const hacker = await db.hacker.findUnique({
       where: { handle: String(attacker).trim() },
-      update: { team: team?.trim() || undefined },
-      create: {
-        handle: String(attacker).trim(),
-        team: team?.trim() || 'INDEPENDENT',
-        country: 'ID',
-        avatarColor: '#22c55e',
-      },
     })
+    if (!hacker) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: `Attacker "${String(attacker).trim()}" is not a registered defacer. Submission rejected.`,
+        },
+        { status: 400 }
+      )
+    }
 
     const cleanPoc = poc?.trim() || null
     const cleanReason = reason?.trim() || null
+
+    // every accepted submission is held for a 10-minute verification window
+    // before being promoted to verified (archived). pendingUntil = now + 10m.
+    const pendingUntil = new Date(Date.now() + 10 * 60 * 1000)
 
     // create one record per URL, deriving display metadata + HMRLS marks from each URL
     const created: string[] = []
@@ -102,7 +109,8 @@ export async function POST(req: NextRequest) {
           isRedeface,
           isSpecial,
           severity: meta.severity,
-          status: 'archived',
+          status: 'onhold',
+          pendingUntil,
           mirrorUrl: `https://mirror.archive-demo.test/snap-${Math.random().toString(36).slice(2, 10)}`,
         },
       })
@@ -119,6 +127,8 @@ export async function POST(req: NextRequest) {
       ok: true,
       created: created.length,
       ids: created,
+      status: 'onhold',
+      pendingMinutes: 10,
     })
   } catch (e) {
     return NextResponse.json(
