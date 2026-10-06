@@ -3,10 +3,24 @@ import type { OpenNextConfig } from '@opennextjs/cloudflare'
 const config: OpenNextConfig = {
   default: {
     override: {
-      // Prisma + node:crypto need the Node compat flag (set in wrangler.jsonc)
-      wrapper: 'node',
-      converter: 'node',
-      incrementalCache: false,
+      wrapper: 'cloudflare-node',
+      converter: 'edge',
+      proxyExternalRequest: 'fetch',
+      incrementalCache: 'dummy',
+      tagCache: 'dummy',
+      queue: 'direct',
+    },
+  },
+  edgeExternals: ['node:crypto'],
+  middleware: {
+    external: true,
+    override: {
+      wrapper: 'cloudflare-edge',
+      converter: 'edge',
+      proxyExternalRequest: 'fetch',
+      incrementalCache: 'dummy',
+      tagCache: 'dummy',
+      queue: 'direct',
     },
   },
 }
