@@ -506,3 +506,16 @@ Work Log:
 Stage Summary:
 - Semua teks disclaimer/demonstration/fictional/demo/no-real dihapus dari UI. Site sekarang profesional.
 - Browser-verified: home hasDemoText=false; About hasDisclaimer/hasFictional/hasDemo=false; Submit hasDemo/hasNoReal=false; mirror viewer hasFictional/hasNoReal=false (sekarang "cryptographically signed"). URLs data pakai .archive.test (tanpa "demo"). Lint clean.
+
+---
+Task ID: MV1
+Agent: Main (Z.ai Code)
+Task: Mirror viewer jadi layout mirror page (metadata panel + framed defaced page)
+
+Work Log:
+- mirror-viewer.tsx rewrite: toolbar (sig). Metadata panel grid 2-col: Timestamp / Notifier (handle, rose) / Web Server (mock deterministic) / Team (rose) / IP (mock deterministic) / Country (flag) / Domain (URL, rose, link) / Category / Severity. Marks row. Main content: framed black box dgn scanline, "Hacked By" + handle (serif + glow attacker color) + team + reason + poc blocks + signature. Footer "cryptographically signed · status".
+- Helper deterministik: mockIP(id) → 4 octet; mockServer(id) → nginx/apache/vercel/cloudflare/iis/openresty/litespeed; mockSig(id,handle).
+
+Stage Summary:
+- Mirror viewer sekarang mirip layout mirror page: panel metadata (label muted, value rose-400 untuk notifier/team/IP/domain) + framed black box berisi defaced page "Hacked By [handle]".
+- Browser-verified: dialog buka, render Timestamp/Notifier/Web Server/Team/IP/Country/Domain + "Hacked By" + handle. Lint clean.
