@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDb } from '@/lib/db'
+import { db } from '@/lib/db'
 import { promoteDueOnhold } from '@/lib/promote'
 
 export const dynamic = 'force-dynamic'
@@ -10,8 +10,7 @@ export const dynamic = 'force-dynamic'
 // When a year is given, only incidents whose createdAt falls in that
 // calendar year are counted.
 export async function GET(req: NextRequest) {
-  const db = await getDb()
-  await promoteDueOnhold()
+  promoteDueOnhold()
   const { searchParams } = new URL(req.url)
   const mode = searchParams.get('mode') ?? 'defacers'
   const yearParam = searchParams.get('year') ?? 'all'

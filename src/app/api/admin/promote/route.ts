@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDb } from '@/lib/db'
+import { db } from '@/lib/db'
 import { parseAdminCookie } from '@/lib/auth'
 import { promoteDueOnhold } from '@/lib/promote'
 
@@ -12,8 +12,7 @@ export async function POST(req: NextRequest) {
   if (!parseAdminCookie(cookie)) {
     return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 })
   }
-  const db = await getDb()
-  await promoteDueOnhold()
+  promoteDueOnhold()
   try {
     const { id } = await req.json()
     if (!id || typeof id !== 'string') {

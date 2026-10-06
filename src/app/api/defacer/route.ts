@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDb } from '@/lib/db'
+import { db } from '@/lib/db'
 import { promoteDueOnhold } from '@/lib/promote'
 
 export const dynamic = 'force-dynamic'
@@ -7,8 +7,7 @@ export const dynamic = 'force-dynamic'
 // GET /api/defacer?handle=n0vakane
 // Returns the defacer profile + count breakdown + their defacements.
 export async function GET(req: NextRequest) {
-  const db = await getDb()
-  await promoteDueOnhold()
+  promoteDueOnhold()
   const { searchParams } = new URL(req.url)
   const handle = searchParams.get('handle')?.trim()
 

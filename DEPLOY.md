@@ -1,82 +1,68 @@
-# Deploying to Cloudflare Pages
+# ZONEDEFACER — Deploy ke Vercel + PostgreSQL
 
-This Next.js app deploys to **Cloudflare Pages** (NOT Workers) via
-[`@opennextjs/cloudflare`](https://opennext.js.org/cloudflare). The build
-produces `.open-next/assets/` (contains `_worker.js` + static files) which
-Pages deploys directly. The local SQLite DB is replaced at runtime by
-**Cloudflare D1** (edge SQLite).
+## Deploy via Vercel (recommended — native Next.js)
 
-## Deploy via Cloudflare Pages dashboard (recommended — no CLI needed after setup)
+### 1. Import repo ke Vercel
+- Buka **vercel.com** → login (GitHub/Google)
+- **Add New → Project → Import Git Repository**
+- Pilih repo `freshjena-bit/ArchiveDeface`
+- Framework: **Next.js** (auto-detected)
+- Build command: `npx prisma generate && next build` (auto-detected dari `vercel.json`)
+- Install command: `bun install` (auto-detected dari `vercel.json`)
 
-### 1. Create a D1 database
-- Dashboard → **Storage & Databases → D1 → Create**
+### 2. Buat Vercel Postgres database
+- Vercel dashboard → **Storage → Create Database → Postgres**
 - Name: `zonedefacer`
-- Copy the **Database ID** (shown after creation, or on the database's Overview tab)
+- Create
+- Klik **Connect to Project** → pilih `ArchiveDeface` project
+- Copy **DATABASE_URL** dari env vars yang otomatis di-set
 
-### 2. Apply schema to D1
-- Open the D1 database → **Console** tab
-- Copy the entire contents of `migrations/0001_init.sql` from the repo
-- Paste into the Console query box → **Execute**
-- Verify: go to **Tables** tab → should show 4 tables (Hacker, Defacement, Stat, News)
+### 3. Set environment variables
+Vercel project → **Settings → Environment Variables**:
+| Name | Value |
+|---|---|
+| `DATABASE_URL` | (otomatis dari Vercel Postgres) |
+| `ADMIN_USERNAME` | `GadaLuBau` |
+| `ADMIN_PASSWORD` | `slametwkw` |
 
-### 3. Connect repo to Cloudflare Pages
-- Dashboard → **Workers & Pages → Create → Pages → Connect to Git**
-- Authorize GitHub → select repo `ArchiveDeface`
-- **Build settings:**
-  - **Framework preset:** None (custom)
-  - **Build command:** `npm run build:cf`
-  - **Build output directory:** `.open-next/assets`
-  - **Environment variables (Production):** add:
-    - `ADMIN_USERNAME` = `GadaLuBau`
-    - `ADMIN_PASSWORD` = `slametwkw`
-    - (optional) `NODE_VERSION` = `20`
-- **Save and Deploy**
-
-### 4. After first deploy — configure D1 binding + compat flag
-Go to the Pages project → **Settings**:
-
-- **Settings → Functions → D1 database bindings:**
-  - Add binding → Variable name: `DB` → select `zonedefacer` database
-
-- **Settings → Functions → Compatibility flags:**
-  - Compatibility date: `2025-05-01` (or later)
-  - Compatibility flags: add `nodejs_compat`
-
-- **Settings → Environment variables (Production):** (if not set in step 3)
-  - `ADMIN_USERNAME` = `GadaLuBau`
-  - `ADMIN_PASSWORD` = `slametwkw`
-
-### 5. Redeploy
-After configuring the D1 binding + compat flag → trigger a new deployment
-(Deployments → Retry deployment / push a commit to GitHub).
-
-Your site: `https://zonedefacer.pages.dev` (or your custom domain).
-
-## Deploy via CLI (alternative)
-
+### 4. Apply schema + seed ke Postgres
+Jalankan locally (dengan DATABASE_URL dari Vercel Postgres):
 ```bash
-npx wrangler login
-npx wrangler d1 create zonedefacer        # → paste database_id somewhere (not needed for Pages CLI)
-npm run db:d1:apply                        # apply schema to D1 remote
-npm run deploy:cf                           # = opennext build + wrangler pages deploy .open-next/assets
+# set DATABASE_URL ke Vercel Postgres (copy dari Vercel dashboard)
+export DATABASE_URL="postgresql://..."  # paste dari Vercel
+
+# apply schema
+npx prisma db push
+
+# seed data
+npx tsx scripts/seed.ts
 ```
 
-Note: for Pages CLI deploy, D1 binding + compat flags must still be configured
-in the Pages project settings (dashboard). `wrangler pages deploy` deploys the
-files but does not set bindings.
-
-## Local Cloudflare preview
-
+Atau via Vercel CLI:
 ```bash
-npm run db:d1:apply:local       # create schema in local D1
-npm run preview:cf               # build + wrangler pages dev (localhost:8788)
+npm i -g vercel
+vercel pull       # download env vars
+npx prisma db push --accept-data-loss
+npx tsx scripts/seed.ts
 ```
 
-## How the dual-mode DB works
+### 5. Deploy
+- Push commit ke GitHub → Vercel auto-deploy
+- Atau: `vercel --prod` dari CLI
+- URL: `zonedefacer.vercel.app`
 
-`src/lib/db.ts` exports:
-- `db` — local SQLite singleton (dev / Node scripts)
-- `getDb()` — async accessor. On Cloudflare it calls
-  `getCloudflareContext()` from `@opennextjs/cloudflare`, reads the `DB` D1
-  binding, and constructs a `PrismaClient` with `@prisma/adapter-d1`.
-  Locally it falls back to the SQLite singleton.
+## Local dev
+
+```bash
+cp .env.example .env          # edit DATABASE_URL ke local Postgres
+npx prisma db push            # create schema
+npx tsx scripts/seed.ts       # seed demo data
+bun run dev                   # localhost:3000
+```
+
+## Tech
+
+- Next.js 16 (App Router) + TypeScript
+- Prisma 6 + PostgreSQL (Vercel Postgres / local)
+- Tailwind CSS 4 + shadcn/ui
+- Vercel (hosting + Postgres)

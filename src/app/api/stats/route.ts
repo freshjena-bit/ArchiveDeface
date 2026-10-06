@@ -1,13 +1,12 @@
 import { NextResponse } from 'next/server'
-import { getDb } from '@/lib/db'
+import { db } from '@/lib/db'
 import { promoteDueOnhold } from '@/lib/promote'
 
 export const dynamic = 'force-dynamic'
 
 // GET /api/stats — dashboard summary + 14-day timeseries + category breakdown
 export async function GET() {
-  const db = await getDb()
-  await promoteDueOnhold()
+  promoteDueOnhold()
   const stats = await db.stat.findMany()
   const statMap = Object.fromEntries(stats.map((s) => [s.key, s.value]))
 

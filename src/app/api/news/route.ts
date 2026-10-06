@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDb } from '@/lib/db'
+import { db } from '@/lib/db'
 import { parseAdminCookie, adminCredentials } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
 // GET /api/news — public list, pinned first then newest
 export async function GET() {
-  const db = await getDb()
   const items = await db.news.findMany({
     orderBy: [{ pinned: 'desc' }, { createdAt: 'desc' }],
     take: 50,
@@ -31,7 +30,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 })
   }
   try {
-    const db = await getDb()
     const { title, body, pinned } = await req.json()
     if (!title || !body) {
       return NextResponse.json({ ok: false, error: 'Title and body required' }, { status: 400 })

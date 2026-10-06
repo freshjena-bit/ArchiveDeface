@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDb } from '@/lib/db'
+import { db } from '@/lib/db'
 import { parseAdminCookie } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
@@ -18,7 +18,6 @@ export async function DELETE(
     if (!id) {
       return NextResponse.json({ ok: false, error: 'Missing id' }, { status: 400 })
     }
-    const db = await getDb()
     await db.news.delete({ where: { id } })
     return NextResponse.json({ ok: true, id })
   } catch (e) {

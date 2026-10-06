@@ -1,4 +1,4 @@
-import { getDb } from '@/lib/db'
+import { db } from '@/lib/db'
 
 /**
  * Lazy promotion: any on-hold record whose verification window has elapsed
@@ -7,7 +7,6 @@ import { getDb } from '@/lib/db'
  */
 export async function promoteDueOnhold(): Promise<void> {
   try {
-    const db = await getDb()
     await db.defacement.updateMany({
       where: {
         status: 'onhold',

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDb } from '@/lib/db'
+import { db } from '@/lib/db'
 import { deriveMeta } from '@/lib/site'
 import { resolvePage } from '@/lib/page'
 
@@ -10,7 +10,6 @@ export const dynamic = 'force-dynamic'
 // `urls` is a newline-separated list — one defacement record is created per URL.
 export async function POST(req: NextRequest) {
   try {
-    const db = await getDb()
     const body = await req.json()
     const { urls, attacker, team, poc, reason } = body ?? {}
 
