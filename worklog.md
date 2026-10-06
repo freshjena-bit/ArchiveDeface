@@ -303,3 +303,14 @@ Stage Summary:
 - On Hold (/#/onhold): page khusus, cuma record onhold (61 total), amber theme, "pending verification".
 - Counts: verified 359 + onhold 61 = 420 total.
 - Browser-verified: nav order benar (On Hold ada); klik On Hold → #/onhold, h1 "On Hold Records", count 61, 25 rows; Archive page count 359 (verified). Lint clean.
+
+---
+Task ID: RT1
+Agent: Main (Z.ai Code)
+Task: Hapus tabs ALL/GOID/GOV/ACID/EDU dari Special Archive
+
+Work Log:
+- special-archive-table.tsx: hapus SPECIALS array + SPECIAL_DESC + state `special` + tabs row. Fetch sekarang special=all (isSpecial=true) limit 25. Desc statik "every record flagged special".
+
+Stage Summary:
+- Special Archive (/#/special): tanpa tabs, tampil semua record special (175 total, 25/page). Count + view buttons tetap jalan. Lint clean.

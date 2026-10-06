@@ -12,22 +12,6 @@ import type { Defacement } from '@/lib/types'
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
-const SPECIALS = [
-  { key: 'all', label: 'ALL' },
-  { key: 'goid', label: 'GOID' },
-  { key: 'gov', label: 'GOV' },
-  { key: 'acid', label: 'ACID' },
-  { key: 'edu', label: 'EDU' },
-]
-
-const SPECIAL_DESC: Record<string, string> = {
-  all: 'every record flagged special',
-  goid: 'government of Indonesia (gov · ID)',
-  gov: 'government targets',
-  acid: 'critical-severity incidents',
-  edu: 'education targets',
-}
-
 function fmtDate(iso: string) {
   const d = new Date(iso)
   const dd = String(d.getDate()).padStart(2, '0')
@@ -39,12 +23,11 @@ function fmtDate(iso: string) {
 }
 
 export function SpecialArchiveTable() {
-  const [special, setSpecial] = React.useState<string>('all')
   const [selected, setSelected] = React.useState<Defacement | null>(null)
-  const limit = 15
+  const limit = 25
 
   const { data, isLoading } = useSWR<{ items: Defacement[]; total: number }>(
-    `/api/defacements?special=${special}&limit=${limit}`,
+    `/api/defacements?special=all&limit=${limit}`,
     fetcher,
     { refreshInterval: 20000 }
   )
@@ -63,25 +46,8 @@ export function SpecialArchiveTable() {
           {total}
         </span>
         <span className="ml-auto truncate font-mono text-[10px] uppercase tracking-wider text-muted-foreground/60">
-          {SPECIAL_DESC[special]}
+          every record flagged special
         </span>
-      </div>
-
-      {/* special tabs */}
-      <div className="mb-2 flex items-center gap-1.5 overflow-x-auto thin-scroll pb-1">
-        {SPECIALS.map((s) => (
-          <button
-            key={s.key}
-            onClick={() => setSpecial(s.key)}
-            className={`shrink-0 rounded-sm border px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider transition-colors ${
-              special === s.key
-                ? 'border-amber-500/50 bg-amber-500/15 text-amber-400'
-                : 'border-border/50 bg-card/40 text-muted-foreground hover:border-amber-500/30 hover:text-foreground'
-            }`}
-          >
-            {s.label}
-          </button>
-        ))}
       </div>
 
       {/* table */}
