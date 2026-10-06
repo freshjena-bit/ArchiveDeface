@@ -104,3 +104,18 @@ Stage Summary:
 - Derive meta terbukti: edu.bank.org → 🇺🇸 United States + EDUCATION; gov.test2.id → 🇮🇩 Indonesia + GOVERNMENT; test.com → 🇺🇸 + COMMERCIAL.
 - Mirror viewer: klik row → tampil OWNED BY multiUrlTester // VERIFY CREW + // PROOF OF CONCEPT + // REASON + signature + timestamp + disclaimer.
 - Lint clean (0 error).
+
+---
+Task ID: D1-D3
+Agent: Main (Z.ai Code)
+Task: PoC & Reason jadi dropdown dengan list opsi yang diberikan user
+
+Work Log:
+- submit-form.tsx: tambah POC_OPTIONS (31 opsi) + REASON_OPTIONS (7 opsi). Field Proof of Concept & Reason diubah dari Textarea → Select (Radix) dengan placeholder "SELECT ONE", SelectContent max-h-72 (scrollable). name="poc"/name="reason" supaya tertangkap FormData via hidden input Radix.
+- /api/submit & /api/defacements & mirror-viewer tidak berubah (sudah handle poc/reason sebagai string) — value dropdown langsung disimpan & ditampilkan.
+
+Stage Summary:
+- PoC & Reason sekarang dropdown pilihan (list persis dari user), bukan input bebas.
+- Browser-verified: isi 2 URL + attacker dropdownTester + team DROP CREW, pilih PoC "SQL Injection" + Reason "As a challenge" → POST 200, 2 record (demo-2.com / gov.demo-1.id) muncul di archive.
+- Mirror viewer: klik row → tampil `// PROOF OF CONCEPT: SQL Injection` + `// REASON: As a challenge` + derive meta (🇺🇸/COMMERCIAL, 🇮🇩/GOVERNMENT) + signature + timestamp.
+- Lint clean (0 error).

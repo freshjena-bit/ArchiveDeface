@@ -7,7 +7,54 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
+
+const POC_OPTIONS = [
+  'Known vulnerability (i.e. unpatched system)',
+  'Undisclosed (new) vulnerability',
+  'Configuration / admin. mistake',
+  'Brute force attack',
+  'Social engineering',
+  'Web Server intrusion',
+  'Web Server external module intrusion',
+  'Mail Server intrusion',
+  'FTP Server intrusion',
+  'SSH Server intrusion',
+  'Telnet Server intrusion',
+  'RPC Server intrusion',
+  'Shares misconfiguration',
+  'Other Server intrusion',
+  'SQL Injection',
+  'URL Poisoning',
+  'File Inclusion',
+  'Other Web Application bug',
+  'Remote administrative panel access through bruteforcing',
+  'Remote administrative panel access through password guessing',
+  'Remote administrative panel access through social engineering',
+  'Attack against the administrator/user (password stealing/sniffing)',
+  'Access credentials through Man in the Middle attack',
+  'Remote service password guessing',
+  'Remote service password bruteforce',
+  'Rerouting after attacking the Firewall',
+  'Rerouting after attacking the Router',
+  'DNS attack through social engineering',
+  'DNS attack through cache poisoning',
+  'Cross-Site Scripting',
+  'Not available',
+]
+
+const REASON_OPTIONS = [
+  'Heh...just for fun!',
+  'Revenge against that website',
+  'Political reasons',
+  'As a challenge',
+  'I just want to be the best defacer',
+  'Patriotism',
+  'Not available',
+]
 
 export function SubmitForm() {
   const { toast } = useToast()
@@ -113,20 +160,32 @@ export function SubmitForm() {
             {/* poc + reason */}
             <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
               <Field label="Proof of Concept">
-                <Textarea
-                  name="poc"
-                  rows={3}
-                  placeholder="Exposed .env served by web root; secrets harvested in <1s."
-                  className="font-mono text-xs"
-                />
+                <Select name="poc">
+                  <SelectTrigger className="h-9 font-mono text-xs">
+                    <SelectValue placeholder="SELECT ONE" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    {POC_OPTIONS.map((o) => (
+                      <SelectItem key={o} value={o} className="font-mono text-xs">
+                        {o}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </Field>
               <Field label="Reason">
-                <Textarea
-                  name="reason"
-                  rows={3}
-                  placeholder="Default credentials are not a strategy. Patched for the archive."
-                  className="font-mono text-xs"
-                />
+                <Select name="reason">
+                  <SelectTrigger className="h-9 font-mono text-xs">
+                    <SelectValue placeholder="SELECT ONE" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    {REASON_OPTIONS.map((o) => (
+                      <SelectItem key={o} value={o} className="font-mono text-xs">
+                        {o}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </Field>
             </div>
 
