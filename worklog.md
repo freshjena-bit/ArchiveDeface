@@ -547,3 +547,15 @@ Stage Summary:
 - Mirror viewer sekarang nampilin SCREENSHOT ASLI webpage target via thum.io (real capture, bukan AI-generated). Untuk URL unreachable → fallback generated image.
 - Seed pakai URL real (gnu.org, nic.fr, cam.ac.uk, dns.de, nic.br, ...). Country/category derive dari URL real (ccTLD → BR/JP/IN/FR/DE/RU/ID/GB/AU; segment gov/edu → special).
 - Browser-verified: img src = https://image.thum.io/get/https://www.gnu.org, naturalW=600 complete=true (real screenshot loaded, on-demand capture ~10s). Lint clean.
+
+---
+Task ID: MS1
+Agent: Main (Z.ai Code)
+Task: Ringkas metadata mirror viewer jadi 6 field
+
+Work Log:
+- mirror-viewer.tsx: rows cuma 6 — Timestamp, Domain, Notifier, Team, Country, Category. Hapus Web Server, IP, Severity. Hapus marks row dari panel.
+
+Stage Summary:
+- Metadata mirror viewer sekarang ringkas: Timestamp · Domain · Notifier · Team · Country · Category (value rose-400 untuk Domain/Notifier/Team).
+- Browser-verified: hasTimestamp/Domain/Notifier/Team/Country/Category=true; hasWebServer/IP/Severity/Marks=false. Lint clean.

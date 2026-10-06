@@ -73,11 +73,6 @@ export function MirrorViewer({
 
   const rows: { label: string; value: React.ReactNode }[] = [
     { label: 'Timestamp', value: <span className="font-mono text-foreground tabular-nums">{time} · {date}</span> },
-    { label: 'Notifier', value: <span className={`font-mono font-semibold ${VAL}`}>{d.attacker.handle}</span> },
-    { label: 'Web Server', value: <span className="font-mono text-foreground">{server}</span> },
-    { label: 'Team', value: <span className={`font-mono font-semibold ${VAL}`}>{d.attacker.team ?? 'INDEPENDENT'}</span> },
-    { label: 'IP', value: <span className={`font-mono ${VAL}`}>{ip}</span> },
-    { label: 'Country', value: <span className="font-mono text-foreground">{countryFlag(d.country)} {d.country}</span> },
     {
       label: 'Domain',
       value: (
@@ -92,8 +87,10 @@ export function MirrorViewer({
         </a>
       ),
     },
+    { label: 'Notifier', value: <span className={`font-mono font-semibold ${VAL}`}>{d.attacker.handle}</span> },
+    { label: 'Team', value: <span className={`font-mono font-semibold ${VAL}`}>{d.attacker.team ?? 'INDEPENDENT'}</span> },
+    { label: 'Country', value: <span className="font-mono text-foreground">{countryFlag(d.country)} {d.country}</span> },
     { label: 'Category', value: <span className="font-mono text-foreground">{cat.label}</span> },
-    { label: 'Severity', value: <span className={`font-mono ${sev.color}`}>{sev.label}</span> },
   ]
 
   return (
@@ -124,18 +121,6 @@ export function MirrorViewer({
                 <span className="min-w-0 flex-1 truncate text-[12px]">{r.value}</span>
               </div>
             ))}
-          </div>
-          {/* marks */}
-          <div className="mt-2 flex items-center gap-2 border-t border-border/40 pt-2">
-            <span className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">marks</span>
-            <DefacementMarks
-              marks={{
-                isHomepage: d.isHomepage,
-                isMass: d.isMass,
-                isRedeface: d.isRedeface,
-                isSpecial: d.isSpecial,
-              }}
-            />
           </div>
         </div>
 
