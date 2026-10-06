@@ -602,3 +602,24 @@ Work Log:
 Stage Summary:
 - H (Homepage) mark sekarang benar: URL root (https://test.com/) → H active; URL ada path (https://test.com/about) → H inactive. Sebelumnya seed assign random.
 - API verified: root (www.gnu.org) isHomepage=true; path (en.wikipedia.org/wiki/Defacement) isHomepage=false. Browser: visible rows (root URLs) H active. Lint clean.
+
+---
+Task ID: AD1
+Agent: Main (Z.ai Code)
+Task: Login admin tersembunyi (route /#/admin, kredensial env) + dashboard promote onhold
+
+Work Log:
+- .env: tambah ADMIN_USERNAME=GadaLuBau, ADMIN_PASSWORD=slametwkw.
+- src/lib/auth.ts: adminCredentials(), adminToken() = sha256(user:pass), parseAdminCookie(), adminCookieOptions() (HttpOnly, 7d, SameSite=Lax), clearCookieOptions().
+- /api/auth/login (POST): cek username+password vs env, set httpOnly cookie. Wrong → 401.
+- /api/auth/logout (POST): clear cookie.
+- /api/auth/me (GET): {admin, username} dari cookie.
+- /api/admin/promote (POST {id}): admin-only, promote onhold→archived (pendingUntil null).
+- useHashRoute: tambah route 'admin' (hidden — nggak di nav).
+- views/admin-view.tsx: login form (kalau belum login) + dashboard (kalau login): header "Admin Dashboard · signed in as", list "Pending Review (On Hold)" + tombol Promote per record. SWR fetch /api/auth/me + /api/defacements?onhold=true.
+- page.tsx: render AdminView saat route=admin.
+
+Stage Summary:
+- Hidden admin login di /#/admin (nggak ada di nav/footer). Kredensial dari env: GadaLuBau / slametwkw.
+- Flow: buka /#/admin → login form → login (wrong → rejected, correct → dashboard). Dashboard: list onhold pending review + Promote (onhold→verified, count 62→61). Logout button.
+- Browser-verified: /#/admin login form render; login GadaLuBau/slametwkw → dashboard (hasDashboard/hasPending/hasSignedInAs true); Promote → onhold 62→61. API: wrong creds 401, correct 200 admin:true. Lint clean.
