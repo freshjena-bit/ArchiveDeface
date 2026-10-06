@@ -1,26 +1,18 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "zonedefacer",
-  "main": ".open-next/worker/index.js",
   "compatibility_date": "2025-05-01",
   "compatibility_flags": ["nodejs_compat"],
-  "assets": {
-    "directory": ".open-next/assets",
-    "binding": "ASSETS"
+  "pages_build_output_dir": ".open-next/assets",
+  "vars": {
+    "ADMIN_USERNAME": "GadaLuBau",
+    "ADMIN_PASSWORD": "slametwkw"
   },
-  // Cloudflare D1 (edge SQLite) — provision with:
-  //   npx wrangler d1 create zonedefacer
-  // then paste the returned database_id below.
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "zonedefacer",
-      "database_id": "073de13b-9465-4e51-8199-f82ae0864ff6",
-      "migrations_dir": "migrations"
+      "database_id": "REPLACE_WITH_YOUR_D1_DATABASE_ID"
     }
-  ],
-  "vars": {
-    "ADMIN_USERNAME": "GadaLuBau",
-    "ADMIN_PASSWORD": "slametwkw"
-  }
+  ]
 }
