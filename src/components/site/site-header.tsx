@@ -14,6 +14,7 @@ const NAV: { route: Route; hash: string; label: string }[] = [
   { route: 'onhold', hash: '#/onhold', label: 'On Hold' },
   { route: 'ranking', hash: '#/ranking', label: 'Ranking' },
   { route: 'submit', hash: '#/submit', label: 'Submit' },
+  { route: 'news', hash: '#/news', label: 'News' },
   { route: 'about', hash: '#/about', label: 'About' },
 ]
 

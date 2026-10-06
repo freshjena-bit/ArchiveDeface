@@ -58,3 +58,14 @@ model Stat {
   key       String   @unique
   value     Int      @default(0)
 }
+
+// News / announcements — only admins can post (see /api/news POST)
+model News {
+  id        String   @id @default(cuid())
+  title     String
+  body      String
+  author    String   // admin username who posted
+  pinned    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

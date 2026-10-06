@@ -177,7 +177,20 @@ async function main() {
     ],
   })
 
-  console.log(`Seeded ${totalDef} defacements across ${totalHackers} hackers.`)
+  // news / announcements — posted by the admin handle
+  await db.news.deleteMany()
+  const NEWS = [
+    { title: "Registry milestone: 400+ incidents archived", body: "The archive crossed 400 mirror-verified incidents this month. Thanks to every researcher who filed a responsible disclosure.", pinned: true },
+    { title: "New special-archive filter live", body: "Special archives now group incidents by domain pattern (*.gov.*, *.go.*, *.ac.*, *.edu.*). Browse them under Archive Special.", pinned: false },
+    { title: "On-hold verification window updated", body: "Fresh submissions are held for a 10-minute verification window before promotion to the verified archive. Admins can still promote manually.", pinned: false },
+    { title: "Team leaderboard + year filter", body: "Ranking now supports a Defacers / Teams toggle and per-year filtering. Switch modes from the Ranking page.", pinned: false },
+    { title: "Reminder: ethics first", body: "We log, mirror, and attribute — we do not exfiltrate, doxx, or sell. Submissions violating the charter are refused.", pinned: false },
+  ]
+  await db.news.createMany({
+    data: NEWS.map((n) => ({ ...n, author: "GadaLuBau" })),
+  })
+
+  console.log(`Seeded ${totalDef} defacements across ${totalHackers} hackers + ${NEWS.length} news.`)
 }
 
 main()

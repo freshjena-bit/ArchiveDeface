@@ -2,9 +2,10 @@
 
 import * as React from 'react'
 import useSWR, { useSWRConfig } from 'swr'
-import { Lock, LogOut, ShieldCheck, ArrowRight, Pause } from 'lucide-react'
+import { Lock, LogOut, ShieldCheck, ArrowRight, Pause, Newspaper, Trash2, Pin } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useToast } from '@/hooks/use-toast'
@@ -13,6 +14,15 @@ import { DefacementMarks } from '@/components/site/marks'
 import type { Defacement } from '@/lib/types'
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
+
+type NewsItem = {
+  id: string
+  title: string
+  body: string
+  author: string
+  pinned: boolean
+  createdAt: string
+}
 
 export function AdminView() {
   const { toast } = useToast()
@@ -25,6 +35,12 @@ export function AdminView() {
   const [password, setPassword] = React.useState('')
   const [loggingIn, setLoggingIn] = React.useState(false)
   const [promoting, setPromoting] = React.useState<string | null>(null)
+  // news posting
+  const [newsTitle, setNewsTitle] = React.useState('')
+  const [newsBody, setNewsBody] = React.useState('')
+  const [newsPinned, setNewsPinned] = React.useState(false)
+  const [postingNews, setPostingNews] = React.useState(false)
+  const [deletingNews, setDeletingNews] = React.useState<string | null>(null)
 
   // onhold records pending manual review (admin can promote them)
   const { data: onholdData, isLoading: onholdLoading } = useSWR<{ items: Defacement[]; total: number }>(
@@ -33,6 +49,14 @@ export function AdminView() {
     { refreshInterval: 30000 }
   )
   const onhold = onholdData?.items ?? []
+
+  // news list (admin can manage)
+  const { data: newsData, isLoading: newsLoading } = useSWR<{ items: NewsItem[] }>(
+    '/api/news',
+    fetcher,
+    { refreshInterval: 60000 }
+  )
+  const news = newsData?.items ?? []
 
   const onLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -78,6 +102,48 @@ export function AdminView() {
       toast({ title: 'Promote failed', description: (err as Error).message, variant: 'destructive' })
     } finally {
       setPromoting(null)
+    }
+  }
+
+  const onPostNews = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newsTitle.trim() || !newsBody.trim()) {
+      toast({ title: 'Missing fields', description: 'Title and body required', variant: 'destructive' })
+      return
+    }
+    setPostingNews(true)
+    try {
+      const res = await fetch('/api/news', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: newsTitle, body: newsBody, pinned: newsPinned }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.ok) throw new Error(data.error || 'post failed')
+      toast({ title: 'News posted', description: 'Published to /news' })
+      setNewsTitle('')
+      setNewsBody('')
+      setNewsPinned(false)
+      await mutate('/api/news')
+    } catch (err) {
+      toast({ title: 'Post failed', description: (err as Error).message, variant: 'destructive' })
+    } finally {
+      setPostingNews(false)
+    }
+  }
+
+  const onDeleteNews = async (id: string) => {
+    setDeletingNews(id)
+    try {
+      const res = await fetch(`/api/news/${id}`, { method: 'DELETE' })
+      const data = await res.json()
+      if (!res.ok || !data.ok) throw new Error(data.error || 'delete failed')
+      toast({ title: 'News deleted' })
+      await mutate('/api/news')
+    } catch (err) {
+      toast({ title: 'Delete failed', description: (err as Error).message, variant: 'destructive' })
+    } finally {
+      setDeletingNews(null)
     }
   }
 
@@ -212,6 +278,97 @@ export function AdminView() {
                   <ArrowRight className="h-3 w-3" />
                   {promoting === d.id ? 'promoting…' : 'Promote'}
                 </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* post news — admin only */}
+      <div className="mb-3 mt-8 flex items-center gap-2">
+        <Newspaper className="h-4 w-4 text-primary" />
+        <h2 className="font-mono text-sm font-bold uppercase tracking-wider">Post News</h2>
+      </div>
+      <form onSubmit={onPostNews} className="mb-6 rounded-md border border-border/70 bg-card/40 p-4">
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <Label className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Title</Label>
+            <Input
+              value={newsTitle}
+              onChange={(e) => setNewsTitle(e.target.value)}
+              placeholder="News headline…"
+              className="h-9 font-mono text-xs"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Body</Label>
+            <Textarea
+              value={newsBody}
+              onChange={(e) => setNewsBody(e.target.value)}
+              rows={4}
+              placeholder="News content…"
+              className="font-mono text-xs"
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <label className="inline-flex cursor-pointer items-center gap-2 font-mono text-[11px] text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={newsPinned}
+                onChange={(e) => setNewsPinned(e.target.checked)}
+                className="h-3.5 w-3.5 accent-[var(--color-primary)]"
+              />
+              <Pin className="h-3 w-3" />
+              Pin to top
+            </label>
+            <Button type="submit" disabled={postingNews} className="gap-1.5 font-mono text-xs uppercase">
+              <Newspaper className="h-3.5 w-3.5" />
+              {postingNews ? 'posting…' : 'Publish'}
+            </Button>
+          </div>
+        </div>
+      </form>
+
+      {/* manage news — admin only */}
+      <div className="mb-3 flex items-center gap-2">
+        <Newspaper className="h-4 w-4 text-primary" />
+        <h2 className="font-mono text-sm font-bold uppercase tracking-wider">Manage News</h2>
+        <span className="rounded-sm bg-primary/10 px-1.5 py-0.5 font-mono text-[10px] text-primary">
+          {news.length}
+        </span>
+      </div>
+      {newsLoading ? (
+        <Skeleton className="h-24 w-full" />
+      ) : news.length === 0 ? (
+        <div className="rounded-md border border-border/70 bg-card/40 px-4 py-8 text-center font-mono text-xs text-muted-foreground">
+          no news yet
+        </div>
+      ) : (
+        <div className="overflow-hidden rounded-md border border-border/70 bg-card/40">
+          <div className="divide-y divide-border/40">
+            {news.map((n) => (
+              <div key={n.id} className="flex items-start gap-3 px-4 py-3">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    {n.pinned && <Pin className="h-3 w-3 shrink-0 text-primary" />}
+                    <span className="truncate font-mono text-xs font-semibold text-foreground">{n.title}</span>
+                  </div>
+                  <div className="mt-0.5 line-clamp-2 font-mono text-[10px] text-muted-foreground">
+                    {n.body}
+                  </div>
+                  <div className="mt-1 font-mono text-[9px] text-muted-foreground/60">
+                    {n.author} · {timeAgo(n.createdAt)}
+                  </div>
+                </div>
+                <button
+                  onClick={() => onDeleteNews(n.id)}
+                  disabled={deletingNews === n.id}
+                  className="grid h-7 w-7 shrink-0 place-items-center rounded-sm border border-border/50 text-muted-foreground transition-colors hover:border-destructive/50 hover:text-destructive"
+                  title="Delete news"
+                  aria-label="Delete news"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
               </div>
             ))}
           </div>

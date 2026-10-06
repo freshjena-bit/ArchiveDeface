@@ -643,3 +643,23 @@ Stage Summary:
 - App sekarang deployable ke Cloudflare Pages. Build: `bun run deploy:cf`. Local dev (`bun run dev`) tetap pakai SQLite file — UNCHANGED, verified.
 - Browser-verified: home renders, stats hasStats=true. API smoke: defacements total:360 (verified), stats totalDefacements:421, leaderboard handle n0vakane. Lint clean.
 - Catatan: DB di Cloudflare = D1 (perlu user provision `npx wrangler d1 create` + paste database_id ke wrangler.jsonc + `bun run db:d1:apply`). Tidak bisa di-test runtime Cloudflare dari sandbox ini (butuh akun CF).
+
+---
+Task ID: NW1-NW7
+Agent: Main (Z.ai Code)
+Task: News feature (public list + admin-only post/delete)
+
+Work Log:
+- Prisma schema: tambah model News {id, title, body, author, pinned, createdAt, updatedAt}. db:push.
+- Seed: tambah 5 news items (author GadaLuBau, 1 pinned). Reseed.
+- /api/news (GET public list pinned-first; POST create admin-only, author=admin username, pinned optional).
+- /api/news/[id] (DELETE admin-only).
+- useHashRoute + nav + footer: tambah 'News' route.
+- views/news-view.tsx: News page — list artikel (title/body/author/date, pinned badge, Newspaper icon).
+- views/admin-view.tsx: tambah Post News form (title + body + pin checkbox + Publish) + Manage News list (delete button per item).
+- page.tsx: render NewsView saat route=news.
+- Restart dev server (setsid) supaya load Prisma client fresh (News model).
+
+Stage Summary:
+- News feature: halaman /#/news (public list) + admin dashboard (post/delete, admin-only).
+- Browser-verified: News page render 5 seeded + 1 admin-posted (hasTestNews=true); admin dashboard has Post News + Manage News; POST /api/news 200 (auth), 401 (unauth); posted news muncul di /#/news. Lint clean.

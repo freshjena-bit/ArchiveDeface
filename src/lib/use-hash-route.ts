@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 
-export type Route = 'home' | 'archive' | 'special' | 'onhold' | 'ranking' | 'submit' | 'about' | 'defacer' | 'team' | 'admin'
+export type Route = 'home' | 'archive' | 'special' | 'onhold' | 'ranking' | 'submit' | 'about' | 'defacer' | 'team' | 'admin' | 'news'
 
 const HEAD_MAP: Record<string, Route> = {
   '': 'home',
@@ -15,6 +15,7 @@ const HEAD_MAP: Record<string, Route> = {
   defacer: 'defacer',
   team: 'team',
   admin: 'admin',
+  news: 'news',
 }
 
 function parse(): { route: Route; param: string | null } {

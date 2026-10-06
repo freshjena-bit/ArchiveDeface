@@ -30,6 +30,7 @@ export function SiteFooter() {
             <a href="#/onhold" className="text-muted-foreground hover:text-primary">On Hold</a>
             <a href="#/ranking" className="text-muted-foreground hover:text-primary">Ranking</a>
             <a href="#/submit" className="text-muted-foreground hover:text-primary">Submit</a>
+            <a href="#/news" className="text-muted-foreground hover:text-primary">News</a>
             <a href="#/about" className="text-muted-foreground hover:text-primary">About</a>
           </nav>
 
