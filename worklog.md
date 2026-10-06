@@ -199,3 +199,18 @@ Stage Summary:
 - Tanda HMRLS tampil di archive table, home recent, mirror viewer. S = bintang ★ di kotak.
 - Browser-verified: API return marks (isHomepage/isMass/isRedeface/isSpecial); archive table 25 rows × 5 boxes (69 active, 8 filled stars); Marks column header + legend; mirror viewer MARKS row (H M R L boxes + legend).
 - Lint clean (0 error). Dev server sehat.
+
+---
+Task ID: RM1
+Agent: Main (Z.ai Code)
+Task: Hapus tanda L (location) karena country sudah tampil
+
+Work Log:
+- marks.tsx: hapus Box L + hapus hasLocation dari Marks type. Sekarang 4 kotak: H M R S (S=star).
+- archive-table.tsx: hapus hasLocation dari marks prop + hapus "L location" dari legend.
+- mirror-viewer.tsx: hapus hasLocation dari marks prop + hapus "L location" dari legend inline.
+- home-recent.tsx: hapus hasLocation dari marks prop.
+
+Stage Summary:
+- Tanda sekarang H M R S (4 kotak) di archive table, home recent, mirror viewer. Country tetap tampil di kolom tersendiri.
+- Browser-verified: 4 mark boxes per row (Homepage defaced / Mass deface / Redeface / Special archive). Lint clean.

@@ -93,7 +93,7 @@ export function MirrorViewer({
           </Meta>
         </div>
 
-        {/* marks row: H M R L S */}
+        {/* marks row: H M R S */}
         <div className="flex items-center gap-2 border-b border-border/70 bg-background/40 px-4 py-2">
           <span className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
             marks
@@ -103,12 +103,11 @@ export function MirrorViewer({
               isHomepage: d.isHomepage,
               isMass: d.isMass,
               isRedeface: d.isRedeface,
-              hasLocation: !!d.country,
               isSpecial: d.isSpecial,
             }}
           />
           <span className="ml-auto hidden font-mono text-[9px] text-muted-foreground/60 sm:inline">
-            H homepage · M mass · R redeface · L location · S special
+            H homepage · M mass · R redeface · S special
           </span>
         </div>
 

@@ -8,7 +8,6 @@ export type Marks = {
   isHomepage?: boolean // H
   isMass?: boolean // M
   isRedeface?: boolean // R
-  hasLocation?: boolean // L (country identified)
   isSpecial?: boolean // S (star)
 }
 
@@ -44,7 +43,7 @@ export function DefacementMarks({
   marks: Marks
   className?: string
 }) {
-  const { isHomepage, isMass, isRedeface, hasLocation, isSpecial } = marks
+  const { isHomepage, isMass, isRedeface, isSpecial } = marks
   return (
     <span className={cn('inline-flex items-center gap-1', className)}>
       <Box active={!!isHomepage} title="Homepage defaced">
@@ -55,9 +54,6 @@ export function DefacementMarks({
       </Box>
       <Box active={!!isRedeface} title="Redeface">
         R
-      </Box>
-      <Box active={!!hasLocation} title="Location identified">
-        L
       </Box>
       <Box active={!!isSpecial} title="Special archive">
         <Star className="h-2.5 w-2.5" fill={isSpecial ? 'currentColor' : 'none'} />

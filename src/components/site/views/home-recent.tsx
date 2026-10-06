@@ -107,7 +107,6 @@ export function HomeRecent({ onViewAll }: { onViewAll: () => void }) {
                             isHomepage: d.isHomepage,
                             isMass: d.isMass,
                             isRedeface: d.isRedeface,
-                            hasLocation: !!d.country,
                             isSpecial: d.isSpecial,
                           }}
                         />

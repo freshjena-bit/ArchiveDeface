@@ -184,7 +184,6 @@ export function ArchiveTable() {
           <span><span className="text-primary">H</span> homepage</span>
           <span><span className="text-primary">M</span> mass deface</span>
           <span><span className="text-primary">R</span> redeface</span>
-          <span><span className="text-primary">L</span> location</span>
           <span><span className="text-primary">★</span> special</span>
         </div>
 
@@ -307,14 +306,13 @@ function Row({ d, index, onOpen }: { d: Defacement; index: number; onOpen: (d: D
         </span>
       </td>
 
-      {/* marks: H M R L S */}
+      {/* marks: H M R S */}
       <td className="px-2 py-2.5 align-middle">
         <DefacementMarks
           marks={{
             isHomepage: d.isHomepage,
             isMass: d.isMass,
             isRedeface: d.isRedeface,
-            hasLocation: !!d.country,
             isSpecial: d.isSpecial,
           }}
         />
