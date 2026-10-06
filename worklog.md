@@ -559,3 +559,16 @@ Work Log:
 Stage Summary:
 - Metadata mirror viewer sekarang ringkas: Timestamp · Domain · Notifier · Team · Country · Category (value rose-400 untuk Domain/Notifier/Team).
 - Browser-verified: hasTimestamp/Domain/Notifier/Team/Country/Category=true; hasWebServer/IP/Severity/Marks=false. Lint clean.
+
+---
+Task ID: MK+SC1
+Agent: Main (Z.ai Code)
+Task: Kembalikan marks di mirror viewer + fix scroll mobile
+
+Work Log:
+- mirror-viewer.tsx: kembalikan marks row (H M R S) di metadata panel (border-top).
+- DialogContent: overflow-hidden → max-h-[88vh] overflow-y-auto supaya dialog scrollable di mobile/hp (konten tinggi — metadata + screenshot image — bisa digeser ke bawah).
+
+Stage Summary:
+- Marks (H M R S) tetap di mirror viewer metadata panel.
+- Dialog mirror viewer sekarang scrollable di mobile (scrollHeight 879 > clientHeight 702, scrollable=true, scrollTop berubah, screenshot img visible setelah scroll). Lint clean.

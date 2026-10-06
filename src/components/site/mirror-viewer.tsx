@@ -95,7 +95,7 @@ export function MirrorViewer({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl gap-0 overflow-hidden p-0">
+      <DialogContent className="max-h-[88vh] max-w-2xl gap-0 overflow-y-auto p-0">
         {/* toolbar */}
         <div className="flex items-center justify-between border-b border-border/70 bg-muted/40 px-4 py-2">
           <DialogHeader className="space-y-0">
@@ -121,6 +121,18 @@ export function MirrorViewer({
                 <span className="min-w-0 flex-1 truncate text-[12px]">{r.value}</span>
               </div>
             ))}
+          </div>
+          {/* marks */}
+          <div className="mt-2 flex items-center gap-2 border-t border-border/40 pt-2">
+            <span className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">marks</span>
+            <DefacementMarks
+              marks={{
+                isHomepage: d.isHomepage,
+                isMass: d.isMass,
+                isRedeface: d.isRedeface,
+                isSpecial: d.isSpecial,
+              }}
+            />
           </div>
         </div>
 
