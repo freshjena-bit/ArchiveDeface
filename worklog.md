@@ -623,3 +623,23 @@ Stage Summary:
 - Hidden admin login di /#/admin (nggak ada di nav/footer). Kredensial dari env: GadaLuBau / slametwkw.
 - Flow: buka /#/admin → login form → login (wrong → rejected, correct → dashboard). Dashboard: list onhold pending review + Promote (onhold→verified, count 62→61). Logout button.
 - Browser-verified: /#/admin login form render; login GadaLuBau/slametwkw → dashboard (hasDashboard/hasPending/hasSignedInAs true); Promote → onhold 62→61. API: wrong creds 401, correct 200 admin:true. Lint clean.
+
+---
+Task ID: CF1-CF7
+Agent: Main (Z.ai Code)
+Task: Deployable di Cloudflare Pages (OpenNext + D1 dual-mode DB)
+
+Work Log:
+- Install: @opennextjs/cloudflare@1.20.8, wrangler@4.147.0 (dev), @prisma/adapter-d1@7.10.0 (runtime).
+- src/lib/db.ts rewrite: dual-mode. `db` = local SQLite singleton (dev/scripts). `getDb()` async: coba getCloudflareContext() (Cloudflare) → PrismaClient dgn @prisma/adapter-d1 + env.DB binding; fallback ke local SQLite. Cache _isCf supaya lokal dev cepat.
+- Refactor 7 API routes (defacements, stats, leaderboard, submit, defacer, team, admin/promote) + src/lib/promote.ts: `import { db }` → `import { getDb }`, `const db = await getDb()` di awal handler.
+- open-next.config.ts: OpenNext build config (node wrapper).
+- wrangler.jsonc: name deface-archive, main .open-next/worker/index.js, compatibility_date 2025-05-01, flag nodejs_compat, assets binding, D1 binding DB (database_id placeholder), vars ADMIN_USERNAME/ADMIN_PASSWORD.
+- migrations/0001_init.sql: D1 schema generated via `prisma migrate diff --from-empty --to-schema-datamodel --script`.
+- package.json scripts: build:cf (opennextjs-cloudflare build), preview:cf, deploy:cf, db:d1:apply (remote), db:d1:apply:local, db:d1:seed.
+- DEPLOY.md: instruksi provision D1, apply schema, build/deploy, preview, dual-mode DB explanation.
+
+Stage Summary:
+- App sekarang deployable ke Cloudflare Pages. Build: `bun run deploy:cf`. Local dev (`bun run dev`) tetap pakai SQLite file — UNCHANGED, verified.
+- Browser-verified: home renders, stats hasStats=true. API smoke: defacements total:360 (verified), stats totalDefacements:421, leaderboard handle n0vakane. Lint clean.
+- Catatan: DB di Cloudflare = D1 (perlu user provision `npx wrangler d1 create` + paste database_id ke wrangler.jsonc + `bun run db:d1:apply`). Tidak bisa di-test runtime Cloudflare dari sandbox ini (butuh akun CF).
