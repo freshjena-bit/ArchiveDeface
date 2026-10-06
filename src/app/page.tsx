@@ -11,6 +11,7 @@ import { RankingView } from '@/components/site/views/ranking-view'
 import { SubmitView } from '@/components/site/views/submit-view'
 import { AboutView } from '@/components/site/views/about-view'
 import { DefacerView } from '@/components/site/views/defacer-view'
+import { TeamView } from '@/components/site/views/team-view'
 import { useHashRoute } from '@/lib/use-hash-route'
 
 export default function Home() {
@@ -33,6 +34,7 @@ export default function Home() {
         {route === 'submit' && <SubmitView />}
         {route === 'about' && <AboutView />}
         {route === 'defacer' && param && <DefacerView handle={param} />}
+        {route === 'team' && param && <TeamView name={param} />}
       </main>
       <SiteFooter />
     </div>

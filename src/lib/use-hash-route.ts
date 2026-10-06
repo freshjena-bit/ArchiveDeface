@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 
-export type Route = 'home' | 'archive' | 'special' | 'onhold' | 'ranking' | 'submit' | 'about' | 'defacer'
+export type Route = 'home' | 'archive' | 'special' | 'onhold' | 'ranking' | 'submit' | 'about' | 'defacer' | 'team'
 
 const HEAD_MAP: Record<string, Route> = {
   '': 'home',
@@ -13,6 +13,7 @@ const HEAD_MAP: Record<string, Route> = {
   submit: 'submit',
   about: 'about',
   defacer: 'defacer',
+  team: 'team',
 }
 
 function parse(): { route: Route; param: string | null } {
@@ -22,7 +23,10 @@ function parse(): { route: Route; param: string | null } {
   const parts = h.split('/').filter(Boolean)
   const head = parts[0] ?? ''
   const route = HEAD_MAP[head] ?? 'home'
-  const param = route === 'defacer' ? decodeURIComponent(parts[1] ?? '') || null : null
+  const param =
+    route === 'defacer' || route === 'team'
+      ? decodeURIComponent(parts[1] ?? '') || null
+      : null
   return { route, param }
 }
 

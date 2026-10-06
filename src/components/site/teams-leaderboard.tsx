@@ -9,7 +9,7 @@ export type TeamEntry = { team: string; members: number; totalHits: number; rank
 
 // deterministic accent color per team name
 const COLORS = ['#22c55e', '#eab308', '#ef4444', '#06b6d4', '#a855f7', '#f97316', '#14b8a6', '#ec4899', '#84cc16', '#fb923c']
-function teamColor(name: string) {
+export function teamColor(name: string) {
   let h = 0
   for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0
   return COLORS[h % COLORS.length]
@@ -58,9 +58,12 @@ export function TeamsLeaderboard({ items, isLoading }: { items: TeamEntry[]; isL
                     >
                       {i === 0 ? <Crown className="h-3.5 w-3.5 text-amber-400" /> : `#${i + 1}`}
                     </span>
-                    <span className="truncate font-mono text-xs font-bold text-foreground">
+                    <a
+                      href={`#/team/${encodeURIComponent(t.team)}`}
+                      className="truncate font-mono text-xs font-bold text-foreground hover:text-primary"
+                    >
                       {t.team}
-                    </span>
+                    </a>
                   </div>
                   <div className="truncate font-mono text-[10px] text-muted-foreground">
                     {t.members} member{t.members === 1 ? '' : 's'}
@@ -111,9 +114,12 @@ export function TeamsLeaderboard({ items, isLoading }: { items: TeamEntry[]; isL
                     >
                       {t.team.slice(0, 2)}
                     </span>
-                    <span className="truncate font-mono text-[11px] font-semibold text-foreground">
+                    <a
+                      href={`#/team/${encodeURIComponent(t.team)}`}
+                      className="truncate font-mono text-[11px] font-semibold text-foreground hover:text-primary"
+                    >
                       {t.team}
-                    </span>
+                    </a>
                   </div>
                   <div className="col-span-3 flex items-center justify-end gap-1.5 font-mono text-[11px] text-muted-foreground tabular-nums">
                     <Users className="h-3 w-3" />

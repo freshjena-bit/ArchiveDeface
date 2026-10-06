@@ -355,3 +355,19 @@ Stage Summary:
 - Ranking page ada year selector (All Time + tahun-tahun dari data) untuk Defacers & Teams.
 - Browser-verified: selector render (All Time + 2026); Teams mode PHANTOM CREW 99 (2026); API year=2025 → items:[] (empty), year=2026 → data (d4rkw0lf...). All Time = 2026 di UI karena semua seed data di 2026.
 - Lint clean.
+
+---
+Task ID: T1-T6
+Agent: Main (Z.ai Code)
+Task: Halaman profil team (sama kayak defacer profile)
+
+Work Log:
+- use-hash-route.ts: tambah route 'team' + param (decode untuk nama team yg ada spasi).
+- /api/team?name=: endpoint baru — cari hacker dengan team=name, defacement where attackerId in ids. Return team {name,members,totalHits}, memberList (handle/country/color/totalHits), counts {total,special,onhold,archived,restored,mass,redeface,homepage}, items (200 terbaru).
+- team-view.tsx (baru): mirror DefacerView — header (team avatar via teamColor deterministik, nama, member count, total incidents), member list (chip clickable ke defacer profile), 8 stat cards, filter Verified/On Hold (default Verified), tabel defacement team (kolom #/Defacer/Target/Cat/Country/Status/Marks/Date/View), row clickable buka mirror viewer. Skeleton + not-found state.
+- page.tsx: render TeamView saat route=team & param ada.
+- teams-leaderboard.tsx: export teamColor; podium + table row team name jadi clickable → /#/team/<encoded>.
+
+Stage Summary:
+- Halaman profil team /#/team/<name> — sama kayak defacer profile: stat cards (Total Archive/Special/On Hold/Mass/Redeface/Homepage/Archived/Restored) + filter Verified/On Hold + tabel arsip team + member list.
+- Browser-verified: Ranking→Teams→klik OUTLAWS → /#/team/OUTLAWS, stat cards (Total Archive 116, Special 047, Onhold 012...), member list, Verified/On Hold filter (On Hold → 12 rows all onhold). Lint clean.
