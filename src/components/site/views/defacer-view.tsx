@@ -59,7 +59,7 @@ export function DefacerView({ handle }: { handle: string }) {
     { refreshInterval: 30000 }
   )
   const [selected, setSelected] = React.useState<Defacement | null>(null)
-  const [filter, setFilter] = React.useState<'all' | 'verified' | 'onhold'>('all')
+  const [filter, setFilter] = React.useState<'verified' | 'onhold'>('verified')
 
   if (isLoading) return <DefacerSkeleton />
   if (error || !data || !data.ok) {
@@ -83,9 +83,9 @@ export function DefacerView({ handle }: { handle: string }) {
   const h = data.hacker
   const c = data.counts
 
-  // client-side filter: all / verified / onhold
+  // client-side filter: verified (exclude onhold) / onhold only
   const filteredItems = data.items.filter((d) =>
-    filter === 'all' ? true : filter === 'onhold' ? d.status === 'onhold' : d.status !== 'onhold'
+    filter === 'onhold' ? d.status === 'onhold' : d.status !== 'onhold'
   )
 
   const statCards = [
@@ -196,10 +196,9 @@ export function DefacerView({ handle }: { handle: string }) {
             {filteredItems.length}
           </span>
         </div>
-        {/* status filter: all / verified / onhold */}
+        {/* status filter: verified / onhold */}
         <div className="flex items-center gap-1.5 overflow-x-auto thin-scroll pb-1">
           {([
-            { key: 'all', label: 'All', count: c.total },
             { key: 'verified', label: 'Verified', count: c.archived + c.restored },
             { key: 'onhold', label: 'On Hold', count: c.onhold },
           ] as const).map((f) => (

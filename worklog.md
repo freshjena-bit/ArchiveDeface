@@ -329,3 +329,14 @@ Work Log:
 Stage Summary:
 - Profil defacer (#/defacer/<handle>) sekarang ada filter All/Verified/On Hold. User bisa lihat record onhold-nya khusus.
 - Browser-verified: d4rkw0lf → ALL·40, VERIFIED·34, ON HOLD·6; klik On Hold → 6 rows semua onhold (allOnhold:true). Lint clean.
+
+---
+Task ID: DA1
+Agent: Main (Z.ai Code)
+Task: Hapus filter "All" di profil defacer, sisain Verified + On Hold
+
+Work Log:
+- defacer-view.tsx: filter type jadi 'verified'|'onhold', default 'verified'. Hapus opsi "All" dari tabs. filteredItems: onhold=status onhold, else (verified)=status!=onhold.
+
+Stage Summary:
+- Profil defacer filter sekarang cuma Verified + On Hold (default Verified). Browser-verified: VERIFIED·34 (default, 34 rows), ON HOLD·6. Lint clean.
