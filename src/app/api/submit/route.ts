@@ -114,14 +114,8 @@ export async function POST(req: NextRequest) {
       const url = list[i]
       const page = pages[i]
       const meta = deriveMeta(url)
-      // H — homepage defaced if the URL has no path (or just "/")
-      let isHomepage = true
-      try {
-        const u = new URL(url)
-        isHomepage = u.pathname === '/' || u.pathname === ''
-      } catch {
-        isHomepage = true
-      }
+      // H — homepage defaced only when the URL targets the root (no path)
+      const isHomepage = meta.isHomepage
       // R — redeface if this target URL was already archived before
       const prior = await db.defacement.findFirst({
         where: { targetUrl: url },

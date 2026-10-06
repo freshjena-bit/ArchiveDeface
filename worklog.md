@@ -588,3 +588,17 @@ Work Log:
 Stage Summary:
 - Kolom CAT (category) dihapus dari: archive table, home recent, defacer profile, team profile. Field Category dihapus dari mirror viewer metadata.
 - Browser-verified: archive hasCatHeader=false; mirror viewer hasCategory=false (marks + country tetap). Lint clean.
+
+---
+Task ID: H1
+Agent: Main (Z.ai Code)
+Task: Fix isHomepage (H mark) — root URL = homepage, path URL = bukan homepage
+
+Work Log:
+- site.ts deriveMeta: tambah isHomepage (pathname === '' || '/'). Return type tambah isHomepage:boolean.
+- seed.ts: REAL_TARGETS tambah 5 path URL (wikipedia.org/wiki/Defacement, iana.org/domains/reserved, archive.org/details/softwarelibrary, mit.edu/admissions-aid/, stanford.edu/about/). deriveMarks signature +param isHomepage (pakai meta.isHomepage, bukan random 0.72). Loop pass meta.isHomepage.
+- /api/submit: isHomepage = meta.isHomepage (ganti inline logic).
+
+Stage Summary:
+- H (Homepage) mark sekarang benar: URL root (https://test.com/) → H active; URL ada path (https://test.com/about) → H inactive. Sebelumnya seed assign random.
+- API verified: root (www.gnu.org) isHomepage=true; path (en.wikipedia.org/wiki/Defacement) isHomepage=false. Browser: visible rows (root URLs) H active. Lint clean.

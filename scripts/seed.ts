@@ -35,6 +35,12 @@ const REAL_TARGETS = [
   "https://www.stanford.edu",
   "https://www.berkeley.edu",
   "https://www.cam.ac.uk",
+  // a few sub-page targets (path → NOT homepage, to exercise the H mark)
+  "https://en.wikipedia.org/wiki/Defacement",
+  "https://www.iana.org/domains/reserved",
+  "https://archive.org/details/softwarelibrary",
+  "https://www.mit.edu/admissions-aid/",
+  "https://www.stanford.edu/about/",
 ]
 
 const HACKERS = [
@@ -88,12 +94,12 @@ function rand<T>(arr: T[]): T {
 }
 
 // derive the H/M/R/S marks for a seeded record
-function deriveMarks(category: string, _severity: string) {
+function deriveMarks(category: string, _severity: string, isHomepage: boolean) {
   // S — special = domain matches a special-archive pattern (gov / edu category,
   // which covers *.gov.*, *.go.*, *.ac.*, *.edu.*). NOT severity-based.
   const isSpecial = category === 'gov' || category === 'edu'
   return {
-    isHomepage: Math.random() < 0.72, // H — most hit the homepage
+    isHomepage, // H — true only when the URL targets the root (no path)
     isMass: Math.random() < 0.35, // M — part of a mass campaign
     isRedeface: Math.random() < 0.12, // R — re-defaced after a prior incident
     isSpecial, // S
@@ -146,7 +152,7 @@ async function main() {
         return r < 0.6 ? "archived" : r < 0.85 ? "restored" : "onhold"
       })(),
       severity,
-      ...deriveMarks(meta.category, severity),
+      ...deriveMarks(meta.category, severity, meta.isHomepage),
       createdAt,
     })
   }

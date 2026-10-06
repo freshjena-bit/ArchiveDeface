@@ -104,16 +104,20 @@ export function deriveMeta(url: string): {
   severity: 'low' | 'medium' | 'high' | 'critical'
   targetName: string
   specialDomain: 'gov' | 'go' | 'ac' | 'edu' | null
+  isHomepage: boolean
 } {
   let host = ''
   let path = ''
+  let pathname = ''
   try {
     const u = new URL(url.trim())
     host = u.hostname.toLowerCase()
+    pathname = u.pathname
     path = (u.pathname + u.search).toLowerCase()
   } catch {
     // not a valid URL — try to grab the host-ish chunk
     host = url.trim().toLowerCase().replace(/^[a-z]+:\/\//, '').split('/')[0] || url.trim()
+    pathname = '/' + url.trim().replace(/^[a-z]+:\/\//, '').split('/').slice(1).join('/')
   }
   const parts = host.split('.')
   const last = parts[parts.length - 1]
@@ -131,5 +135,8 @@ export function deriveMeta(url: string): {
 
   const targetName = host || url
   const specialDomain = matchSpecialDomain(url)
-  return { country, category, severity: 'medium', targetName, specialDomain }
+  // H — homepage defaced only when the URL targets the root (no real path).
+  // https://test.com/ → homepage; https://test.com/about → not homepage.
+  const isHomepage = pathname === '' || pathname === '/'
+  return { country, category, severity: 'medium', targetName, specialDomain, isHomepage }
 }
