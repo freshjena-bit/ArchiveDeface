@@ -25,10 +25,10 @@ export default function Home() {
         {/* main 2-column: archive table + sidebar */}
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
           <div className="grid gap-5 lg:grid-cols-12">
-            <div className="lg:col-span-8">
+            <div className="min-w-0 lg:col-span-8">
               <ArchiveTable />
             </div>
-            <div className="lg:col-span-4">
+            <div className="min-w-0 lg:col-span-4">
               <Sidebar />
             </div>
           </div>

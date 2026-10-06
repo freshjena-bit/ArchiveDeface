@@ -4,7 +4,7 @@ import * as React from 'react'
 import useSWR from 'swr'
 import { motion } from 'framer-motion'
 import {
-  Search, ExternalLink, ChevronsUpDown, RotateCcw, ShieldCheck,
+  Search, ExternalLink, ChevronsUpDown,
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -65,7 +65,7 @@ export function ArchiveTable() {
             {total}
           </span>
         </div>
-        <div className="flex items-center gap-1.5 overflow-x-auto thin-scroll">
+        <div className="flex items-center gap-1.5 overflow-x-auto thin-scroll pb-1">
           <button
             onClick={() => setCategory('')}
             className={`shrink-0 rounded-sm px-2 py-1 font-mono text-[10px] uppercase tracking-wider transition-colors ${
@@ -103,36 +103,48 @@ export function ArchiveTable() {
         />
       </div>
 
-      {/* table */}
+      {/* table — horizontally scrollable on small screens */}
       <div className="overflow-hidden rounded-md border border-border/70 bg-card/40">
-        {/* head */}
-        <div className="hidden grid-cols-12 gap-2 border-b border-border/70 bg-muted/40 px-3 py-2 font-mono text-[10px] uppercase tracking-wider text-muted-foreground sm:grid">
-          <div className="col-span-1">#</div>
-          <div className="col-span-3">Defacer</div>
-          <div className="col-span-4">Target</div>
-          <div className="col-span-2">Country</div>
-          <div className="col-span-2">Date</div>
-        </div>
-        <div className="hidden grid-cols-12 gap-2 border-b border-border/70 bg-muted/40 px-3 py-2 font-mono text-[10px] uppercase tracking-wider text-muted-foreground lg:grid">
-          <div className="col-span-1">#</div>
-          <div className="col-span-3">Defacer</div>
-          <div className="col-span-4">Target</div>
-          <div className="col-span-1">Cat</div>
-          <div className="col-span-2">Country</div>
-          <div className="col-span-1 text-right">View</div>
+        <div className="overflow-x-auto thin-scroll">
+          <table className="w-full min-w-[720px] border-collapse text-left">
+            <thead>
+              <tr className="border-b border-border/70 bg-muted/40 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                <th className="w-10 px-3 py-2 text-center">#</th>
+                <th className="px-2 py-2 font-medium">Defacer</th>
+                <th className="px-2 py-2 font-medium">Target</th>
+                <th className="w-16 px-2 py-2 font-medium">Cat</th>
+                <th className="w-28 px-2 py-2 font-medium">Country</th>
+                <th className="w-36 px-2 py-2 font-medium">Date</th>
+                <th className="w-12 px-2 py-2 text-center font-medium">View</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/40">
+              {isLoading
+                ? Array.from({ length: 12 }).map((_, i) => (
+                    <tr key={i}>
+                      <td colSpan={7} className="px-3 py-2.5">
+                        <Skeleton className="h-4 w-full" />
+                      </td>
+                    </tr>
+                  ))
+                : !data?.items?.length
+                ? (
+                  <tr>
+                    <td colSpan={7}>
+                      <EmptyRow />
+                    </td>
+                  </tr>
+                )
+                : data.items.map((d, i) => (
+                    <Row key={d.id} d={d} index={i + page * pageSize} onOpen={setSelected} />
+                  ))}
+            </tbody>
+          </table>
         </div>
 
-        {/* rows */}
-        <div className="divide-y divide-border/40">
-          {isLoading
-            ? Array.from({ length: 12 }).map((_, i) => (
-                <div key={i} className="px-3 py-2.5">
-                  <Skeleton className="h-4 w-full" />
-                </div>
-              ))
-            : !data?.items?.length
-            ? <EmptyRow />
-            : data.items.map((d, i) => <Row key={d.id} d={d} index={i + page * pageSize} onOpen={setSelected} />)}
+        {/* hint on mobile */}
+        <div className="border-t border-border/40 bg-muted/20 px-3 py-1 text-center font-mono text-[9px] uppercase tracking-wider text-muted-foreground/60 sm:hidden">
+          ← swipe to see all columns →
         </div>
 
         {/* footer / pagination */}
@@ -180,44 +192,50 @@ export function ArchiveTable() {
 function Row({ d, index, onOpen }: { d: Defacement; index: number; onOpen: (d: Defacement) => void }) {
   const sev = severityMeta(d.severity)
   const cat = categoryMeta(d.category)
-  const StatusIcon = d.status === 'restored' ? RotateCcw : ShieldCheck
 
   return (
-    <motion.div
+    <motion.tr
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.2 }}
       onClick={() => onOpen(d)}
-      className="group grid cursor-pointer grid-cols-12 gap-2 px-3 py-2.5 transition-colors hover:bg-primary/[0.06]"
+      className="group cursor-pointer transition-colors hover:bg-primary/[0.06]"
     >
-      {/* # */}
-      <div className="col-span-1 font-mono text-[11px] text-muted-foreground tabular-nums">
-        {String(index + 1).padStart(3, '0')}
-      </div>
+      {/* # + severity dot */}
+      <td className="px-3 py-2.5 text-center align-middle">
+        <span className="inline-flex items-center gap-1.5">
+          <span className={`h-1.5 w-1.5 rounded-full ${sev.dot}`} title={`severity: ${sev.label}`} />
+          <span className="font-mono text-[11px] text-muted-foreground tabular-nums">
+            {String(index + 1).padStart(3, '0')}
+          </span>
+        </span>
+      </td>
 
       {/* defacer */}
-      <div className="col-span-3 flex items-center gap-2">
-        <span
-          className="grid h-5 w-5 shrink-0 place-items-center rounded-sm font-mono text-[9px] font-bold text-black"
-          style={{ background: d.attacker.color }}
-        >
-          {d.attacker.handle.slice(0, 2).toUpperCase()}
-        </span>
-        <div className="min-w-0">
-          <div className="truncate font-mono text-[11px] font-semibold text-foreground">
-            {d.attacker.handle}
-          </div>
-          {d.attacker.team && (
-            <div className="truncate font-mono text-[9px] text-muted-foreground">
-              {d.attacker.team}
+      <td className="px-2 py-2.5 align-middle">
+        <div className="flex items-center gap-2">
+          <span
+            className="grid h-5 w-5 shrink-0 place-items-center rounded-sm font-mono text-[9px] font-bold text-black"
+            style={{ background: d.attacker.color }}
+          >
+            {d.attacker.handle.slice(0, 2).toUpperCase()}
+          </span>
+          <div className="min-w-0">
+            <div className="truncate font-mono text-[11px] font-semibold text-foreground">
+              {d.attacker.handle}
             </div>
-          )}
+            {d.attacker.team && (
+              <div className="truncate font-mono text-[9px] text-muted-foreground">
+                {d.attacker.team}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      </td>
 
       {/* target */}
-      <div className="col-span-4 min-w-0">
-        <div className="truncate font-mono text-[11px] text-foreground">
+      <td className="px-2 py-2.5 align-middle">
+        <div className="truncate font-mono text-[11px] text-foreground" title={d.targetName}>
           {d.targetName}
         </div>
         <a
@@ -229,48 +247,48 @@ function Row({ d, index, onOpen }: { d: Defacement; index: number; onOpen: (d: D
         >
           {d.targetUrl.replace(/^https?:\/\//, '')}
         </a>
-      </div>
+      </td>
 
-      {/* category (lg only) */}
-      <div className="col-span-1 hidden items-center lg:flex">
+      {/* category */}
+      <td className="px-2 py-2.5 align-middle">
         <span className="rounded-sm border border-border/60 px-1.5 py-0.5 font-mono text-[9px] uppercase text-muted-foreground">
           {cat.label.slice(0, 3)}
         </span>
-      </div>
+      </td>
 
       {/* country */}
-      <div className="col-span-2 flex items-center gap-1.5">
-        <span className="text-sm">{countryFlag(d.country)}</span>
-        <span className="font-mono text-[10px] text-muted-foreground">
-          {d.country}
+      <td className="px-2 py-2.5 align-middle">
+        <span className="inline-flex items-center gap-1.5">
+          <span className="text-sm">{countryFlag(d.country)}</span>
+          <span className="font-mono text-[10px] text-muted-foreground">
+            {d.country}
+          </span>
         </span>
-        <span
-          className={`ml-auto hidden h-1.5 w-1.5 rounded-full ${sev.dot} lg:block`}
-          title={`severity: ${sev.label}`}
-        />
-      </div>
+      </td>
 
-      {/* date / view */}
-      <div className="col-span-2 flex items-center justify-between gap-2">
-        <div className="min-w-0">
-          <div className="font-mono text-[10px] text-muted-foreground tabular-nums">
-            {fmtDate(d.createdAt)}
-          </div>
-          <div className="font-mono text-[9px] text-muted-foreground/60">
-            {timeAgo(d.createdAt)}
-          </div>
+      {/* date */}
+      <td className="px-2 py-2.5 align-middle">
+        <div className="font-mono text-[10px] text-muted-foreground tabular-nums">
+          {fmtDate(d.createdAt)}
         </div>
+        <div className="font-mono text-[9px] text-muted-foreground/60">
+          {timeAgo(d.createdAt)}
+        </div>
+      </td>
+
+      {/* view */}
+      <td className="px-2 py-2.5 text-center align-middle">
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); onOpen(d) }}
-          className="grid h-6 w-6 shrink-0 place-items-center rounded-sm border border-border/50 text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary group-hover:border-primary/40"
+          className="grid h-6 w-6 place-items-center rounded-sm border border-border/50 text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary group-hover:border-primary/40"
           title="view mirror snapshot"
           aria-label="view mirror snapshot"
         >
           <ExternalLink className="h-3 w-3" />
         </button>
-      </div>
-    </motion.div>
+      </td>
+    </motion.tr>
   )
 }
 

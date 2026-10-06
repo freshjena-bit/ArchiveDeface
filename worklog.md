@@ -119,3 +119,19 @@ Stage Summary:
 - Browser-verified: isi 2 URL + attacker dropdownTester + team DROP CREW, pilih PoC "SQL Injection" + Reason "As a challenge" → POST 200, 2 record (demo-2.com / gov.demo-1.id) muncul di archive.
 - Mirror viewer: klik row → tampil `// PROOF OF CONCEPT: SQL Injection` + `// REASON: As a challenge` + derive meta (🇺🇸/COMMERCIAL, 🇮🇩/GOVERNMENT) + signature + timestamp.
 - Lint clean (0 error).
+
+---
+Task ID: R1-R2
+Agent: Main (Z.ai Code)
+Task: Recent defacements jadi horizontally scrollable di mobile (bukan numpuk)
+
+Work Log:
+- archive-table.tsx dirombak: dari div grid-cols-12 → HTML <table> beneran.
+- Struktur: <div overflow-x-auto thin-scroll> → <table min-w-[720px]> dengan thead (7 kolom: #/Defacer/Target/Cat/Country/Date/View) + tbody (motion.tr). Kolom sejajar, row clickable + tombol View buka mirror viewer.
+- Tambah hint "← swipe to see all columns →" di mobile (sm:hidden).
+- Fix root cause overflow: grid track auto-sized tumbuh ke min-content table (720px) → halaman ikut overflow. Tambah min-w-0 ke grid item col-span-8 & col-span-4 di page.tsx supaya track bisa shrink dan overflow-x-auto yang aktif.
+
+Stage Summary:
+- Mobile (390px): container 356px, table 720px, scrollable=true, pageScrollable=false → bisa digeser kiri-kanan, kolom rapi sejajar, halaman tidak overflow.
+- Desktop (1280px): container 813px, table fit, scrollable=false → rapi tanpa scroll.
+- Browser-verified: swipe horizontal bekerja (scrollLeft 300/720), no console errors, lint clean.
