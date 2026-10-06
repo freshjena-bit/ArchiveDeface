@@ -572,3 +572,19 @@ Work Log:
 Stage Summary:
 - Marks (H M R S) tetap di mirror viewer metadata panel.
 - Dialog mirror viewer sekarang scrollable di mobile (scrollHeight 879 > clientHeight 702, scrollable=true, scrollTop berubah, screenshot img visible setelah scroll). Lint clean.
+
+---
+Task ID: CAT1
+Agent: Main (Z.ai Code)
+Task: Hapus kolom CAT (category) dari archive table + mirror viewer (+ tabel lain biar konsisten)
+
+Work Log:
+- archive-table.tsx: hapus Cat th + cat td + cat const + categoryMeta import.
+- mirror-viewer.tsx: hapus Category field dari rows + cat const + mockIP/mockServer/SERVERS helpers (juga unused setelah IP/WebServer dihapus sebelumnya) + severityMeta/categoryMeta import.
+- home-recent.tsx: hapus cat badge dari country cell + cat const + categoryMeta import.
+- defacer-view.tsx: hapus Cat th + cat td + cat const + categoryMeta import.
+- team-view.tsx: hapus Cat th + cat td + cat const + categoryMeta import.
+
+Stage Summary:
+- Kolom CAT (category) dihapus dari: archive table, home recent, defacer profile, team profile. Field Category dihapus dari mirror viewer metadata.
+- Browser-verified: archive hasCatHeader=false; mirror viewer hasCategory=false (marks + country tetap). Lint clean.

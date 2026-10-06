@@ -3,7 +3,7 @@
 import * as React from 'react'
 import useSWR from 'swr'
 import { ArrowRight, ExternalLink } from 'lucide-react'
-import { countryFlag, severityMeta, categoryMeta, timeAgo } from '@/lib/site'
+import { countryFlag, severityMeta, timeAgo } from '@/lib/site'
 import { DefacementMarks } from '@/components/site/marks'
 import type { Defacement } from '@/lib/types'
 
@@ -53,7 +53,6 @@ export function HomeRecent({ onViewAll }: { onViewAll: () => void }) {
                 ))
               : items.map((d) => {
                   const sev = severityMeta(d.severity)
-                  const cat = categoryMeta(d.category)
                   return (
                     <tr
                       key={d.id}
@@ -99,9 +98,6 @@ export function HomeRecent({ onViewAll }: { onViewAll: () => void }) {
                           <span className="text-sm">{countryFlag(d.country)}</span>
                           <span className="font-mono text-[10px] text-muted-foreground">
                             {d.country}
-                          </span>
-                          <span className="ml-auto rounded-sm border border-border/60 px-1 py-0.5 font-mono text-[9px] uppercase text-muted-foreground">
-                            {cat.label.slice(0, 3)}
                           </span>
                         </span>
                       </td>

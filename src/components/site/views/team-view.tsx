@@ -9,7 +9,7 @@ import {
 } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
-import { countryFlag, countryName, severityMeta, categoryMeta, timeAgo } from '@/lib/site'
+import { countryFlag, countryName, severityMeta, timeAgo } from '@/lib/site'
 import { DefacementMarks } from '@/components/site/marks'
 import { MirrorViewer } from '@/components/site/mirror-viewer'
 import { teamColor } from '@/components/site/teams-leaderboard'
@@ -226,7 +226,6 @@ export function TeamView({ name }: { name: string }) {
                 <th className="w-10 px-3 py-2 text-center">#</th>
                 <th className="px-2 py-2 font-medium">Defacer</th>
                 <th className="px-2 py-2 font-medium">Target</th>
-                <th className="w-16 px-2 py-2 font-medium">Cat</th>
                 <th className="w-28 px-2 py-2 font-medium">Country</th>
                 <th className="w-24 px-2 py-2 font-medium">Status</th>
                 <th className="w-36 px-2 py-2 font-medium">Marks</th>
@@ -237,7 +236,6 @@ export function TeamView({ name }: { name: string }) {
             <tbody className="divide-y divide-border/40">
               {filteredItems.map((d, i) => {
                 const sev = severityMeta(d.severity)
-                const cat = categoryMeta(d.category)
                 const statusTone =
                   d.status === 'onhold'
                     ? 'text-destructive border-destructive/40 bg-destructive/10'
@@ -291,11 +289,6 @@ export function TeamView({ name }: { name: string }) {
                       >
                         {d.targetUrl.replace(/^https?:\/\//, '')}
                       </a>
-                    </td>
-                    <td className="px-2 py-2.5 align-middle">
-                      <span className="rounded-sm border border-border/60 px-1.5 py-0.5 font-mono text-[9px] uppercase text-muted-foreground">
-                        {cat.label.slice(0, 3)}
-                      </span>
                     </td>
                     <td className="px-2 py-2.5 align-middle">
                       <span className="inline-flex items-center gap-1.5">

@@ -9,7 +9,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { countryFlag, countryName, severityMeta, categoryMeta, timeAgo } from '@/lib/site'
+import { countryFlag, countryName, severityMeta, timeAgo } from '@/lib/site'
 import { MirrorViewer } from '@/components/site/mirror-viewer'
 import { DefacementMarks } from '@/components/site/marks'
 import type { Defacement } from '@/lib/types'
@@ -89,7 +89,6 @@ export function ArchiveTable({ mode = 'archive' }: { mode?: 'archive' | 'onhold'
                 <th className="w-10 px-3 py-2 text-center">#</th>
                 <th className="px-2 py-2 font-medium">Defacer</th>
                 <th className="px-2 py-2 font-medium">Target</th>
-                <th className="w-16 px-2 py-2 font-medium">Cat</th>
                 <th className="w-28 px-2 py-2 font-medium">Country</th>
                 <th className="w-36 px-2 py-2 font-medium">Marks</th>
                 <th className="w-36 px-2 py-2 font-medium">Date</th>
@@ -178,7 +177,6 @@ export function ArchiveTable({ mode = 'archive' }: { mode?: 'archive' | 'onhold'
 
 function Row({ d, index, onOpen }: { d: Defacement; index: number; onOpen: (d: Defacement) => void }) {
   const sev = severityMeta(d.severity)
-  const cat = categoryMeta(d.category)
 
   return (
     <motion.tr
@@ -238,13 +236,6 @@ function Row({ d, index, onOpen }: { d: Defacement; index: number; onOpen: (d: D
         >
           {d.targetUrl.replace(/^https?:\/\//, '')}
         </a>
-      </td>
-
-      {/* category */}
-      <td className="px-2 py-2.5 align-middle">
-        <span className="rounded-sm border border-border/60 px-1.5 py-0.5 font-mono text-[9px] uppercase text-muted-foreground">
-          {cat.label.slice(0, 3)}
-        </span>
       </td>
 
       {/* country */}

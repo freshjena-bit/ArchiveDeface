@@ -9,7 +9,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { countryFlag, severityMeta, categoryMeta } from '@/lib/site'
+import { countryFlag } from '@/lib/site'
 import { DefacementMarks } from '@/components/site/marks'
 import type { Defacement } from '@/lib/types'
 
@@ -18,18 +18,6 @@ function hashStr(s: string): number {
   let h = 0
   for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0
   return h
-}
-function mockIP(id: string): string {
-  const h = hashStr(id)
-  const a = (h & 0xff) % 223 + 1
-  const b = ((h >> 8) & 0xff) % 255 + 1
-  const c = ((h >> 16) & 0xff) % 255 + 1
-  const d = ((h >> 24) & 0xff) % 255 + 1
-  return `${a}.${b}.${c}.${d}`
-}
-const SERVERS = ['nginx', 'apache', 'vercel', 'cloudflare', 'iis', 'openresty', 'litespeed']
-function mockServer(id: string): string {
-  return SERVERS[hashStr(id) % SERVERS.length]
 }
 // 3 generated "defaced webpage screenshot" captures — picked deterministically per record
 const SHOTS = ['/mirror/defaced-1.png', '/mirror/defaced-2.png', '/mirror/defaced-3.png']
@@ -58,11 +46,7 @@ export function MirrorViewer({
 
   if (!record) return null
   const d = record
-  const sev = severityMeta(d.severity)
-  const cat = categoryMeta(d.category)
   const captured = new Date(d.createdAt)
-  const ip = mockIP(d.id)
-  const server = mockServer(d.id)
   const sig = mockSig(d.id, d.attacker.handle)
   const fallbackShot = pickShot(d.id)
   const time = captured.toISOString().slice(11, 19)
@@ -90,7 +74,6 @@ export function MirrorViewer({
     { label: 'Notifier', value: <span className={`font-mono font-semibold ${VAL}`}>{d.attacker.handle}</span> },
     { label: 'Team', value: <span className={`font-mono font-semibold ${VAL}`}>{d.attacker.team ?? 'INDEPENDENT'}</span> },
     { label: 'Country', value: <span className="font-mono text-foreground">{countryFlag(d.country)} {d.country}</span> },
-    { label: 'Category', value: <span className="font-mono text-foreground">{cat.label}</span> },
   ]
 
   return (
