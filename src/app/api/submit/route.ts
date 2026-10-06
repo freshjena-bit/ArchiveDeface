@@ -128,11 +128,9 @@ export async function POST(req: NextRequest) {
         select: { id: true },
       })
       const isRedeface = !!prior
-      // S — special if it belongs to a special archive (gov / edu / critical)
-      const isSpecial =
-        meta.category === 'gov' ||
-        meta.category === 'edu' ||
-        meta.severity === 'critical'
+      // S — special if the domain matches a special-archive pattern
+      // (*.gov.* / *.go.* / *.ac.* / *.edu.*) — NOT severity-based.
+      const isSpecial = meta.specialDomain !== null
 
       // does the PAGE contain the submitter's own handle?
       const hasOwn = page.content.toLowerCase().includes(ownHandle)

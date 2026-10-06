@@ -58,11 +58,10 @@ export async function GET(req: NextRequest) {
         where.country = 'ID'
         break
       case 'acid':
-        where.severity = 'critical'
-        break
       case 'all':
       default:
-        // special archive "ALL" = every record flagged special
+        // special archive "ALL" = every record whose domain matches a
+        // special-archive pattern (gov / go / ac / edu) → isSpecial flag.
         where.isSpecial = true
         break
     }

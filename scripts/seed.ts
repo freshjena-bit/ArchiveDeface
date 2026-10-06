@@ -72,7 +72,12 @@ function fakeDomain(country: string, category: string) {
     Math.floor(Math.random() * 8)
   ]
   const id = Math.floor(1000 + Math.random() * 9000)
-  const base = `https://${slug}-${id}.${category}.${country.toLowerCase()}.archive-demo.test`
+  // government category: sometimes use the alt ".go." segment (e.g. go.id)
+  // academic category: sometimes use the ".ac." segment (e.g. ac.id, ac.ru)
+  let catSeg = category
+  if (category === 'gov' && Math.random() < 0.4) catSeg = 'go'
+  else if (category === 'edu' && Math.random() < 0.4) catSeg = 'ac'
+  const base = `https://${slug}-${id}.${catSeg}.${country.toLowerCase()}.archive-demo.test`
   // ~28% of targets are a sub-page (so isHomepage varies), rest are root
   if (Math.random() < 0.28) {
     const sub = rand(["en", "news", "about", "login", "blog", "v2", "old", "info"])
@@ -81,10 +86,11 @@ function fakeDomain(country: string, category: string) {
   return base
 }
 
-// derive the H/M/R/L/S marks for a seeded record
-function deriveMarks(category: string, severity: string) {
-  // S — belongs to a special archive (gov / edu / critical)
-  const isSpecial = category === "gov" || category === "edu" || severity === "critical"
+// derive the H/M/R/S marks for a seeded record
+function deriveMarks(category: string, _severity: string) {
+  // S — special = domain matches a special-archive pattern (gov / edu category,
+  // which covers *.gov.*, *.go.*, *.ac.*, *.edu.*). NOT severity-based.
+  const isSpecial = category === 'gov' || category === 'edu'
   return {
     isHomepage: Math.random() < 0.72, // H — most hit the homepage
     isMass: Math.random() < 0.35, // M — part of a mass campaign

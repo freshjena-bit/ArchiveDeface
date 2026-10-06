@@ -70,6 +70,30 @@ const CCTLD: Record<string, string> = {
 }
 
 /**
+ * Match a "special archive" domain pattern in the target URL's hostname.
+ * Special archives are domain-segment based:
+ *   *.gov.*  — government
+ *   *.go.*   — government (alt, e.g. go.id)
+ *   *.ac.*   — academic, country-specific (ac.ru, ac.id, … all countries)
+ *   *.edu.*  — education (same idea as *.ac.*)
+ * Returns the matched pattern key, or null if none.
+ */
+export function matchSpecialDomain(url: string): 'gov' | 'go' | 'ac' | 'edu' | null {
+  let host = ''
+  try {
+    host = new URL(url.trim()).hostname.toLowerCase()
+  } catch {
+    host = url.trim().toLowerCase().replace(/^[a-z]+:\/\//, '').split('/')[0] || url.trim()
+  }
+  const segs = host.split('.')
+  if (segs.includes('gov')) return 'gov'
+  if (segs.includes('go')) return 'go'
+  if (segs.includes('ac')) return 'ac'
+  if (segs.includes('edu')) return 'edu'
+  return null
+}
+
+/**
  * Auto-derive display metadata from a target URL so the submit form stays
  * minimal (urls + attacker + team + poc + reason) while the archive/mirror
  * still shows country, category and a label.
@@ -79,6 +103,7 @@ export function deriveMeta(url: string): {
   category: string
   severity: 'low' | 'medium' | 'high' | 'critical'
   targetName: string
+  specialDomain: 'gov' | 'go' | 'ac' | 'edu' | null
 } {
   let host = ''
   let path = ''
@@ -94,14 +119,17 @@ export function deriveMeta(url: string): {
   const last = parts[parts.length - 1]
   const country = CCTLD[last] ?? 'US'
 
+  const segs = parts
   const combined = host + ' ' + path
+  // category is segment-based for the special domain patterns
   let category = 'com'
-  if (combined.includes('gov')) category = 'gov'
-  else if (combined.includes('edu') || combined.includes('ac.') || combined.includes('sch.')) category = 'edu'
+  if (segs.includes('gov') || segs.includes('go')) category = 'gov'
+  else if (segs.includes('edu') || segs.includes('ac')) category = 'edu'
   else if (combined.includes('mil')) category = 'mil'
   else if (combined.includes('fin') || combined.includes('bank') || combined.includes('pay')) category = 'fin'
   else if (combined.includes('org')) category = 'org'
 
   const targetName = host || url
-  return { country, category, severity: 'medium', targetName }
+  const specialDomain = matchSpecialDomain(url)
+  return { country, category, severity: 'medium', targetName, specialDomain }
 }

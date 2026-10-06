@@ -441,3 +441,20 @@ Stage Summary:
   3) no-deface demo (https://random-no-name.page-demo.test) → reject "No defacement activity (no attacker name) found on the page".
   4) unreachable real (https://this-does-not-exist-xyz987654321.gov) → reject "URL cannot be accessed".
 - Browser: own-name demo submit → POST 200 redirect home; record muncul di On Hold. Lint clean.
+
+---
+Task ID: SD1-SD5
+Agent: Main (Z.ai Code)
+Task: Special = domain-pattern based (*.gov.* / *.go.* / *.ac.* / *.edu.*), bukan severity
+
+Work Log:
+- site.ts: tambah matchSpecialDomain(url) — segment-based: hostname punya segment gov/go/ac/edu. deriveMeta category jadi segment-based (gov/go→gov, edu/ac→edu) + return specialDomain.
+- seed.ts: fakeDomain kadang pakai '.go.' (gov cat) / '.ac.' (edu cat) untuk demonstrasi pola tsb. deriveMarks isSpecial = (category gov||edu) — drop severity=critical.
+- /api/submit: isSpecial = meta.specialDomain !== null (domain-based).
+- /api/defacements: special switch, acid jadi isSpecial true (bukan severity critical).
+- Reseed 420 records.
+
+Stage Summary:
+- Special sekarang = domain pattern *.gov.* / *.go.* / *.ac.* (country-specific: ac.in/ac.fr/ac.mx/ac.de...) / *.edu.*. com/org/mil/fin BUKAN special. Severity critical tidak lagi otomatis special.
+- Special count 116 (verified-only). Sample: .gov.tr, .go.ru, .go.pl, .edu.us, .ac.in, .ac.fr, .ac.mx, .ac.de.
+- Browser: Special Archive 25 rows, semua sample URL match pola gov/go/edu. Lint clean.
