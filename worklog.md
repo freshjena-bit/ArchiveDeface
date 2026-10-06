@@ -663,3 +663,18 @@ Work Log:
 Stage Summary:
 - News feature: halaman /#/news (public list) + admin dashboard (post/delete, admin-only).
 - Browser-verified: News page render 5 seeded + 1 admin-posted (hasTestNews=true); admin dashboard has Post News + Manage News; POST /api/news 200 (auth), 401 (unauth); posted news muncul di /#/news. Lint clean.
+
+---
+Task ID: ZD1-ZD3
+Agent: Main (Z.ai Code)
+Task: Rebrand ZONEDEFACER + push to GitHub + deploy guide
+
+Work Log:
+- Rebrand: package.json name → zonedefacer; layout metadata → ZONEDEFACER; site-header/site-footer brand → ZONEDEFACER; wrangler.jsonc name + D1 db_name → zonedefacer; page.ts user-agent → zonedefacer-bot; footer copyright → ZONEDEFACER; DEPLOY.md references; .env.example; README.md.
+- .gitignore: tambah /db/ (jangan commit SQLite file) + .open-next/ + .wrangler/. .env sudah gitignored (admin creds nggak ke-commit).
+- git add + commit "feat: ZONEDEFACER …". Push ke github.com/freshjena-bit/ArchiveDeface (PAT one-time, nggak disimpen di .git/config). Branch main baru.
+
+Stage Summary:
+- Project rebranded ZONEDEFACER. Repo live di GitHub: github.com/freshjena-bit/ArchiveDeface (branch main).
+- Token PAT dipakai sekali buat push, NGGAK disimpen di repo/config. User HARUS rotate token (udah terekam di chat history).
+- Cloudflare deploy-from-0 guide: di DEPLOY.md + ringkas di chat.
