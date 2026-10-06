@@ -31,6 +31,11 @@ const SERVERS = ['nginx', 'apache', 'vercel', 'cloudflare', 'iis', 'openresty', 
 function mockServer(id: string): string {
   return SERVERS[hashStr(id) % SERVERS.length]
 }
+// 3 generated "defaced webpage screenshot" captures — picked deterministically per record
+const SHOTS = ['/mirror/defaced-1.png', '/mirror/defaced-2.png', '/mirror/defaced-3.png']
+function pickShot(id: string): string {
+  return SHOTS[hashStr(id) % SHOTS.length]
+}
 function mockSig(id: string, handle: string): string {
   return (hashStr(id + handle).toString(16).padStart(8, '0').slice(0, 16)).toUpperCase()
 }
@@ -52,6 +57,7 @@ export function MirrorViewer({
   const ip = mockIP(d.id)
   const server = mockServer(d.id)
   const sig = mockSig(d.id, d.attacker.handle)
+  const screenshot = pickShot(d.id)
   const time = captured.toISOString().slice(11, 19)
   const date = captured.toISOString().slice(0, 10)
 
@@ -126,69 +132,54 @@ export function MirrorViewer({
           </div>
         </div>
 
-        {/* the defaced page — framed black box */}
+        {/* screenshot of the target web — the captured defaced page */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.25 }}
-          className="relative"
+          className="px-3 pb-1 pt-3"
         >
-          <div className="m-3 rounded-md border border-border/70 bg-black p-6">
-            {/* subtle scanline */}
-            <div
-              className="pointer-events-none absolute inset-3 rounded-md opacity-40"
-              style={{
-                background:
-                  'repeating-linear-gradient(to bottom, transparent 0, transparent 2px, rgba(255,255,255,0.03) 2px, rgba(255,255,255,0.03) 3px)',
-              }}
+          <div className="overflow-hidden rounded-md border border-border/70 bg-black">
+            {/* fake browser chrome above the screenshot */}
+            <div className="flex items-center gap-1.5 border-b border-white/10 bg-white/[0.04] px-2 py-1.5">
+              <span className="h-2 w-2 rounded-full bg-rose-400/60" />
+              <span className="h-2 w-2 rounded-full bg-amber-400/60" />
+              <span className="h-2 w-2 rounded-full bg-emerald-400/60" />
+              <span className="ml-2 truncate rounded-sm bg-black/40 px-2 py-0.5 font-mono text-[9px] text-white/40">
+                {d.targetUrl.replace(/^https?:\/\//, '')}
+              </span>
+            </div>
+            <img
+              src={screenshot}
+              alt={`defaced page screenshot — ${d.attacker.handle}`}
+              className="block w-full"
+              loading="lazy"
             />
-            <div className="relative min-h-[240px]">
-              <div className="text-center">
-                <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-white/30">
-                  {d.targetUrl.replace(/^https?:\/\//, '')}
-                </div>
-                <div className="mt-6 font-serif text-3xl font-bold tracking-tight text-white sm:text-4xl">
-                  Hacked By
-                </div>
-                <div
-                  className="mt-1 font-mono text-3xl font-extrabold tracking-tight sm:text-4xl"
-                  style={{
-                    color: d.attacker.color,
-                    textShadow: `0 0 12px ${d.attacker.color}88, 0 0 28px ${d.attacker.color}44`,
-                  }}
-                >
-                  {d.attacker.handle}
-                </div>
-                {d.attacker.team && (
-                  <div className="mt-1 font-mono text-[11px] uppercase tracking-[0.2em] text-white/40">
-                    {'//'} {d.attacker.team}
-                  </div>
-                )}
-              </div>
-
-              {(d.reason || d.poc) && (
-                <div className="mx-auto mt-6 grid max-w-md gap-2">
-                  {d.reason && (
-                    <div className="rounded border border-white/10 bg-white/[0.03] px-3 py-2">
-                      <div className="font-mono text-[9px] uppercase tracking-widest text-white/30">reason</div>
-                      <div className="mt-0.5 font-mono text-[12px] leading-relaxed text-white/70">{d.reason}</div>
-                    </div>
-                  )}
-                  {d.poc && (
-                    <div className="rounded border border-white/10 bg-white/[0.03] px-3 py-2">
-                      <div className="font-mono text-[9px] uppercase tracking-widest text-white/30">proof of concept</div>
-                      <div className="mt-0.5 font-mono text-[12px] leading-relaxed text-white/70">{d.poc}</div>
-                    </div>
-                  )}
+          </div>
+          {/* caption tying the capture to the record */}
+          <div className="mt-1.5 flex items-center justify-between font-mono text-[10px] text-muted-foreground">
+            <span className="truncate">captured · {date} {time}</span>
+            <span>
+              owned by <span className="text-rose-400">{d.attacker.handle}</span>
+              {d.attacker.team && <span className="text-muted-foreground/60"> · {d.attacker.team}</span>}
+            </span>
+          </div>
+          {(d.reason || d.poc) && (
+            <div className="mt-2 grid gap-2">
+              {d.reason && (
+                <div className="rounded border border-border/60 bg-card/40 px-3 py-2">
+                  <div className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground/60">reason</div>
+                  <div className="mt-0.5 font-mono text-[12px] leading-relaxed text-foreground/80">{d.reason}</div>
                 </div>
               )}
-
-              <div className="mt-8 flex items-center justify-center gap-2 font-mono text-[10px] text-white/25">
-                <Fingerprint className="h-3 w-3" />
-                {sig}
-              </div>
+              {d.poc && (
+                <div className="rounded border border-border/60 bg-card/40 px-3 py-2">
+                  <div className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground/60">proof of concept</div>
+                  <div className="mt-0.5 font-mono text-[12px] leading-relaxed text-foreground/80">{d.poc}</div>
+                </div>
+              )}
             </div>
-          </div>
+          )}
         </motion.div>
 
         {/* footer */}

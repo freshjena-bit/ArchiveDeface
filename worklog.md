@@ -519,3 +519,16 @@ Work Log:
 Stage Summary:
 - Mirror viewer sekarang mirip layout mirror page: panel metadata (label muted, value rose-400 untuk notifier/team/IP/domain) + framed black box berisi defaced page "Hacked By [handle]".
 - Browser-verified: dialog buka, render Timestamp/Notifier/Web Server/Team/IP/Country/Domain + "Hacked By" + handle. Lint clean.
+
+---
+Task ID: SS1
+Agent: Main (Z.ai Code)
+Task: Mirror viewer — mock data metadata (tetap) + SCREENSHOT gambar web target di bawahnya
+
+Work Log:
+- Generate 3 screenshot gambar "defaced webpage" via z-ai image CLI → /public/mirror/defaced-{1,2,3}.png (1344x768, dark hacker aesthetic).
+- mirror-viewer.tsx: tetap pertahankan metadata panel (Timestamp/Notifier/Web Server/Team/IP/Country/Domain/Category/Severity + marks, value rose-400). Ganti styled "Hacked By" box → screenshot image: framed black box + fake browser chrome (traffic-light dots + URL bar) + <img src=pickShot(id)> (deterministic per record) + caption "captured · date time | owned by [handle] · [team]" + reason/poc blocks.
+
+Stage Summary:
+- Mirror viewer sekarang: metadata panel (mock data deterministik: IP, web server, dll) + DI BAWAHNYA screenshot gambar web target yang di-deface (fake browser chrome + image).
+- Browser-verified: dialog buka, hasImg=true (imgSrc /mirror/defaced-2.png), metadata NOTIFIER GadaLuBau / WEB SERVER cloudflare / TEAM SonicNetwork / IP 116.140.84.217. Lint clean.
