@@ -172,7 +172,7 @@ export function SubmitForm() {
                   name="attacker"
                   required
                   list="registered-handles"
-                  placeholder="n0vakane (must be registered)"
+                  placeholder="n0vakane (your handle)"
                   className="h-9 font-mono text-xs"
                 />
                 <datalist id="registered-handles">
@@ -182,13 +182,13 @@ export function SubmitForm() {
                 </datalist>
                 <p className="flex items-center gap-1 font-mono text-[10px] text-muted-foreground/70">
                   <UserCheck className="h-3 w-3" />
-                  must be a registered defacer
+                  anyone can submit — new handles are auto-registered
                   {registeredHandles.length > 0 && (
                     <span className="text-muted-foreground/50">
-                      ({registeredHandles.length} registered · {registeredHandles.slice(0, 3).join(', ')}…)
+                      ({registeredHandles.length} existing · {registeredHandles.slice(0, 3).join(', ')}…)
                     </span>
                   )}
-                  — unregistered handles are rejected.
+                  .
                 </p>
               </Field>
               <Field label="Team / crew">

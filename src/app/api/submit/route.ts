@@ -48,20 +48,18 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // the attacker handle MUST be a registered defacer in the registry.
-    // unknown handles → rejected outright (no auto-registration).
-    const hacker = await db.hacker.findUnique({
-      where: { handle: String(attacker).trim() },
+    // anyone can submit — the attacker handle is auto-registered if new.
+    const ownHandleRaw = String(attacker).trim()
+    const hacker = await db.hacker.upsert({
+      where: { handle: ownHandleRaw },
+      update: { team: team?.trim() || undefined },
+      create: {
+        handle: ownHandleRaw,
+        team: team?.trim() || 'INDEPENDENT',
+        country: 'ID',
+        avatarColor: '#22c55e',
+      },
     })
-    if (!hacker) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: `Attacker "${String(attacker).trim()}" is not a registered defacer. Submission rejected.`,
-        },
-        { status: 400 }
-      )
-    }
 
     const cleanPoc = poc?.trim() || null
     const cleanReason = reason?.trim() || null
@@ -69,7 +67,7 @@ export async function POST(req: NextRequest) {
     // fetch every registered handle so we can scan each target URL for one.
     // the target URL must contain a registered attacker's name (the signature
     // left on the defaced page). no name → reject outright.
-    const ownHandle = String(attacker).trim().toLowerCase()
+    const ownHandle = ownHandleRaw.toLowerCase()
     const allHackers = await db.hacker.findMany({ select: { handle: true } })
     const handles = allHackers.map((h) => h.handle).filter(Boolean)
     const lowerHandles = handles.map((h) => h.toLowerCase())

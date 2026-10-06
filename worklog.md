@@ -408,3 +408,18 @@ Stage Summary:
   3) URL other-name (https://gh0stbyte-was-here.gov.id, attacker n0vakane) → onhold, otherName:1, pendingUntil null → stays onhold setelah promote (perlu review).
 - Promote test: own-name onhold→archived; other-name stays onhold (pendingUntil null).
 - Browser: own-name submit → 200 + redirect; no-name submit → 400 + toast "Target URL must contain...". Lint clean.
+
+---
+Task ID: AR1
+Agent: Main (Z.ai Code)
+Task: Semua orang bisa submit (handle auto-register), URL tetap harus ada nama attacker
+
+Work Log:
+- /api/submit: ganti findUnique+reject jadi upsert (auto-register handle baru). Hapus pesan "Attacker X is not a registered defacer". allHackers fetch setelah upsert (jadi handle baru termasuk).
+- URL-name validation tetap: URL harus mengandung handle terdaftar (sekarang termasuk handle baru sendiri). No-name → reject. Own-name → onhold+pending(10m). Other-name → onhold stays.
+- submit-form.tsx: placeholder "n0vakane (your handle)"; hint "anyone can submit — new handles are auto-registered (N existing · …)".
+
+Stage Summary:
+- Submit dengan handle baru (mis. GadaLuBau) + URL berisi nama sendiri → POST 200, auto-register, onhold+pending 10m. Tidak lagi ditolak.
+- Submit URL tanpa nama handle → tetap reject.
+- Browser-verified: GadaLuBau + URL https://GadaLuBau-demo.gov.id → POST 200 redirect home; handle muncul di leaderboard. API test: own-name accept, no-name reject. Lint clean.
