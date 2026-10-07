@@ -12,3 +12,6 @@ Allow: /
 
 User-agent: *
 Allow: /
+
+# Sitemap untuk Google Search Console & crawl discovery
+Sitemap: https://defacer.zone.id/sitemap.xml

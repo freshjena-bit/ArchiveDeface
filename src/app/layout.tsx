@@ -15,6 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://defacer.zone.id"),
   title: "DEFACERZONEID — Defacement Archive",
   description:
     "Open archive of website defacement incidents, mirror snapshots and attacker attribution. Top defacers, recent records, live stats.",
@@ -27,8 +28,25 @@ export const metadata: Metadata = {
     "cybersecurity",
     "web security",
     "indonesia",
+    "defacer zone id",
   ],
   authors: [{ name: "DEFACERZONEID Project" }],
+  creator: "DEFACERZONEID Project",
+  publisher: "DEFACERZONEID Project",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
+  alternates: {
+    canonical: "https://defacer.zone.id",
+  },
   icons: {
     icon: "/favicon.svg",
   },
