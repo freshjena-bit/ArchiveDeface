@@ -1,68 +1,29 @@
-# ZONEDEFACER — Deploy ke Vercel + PostgreSQL
+# ZONEDEFACER — Deploy ke Vercel + Neon PostgreSQL
 
-## Deploy via Vercel (recommended — native Next.js)
+## Deploy 100% via web (tanpa CLI)
 
-### 1. Import repo ke Vercel
-- Buka **vercel.com** → login (GitHub/Google)
-- **Add New → Project → Import Git Repository**
-- Pilih repo `freshjena-bit/ArchiveDeface`
-- Framework: **Next.js** (auto-detected)
-- Build command: `npx prisma generate && next build` (auto-detected dari `vercel.json`)
-- Install command: `bun install` (auto-detected dari `vercel.json`)
+### 1. Buat database di Neon (free 10GB)
+- Buka **neon.tech** → login (GitHub/Google)
+- **Create Project** → name: `zonedefacer` → region: terdekat
+- Copy connection string: `postgresql://...?sslmode=require`
 
-### 2. Buat Vercel Postgres database
-- Vercel dashboard → **Storage → Create Database → Postgres**
-- Name: `zonedefacer`
-- Create
-- Klik **Connect to Project** → pilih `ArchiveDeface` project
-- Copy **DATABASE_URL** dari env vars yang otomatis di-set
+### 2. Import repo ke Vercel + set env vars
+- **vercel.com** → Add New → Project → pilih repo `freshjena-bit/ArchiveDeface`
+- **Settings → Environment Variables:**
+  - `DATABASE_URL` = paste Neon connection string
+  - `ADMIN_USERNAME` = `GadaLuBau`
+  - `ADMIN_PASSWORD` = `slametwkw`
+- **Deploy** (build otomatis: sed sqlite→postgresql → prisma generate → prisma db push (auto-create tables) → next build)
 
-### 3. Set environment variables
-Vercel project → **Settings → Environment Variables**:
-| Name | Value |
-|---|---|
-| `DATABASE_URL` | (otomatis dari Vercel Postgres) |
-| `ADMIN_USERNAME` | `GadaLuBau` |
-| `ADMIN_PASSWORD` | `slametwkw` |
+### 3. Buka site
+`zonedefacer.vercel.app` — site live, DB kosong (ready buat user submit)
 
-### 4. Apply schema + seed ke Postgres
-Jalankan locally (dengan DATABASE_URL dari Vercel Postgres):
-```bash
-# set DATABASE_URL ke Vercel Postgres (copy dari Vercel dashboard)
-export DATABASE_URL="postgresql://..."  # paste dari Vercel
-
-# apply schema
-npx prisma db push
-
-# seed data
-npx tsx scripts/seed.ts
-```
-
-Atau via Vercel CLI:
-```bash
-npm i -g vercel
-vercel pull       # download env vars
-npx prisma db push --accept-data-loss
-npx tsx scripts/seed.ts
-```
-
-### 5. Deploy
-- Push commit ke GitHub → Vercel auto-deploy
-- Atau: `vercel --prod` dari CLI
-- URL: `zonedefacer.vercel.app`
+Database mulai kosong. User asli isi sendiri lewat halaman `/#/submit`.
 
 ## Local dev
-
 ```bash
-cp .env.example .env          # edit DATABASE_URL ke local Postgres
-npx prisma db push            # create schema
-npx tsx scripts/seed.ts       # seed demo data
-bun run dev                   # localhost:3000
+cp .env.example .env
+npx prisma db push
+npx tsx scripts/seed.ts    # demo data buat local testing
+bun run dev
 ```
-
-## Tech
-
-- Next.js 16 (App Router) + TypeScript
-- Prisma 6 + PostgreSQL (Vercel Postgres / local)
-- Tailwind CSS 4 + shadcn/ui
-- Vercel (hosting + Postgres)

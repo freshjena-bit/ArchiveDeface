@@ -1,4 +1,14 @@
 {
+<<<<<<< HEAD
   "buildCommand": "sed -i 's/provider = \"sqlite\"/provider = \"postgresql\"/' prisma/schema.prisma && npx prisma generate && next build",
   "installCommand": "bun install"
+=======
+  "buildCommand": "npx prisma generate && next build",
+  "installCommand": "bun install",
+  "functions": {
+    "src/app/api/**": {
+      "maxDuration": 30
+    }
+  }
+>>>>>>> 0f9d96c (migrate: Cloudflare → Vercel + PostgreSQL (remove D1/OpenNext, use Vercel Postgres))
 }
