@@ -7,6 +7,7 @@ import { StatsBar } from '@/components/site/stats-bar'
 import { LiveTicker } from '@/components/site/live-ticker'
 import { HomeRecent } from './home-recent'
 import { HomeTopDefacers } from './home-top-defacers'
+import { HomeLatestNews } from './home-latest-news'
 import { useHashRoute } from '@/lib/use-hash-route'
 
 export function HomeView() {
@@ -85,6 +86,11 @@ export function HomeView() {
             <div className="mb-3" />
             <HomeTopDefacers />
           </div>
+        </div>
+
+        {/* Latest news (full-width, 3-col on lg) */}
+        <div className="mt-6">
+          <HomeLatestNews />
         </div>
       </div>
     </>
