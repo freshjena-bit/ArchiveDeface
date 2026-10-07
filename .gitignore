@@ -69,3 +69,7 @@ server.log
 # local sqlite db (legacy, now using Neon)
 /db/*.db
 /db/*.db-journal
+
+# local screenshots (dev only)
+/screenshot-*.png
+/upload/
