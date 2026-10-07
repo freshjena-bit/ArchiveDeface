@@ -1,4 +1,4 @@
-# ZONEDEFACER — Deploy ke Vercel + Neon PostgreSQL
+# DEFACERZONEID — Deploy ke Vercel + Neon PostgreSQL
 
 ## Kenapa Neon?
 - **10GB free** PostgreSQL (cukup buat ~20 juta record)
@@ -22,7 +22,7 @@ Gak ada lagi:
 
 ## 1. Setup Neon (sekali untuk local + prod)
 - Buka **neon.tech** → login (GitHub/Google)
-- **Create Project** → name: `zonedefacer` → region: pilih terdekat
+- **Create Project** → name: `defacerzoneid` → region: pilih terdekat
 - Copy **connection string** (format: `postgresql://user:password@ep-xxx.region.aws.neon.tech/neondb?sslmode=require`)
 
 ## 2. Local dev
@@ -36,7 +36,7 @@ bun run dev
 ```
 
 ## 3. Deploy ke Vercel (100% via web, tanpa CLI)
-- Vercel → project `zonedefacer` → **Settings → Environment Variables**
+- Vercel → project `defacerzoneid` → **Settings → Environment Variables**
 - Add:
   - `DATABASE_URL` = paste Neon connection string (sama dengan local)
   - `ADMIN_USERNAME` = `GadaLuBau`
@@ -46,7 +46,7 @@ bun run dev
 Build otomatis: `prisma generate → prisma db push (auto-create tables) → next build` ✅
 
 ## 4. Isi data (seed) via Neon SQL Editor
-- Neon dashboard → project `zonedefacer` → **SQL Editor**
+- Neon dashboard → project `defacerzoneid` → **SQL Editor**
 - Atau jalankan `bun run db:seed` dari local (bakal connect ke Neon yang sama)
 
 ## Limit Neon free

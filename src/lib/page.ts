@@ -29,7 +29,7 @@ export async function resolvePage(url: string): Promise<ResolvedPage> {
     const res = await fetch(url, {
       signal: ctrl.signal,
       redirect: 'follow',
-      headers: { 'user-agent': 'zonedefacer-bot/1.0' },
+      headers: { 'user-agent': 'defacerzoneid-bot/1.0' },
     })
     clearTimeout(timer)
     if (res.ok) {

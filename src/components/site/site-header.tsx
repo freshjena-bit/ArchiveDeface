@@ -53,7 +53,7 @@ export function SiteHeader() {
             <Terminal className="h-4 w-4" />
           </span>
           <span className="font-mono text-sm font-bold tracking-tight">
-            ZONE<span className="text-primary">DEFACER</span>
+            DEFACER<span className="text-primary">ZONE</span>ID
           </span>
         </Link>
 
