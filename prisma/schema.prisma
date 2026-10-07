@@ -9,13 +9,13 @@ datasource db {
 
 model Hacker {
   id          String   @id @default(cuid())
-  handle      String   @unique // display name / alias
-  team        String?  // group / crew affiliation
-  country     String?  // origin country (ISO code)
+  handle      String   @unique 
+  team        String?  
+  country     String?  
   avatarColor String   @default("#22c55e")
-  rank        Int      @default(0) // computed score
+  rank        Int      @default(0) 
   totalHits   Int      @default(0)
-  badges      String   @default("[]") // JSON array of badge ids
+  badges      String   @default("[]") 
   bio         String?
   joinedAt    DateTime @default(now())
   defacements Defacement[]
