@@ -1,5 +1,7 @@
 import { PrismaClient } from '@prisma/client'
 
+// Single Prisma client for both local dev (Neon) and production (Neon).
+// DATABASE_URL must point to a PostgreSQL connection string (e.g. Neon).
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient | undefined }
 
 export const db =
@@ -9,9 +11,3 @@ export const db =
   })
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db
-
-// Vercel: use the `db` export directly — Prisma connects to PostgreSQL via DATABASE_URL.
-// No need for the dual-mode getDb() / D1 adapter (that was Cloudflare-specific).
-export async function getDb(): Promise<PrismaClient> {
-  return db
-}

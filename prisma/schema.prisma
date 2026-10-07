@@ -1,3 +1,6 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,39 +10,41 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// A security researcher / attacker who has claimed defacements
 model Hacker {
   id          String   @id @default(cuid())
-  handle      String   @unique 
-  team        String?  
-  country     String?  
+  handle      String   @unique // display name / alias
+  team        String?  // group / crew affiliation
+  country     String?  // origin country (ISO code)
   avatarColor String   @default("#22c55e")
-  rank        Int      @default(0) 
+  rank        Int      @default(0) // computed score
   totalHits   Int      @default(0)
-  badges      String   @default("[]") 
+  badges      String   @default("[]") // JSON array of badge ids
   bio         String?
   joinedAt    DateTime @default(now())
   defacements Defacement[]
 }
 
+// A single recorded website defacement incident
 model Defacement {
   id          String   @id @default(cuid())
-  targetUrl   String   
-  targetName  String   
-  country     String   
-  category    String   
+  targetUrl   String   // e.g. https://gov.example.gov.id
+  targetName  String   // human label (auto-derived from hostname)
+  country     String   // target country ISO code (auto-derived from URL TLD) — L mark
+  category    String   // gov / edu / com / org / mil / fin (auto-derived from URL)
   attackerId  String
   attacker    Hacker   @relation(fields: [attackerId], references: [id])
-  mirrorUrl   String?  
-  note        String?  
-  poc         String?  
-  reason      String?  
-  isHomepage  Boolean  @default(false) 
-  isMass      Boolean  @default(false) 
-  isRedeface  Boolean  @default(false) 
-  isSpecial   Boolean  @default(false) 
-  pendingUntil DateTime? 
-  status      String   @default("archived") 
-  severity    String   @default("medium") 
+  mirrorUrl   String?  // archived snapshot link
+  note        String?  // legacy single message (seeded records)
+  poc         String?  // proof of concept — how the compromise was demonstrated
+  reason      String?  // motivation / message from the attacker
+  isHomepage  Boolean  @default(false) // H mark — homepage/root was defaced
+  isMass      Boolean  @default(false) // M mark — part of a mass-deface campaign
+  isRedeface  Boolean  @default(false) // R mark — target was defaced before
+  isSpecial   Boolean  @default(false) // S mark — belongs to a special archive
+  pendingUntil DateTime? // when set + status=onhold, auto-promotes to archived after this time (10-min verification window)
+  status      String   @default("archived") // archived / restored / live / onhold
+  severity    String   @default("medium") // low / medium / high / critical
   createdAt   DateTime @default(now())
 
   @@index([attackerId])
@@ -47,17 +52,19 @@ model Defacement {
   @@index([createdAt])
 }
 
+// Aggregate counter for the dashboard
 model Stat {
   id        String   @id @default(cuid())
   key       String   @unique
   value     Int      @default(0)
 }
 
+// News / announcements — only admins can post (see /api/news POST)
 model News {
   id        String   @id @default(cuid())
   title     String
   body      String
-  author    String   
+  author    String   // admin username who posted
   pinned    Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

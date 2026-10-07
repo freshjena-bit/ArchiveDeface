@@ -60,3 +60,12 @@ server.log
 
 # wrangler local state
 .wrangler/
+.env
+
+# tool output
+/tool-results/
+# zscripts runtime
+/.zscripts/
+# local sqlite db (legacy, now using Neon)
+/db/*.db
+/db/*.db-journal
