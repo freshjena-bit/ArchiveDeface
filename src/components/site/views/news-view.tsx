@@ -77,9 +77,9 @@ export function NewsView() {
               <h2 className="mt-2 font-mono text-sm font-bold text-foreground sm:text-base">
                 {n.title}
               </h2>
-              <p className="mt-1.5 font-mono text-[12px] leading-relaxed text-muted-foreground">
+              <div className="mt-1.5 font-mono text-[12px] leading-relaxed text-muted-foreground whitespace-pre-wrap break-words">
                 {n.body}
-              </p>
+              </div>
               <div className="mt-3 border-t border-border/40 pt-2 font-mono text-[10px] text-muted-foreground/70">
                 posted by <span className="text-primary">{n.author}</span>
               </div>

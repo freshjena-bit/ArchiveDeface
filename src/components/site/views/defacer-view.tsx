@@ -147,7 +147,7 @@ export function DefacerView({ handle }: { handle: string }) {
             <span>joined {new Date(h.joinedAt).toISOString().slice(0, 10)}</span>
           </div>
           {h.bio && (
-            <p className="mt-2 font-mono text-xs leading-relaxed text-muted-foreground/80">
+            <p className="mt-2 font-mono text-xs leading-relaxed text-muted-foreground/80 whitespace-pre-wrap break-words">
               “{h.bio}”
             </p>
           )}

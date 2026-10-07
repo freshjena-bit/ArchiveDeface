@@ -157,13 +157,13 @@ export function MirrorViewer({
               {d.reason && (
                 <div className="rounded border border-border/60 bg-card/40 px-3 py-2">
                   <div className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground/60">reason</div>
-                  <div className="mt-0.5 font-mono text-[12px] leading-relaxed text-foreground/80">{d.reason}</div>
+                  <div className="mt-0.5 font-mono text-[12px] leading-relaxed text-foreground/80 whitespace-pre-wrap break-words">{d.reason}</div>
                 </div>
               )}
               {d.poc && (
                 <div className="rounded border border-border/60 bg-card/40 px-3 py-2">
                   <div className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground/60">proof of concept</div>
-                  <div className="mt-0.5 font-mono text-[12px] leading-relaxed text-foreground/80">{d.poc}</div>
+                  <div className="mt-0.5 font-mono text-[12px] leading-relaxed text-foreground/80 whitespace-pre-wrap break-words">{d.poc}</div>
                 </div>
               )}
             </div>

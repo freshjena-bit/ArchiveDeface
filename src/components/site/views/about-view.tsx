@@ -78,7 +78,7 @@ export function AboutView() {
                 <h3 className="mt-3 font-mono text-sm font-bold text-foreground">
                   {p.title}
                 </h3>
-                <p className="mt-1.5 font-mono text-[11px] leading-relaxed text-muted-foreground">
+                <p className="mt-1.5 font-mono text-[11px] leading-relaxed text-muted-foreground whitespace-pre-wrap break-words">
                   {p.body}
                 </p>
               </motion.div>
