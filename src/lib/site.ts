@@ -21,6 +21,29 @@ export function countryName(code: string | null | undefined): string {
   return NAMES[code.toUpperCase()] ?? code.toUpperCase()
 }
 
+/**
+ * Extract a normalized hostname from a URL for dedup comparison.
+ * Normalization:
+ *   - lowercase
+ *   - strip port
+ *   - strip leading "www."
+ * Examples:
+ *   https://TEST.com:8080/path → test.com
+ *   https://www.test.com       → test.com
+ *   https://portal.test.com    → portal.test.com  (different host — allowed)
+ * Same hostname == duplicate; subdomains are different hosts (allowed).
+ */
+export function getHostname(url: string): string {
+  let host = ''
+  try {
+    host = new URL(url.trim()).hostname.toLowerCase()
+  } catch {
+    host = url.trim().toLowerCase().replace(/^[a-z]+:\/\//, '').split('/')[0]
+  }
+  host = host.split(':')[0]
+  return host.replace(/^www\./, '')
+}
+
 const SEVERITY_META = {
   low: { label: 'LOW', color: 'text-term-green', dot: 'bg-term-green', ring: 'border-term-green/40' },
   medium: { label: 'MED', color: 'text-term-amber', dot: 'bg-term-amber', ring: 'border-term-amber/40' },

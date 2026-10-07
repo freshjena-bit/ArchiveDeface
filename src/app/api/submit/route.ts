@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { deriveMeta } from '@/lib/site'
+import { deriveMeta, getHostname } from '@/lib/site'
 import { resolvePage } from '@/lib/page'
 
 export const dynamic = 'force-dynamic'
@@ -47,6 +47,49 @@ export async function POST(req: NextRequest) {
         { ok: false, error: 'Too many URLs in one submission (max 50)' },
         { status: 400 }
       )
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Duplicate-domain check (across archive / onhold / special)
+    //
+    // If the submitted URL's hostname already exists in the DB (any status),
+    // reject with 409 Conflict.
+    //
+    // Same hostname == duplicate. Subdomains are different hostnames, so
+    // they are allowed:
+    //   test.com archived       → reject test.com      (duplicate)
+    //   test.com archived       → allow  portal.test.com (subdomain, different host)
+    //   test.com archived       → allow  test.org        (different domain)
+    //   www.test.com archived   → reject test.com      (www. stripped, same host)
+    // ─────────────────────────────────────────────────────────────
+    const submittedHosts = Array.from(
+      new Set(list.map((u) => getHostname(u)).filter(Boolean))
+    )
+    if (submittedHosts.length > 0) {
+      // Broad filter: only fetch candidates whose targetUrl contains one of
+      // the submitted hostnames. (targetUrl is stored as full URL, so we
+      // post-filter for exact hostname match below.)
+      const candidates = await db.defacement.findMany({
+        where: {
+          OR: submittedHosts.map((h) => ({ targetUrl: { contains: h } })),
+        },
+        select: { targetUrl: true },
+      })
+      const existingHosts = new Set(
+        candidates.map((c) => getHostname(c.targetUrl)).filter(Boolean)
+      )
+      const duplicates = submittedHosts.filter((h) => existingHosts.has(h))
+      if (duplicates.length > 0) {
+        const sample = duplicates[0]
+        return NextResponse.json(
+          {
+            ok: false,
+            error: `Domain already archived: ${duplicates.join(', ')}. Submit a subdomain (e.g. portal.${sample}) or a different domain.`,
+            duplicates,
+          },
+          { status: 409 }
+        )
+      }
     }
 
     // anyone can submit — the attacker handle is auto-registered if new.
