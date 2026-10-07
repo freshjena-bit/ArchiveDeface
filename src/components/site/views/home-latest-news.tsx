@@ -50,10 +50,10 @@ export function HomeLatestNews() {
         </button>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="flex gap-3 overflow-x-auto pb-2 sm:grid sm:grid-cols-2 sm:overflow-visible lg:grid-cols-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {isLoading ? (
           Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className="h-36 w-full" />
+            <Skeleton key={i} className="h-36 w-[230px] flex-shrink-0 sm:w-auto" />
           ))
         ) : items.length === 0 ? (
           <div className="col-span-full rounded-md border border-border/70 bg-card/40 px-4 py-8 text-center font-mono text-[11px] text-muted-foreground">
@@ -67,7 +67,7 @@ export function HomeLatestNews() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: i * 0.06 }}
               onClick={() => navigate('/news')}
-              className={`group flex flex-col rounded-md border bg-card/40 p-3 text-left transition-colors hover:border-primary/40 ${
+              className={`group flex w-[230px] flex-shrink-0 flex-col rounded-md border bg-card/40 p-3 text-left transition-colors hover:border-primary/40 sm:w-auto ${
                 n.pinned ? 'border-primary/40 bg-primary/[0.04]' : 'border-border/70'
               }`}
             >
@@ -89,7 +89,7 @@ export function HomeLatestNews() {
               <h3 className="mt-2 line-clamp-2 font-mono text-xs font-bold text-foreground break-words">
                 {n.title}
               </h3>
-              <p className="mt-1 line-clamp-3 flex-1 font-mono text-[11px] leading-relaxed text-muted-foreground break-words">
+              <p className="mt-1 line-clamp-2 flex-1 font-mono text-[11px] leading-relaxed text-muted-foreground break-words">
                 {n.body}
               </p>
 
