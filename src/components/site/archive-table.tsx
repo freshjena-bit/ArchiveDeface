@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import Link from 'next/link'
 import useSWR from 'swr'
 import { motion } from 'framer-motion'
 import {
@@ -198,8 +199,8 @@ function Row({ d, index, onOpen }: { d: Defacement; index: number; onOpen: (d: D
 
       {/* defacer */}
       <td className="px-2 py-2.5 align-middle">
-        <a
-          href={`#/defacer/${encodeURIComponent(d.attacker.handle)}`}
+        <Link
+          href={`/defacer/${encodeURIComponent(d.attacker.handle)}`}
           onClick={(e) => e.stopPropagation()}
           className="flex items-center gap-2 hover:opacity-90"
         >
@@ -214,12 +215,16 @@ function Row({ d, index, onOpen }: { d: Defacement; index: number; onOpen: (d: D
               {d.attacker.handle}
             </div>
             {d.attacker.team && (
-              <div className="truncate font-mono text-[9px] text-muted-foreground">
+              <Link
+                href={`/team/${encodeURIComponent(d.attacker.team)}`}
+                onClick={(e) => e.stopPropagation()}
+                className="truncate font-mono text-[9px] text-muted-foreground hover:text-primary"
+              >
                 {d.attacker.team}
-              </div>
+              </Link>
             )}
           </div>
-        </a>
+        </Link>
       </td>
 
       {/* target */}

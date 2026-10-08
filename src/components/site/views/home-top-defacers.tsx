@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import Link from 'next/link'
 import useSWR from 'swr'
 import { Trophy, Flame, Crown } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -63,20 +64,20 @@ export function HomeTopDefacers() {
                     String(e.rank).padStart(2, '0')
                   )}
                 </span>
-                <a
-                  href={`#/defacer/${encodeURIComponent(e.handle)}`}
+                <Link
+                  href={`/defacer/${encodeURIComponent(e.handle)}`}
                   className="grid h-5 w-5 shrink-0 place-items-center rounded-sm font-mono text-[9px] font-bold text-black hover:opacity-90"
                   style={{ background: e.color }}
                 >
                   {e.handle.slice(0, 2).toUpperCase()}
-                </a>
+                </Link>
                 <div className="min-w-0 flex-1">
-                  <a
-                    href={`#/defacer/${encodeURIComponent(e.handle)}`}
+                  <Link
+                    href={`/defacer/${encodeURIComponent(e.handle)}`}
                     className="block truncate font-mono text-[11px] text-foreground hover:text-primary"
                   >
                     {e.handle}
-                  </a>
+                  </Link>
                   <div className="truncate font-mono text-[9px] text-muted-foreground">
                     {e.team ?? 'INDEPENDENT'} · {countryFlag(e.country)}
                   </div>

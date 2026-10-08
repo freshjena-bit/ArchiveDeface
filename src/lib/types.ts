@@ -12,7 +12,7 @@ export type Defacement = {
   country: string
   category: string
   severity: 'low' | 'medium' | 'high' | 'critical'
-  status: 'archived' | 'restored' | 'live'
+  status: 'archived' | 'restored' | 'live' | 'onhold'
   note: string | null
   poc: string | null
   reason: string | null

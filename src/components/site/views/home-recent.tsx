@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import Link from 'next/link'
 import useSWR from 'swr'
 import { ArrowRight, ExternalLink } from 'lucide-react'
 import { countryFlag, severityMeta, timeAgo } from '@/lib/site'
@@ -63,8 +64,8 @@ export function HomeRecent({ onViewAll }: { onViewAll: () => void }) {
                         <span className={`inline-block h-1.5 w-1.5 rounded-full ${sev.dot}`} />
                       </td>
                       <td className="px-2 py-2 align-middle">
-                        <a
-                          href={`#/defacer/${encodeURIComponent(d.attacker.handle)}`}
+                        <Link
+                          href={`/defacer/${encodeURIComponent(d.attacker.handle)}`}
                           onClick={(e) => e.stopPropagation()}
                           className="flex items-center gap-2 hover:opacity-90"
                         >
@@ -77,7 +78,7 @@ export function HomeRecent({ onViewAll }: { onViewAll: () => void }) {
                           <span className="truncate font-mono text-[11px] font-semibold text-foreground">
                             {d.attacker.handle}
                           </span>
-                        </a>
+                        </Link>
                       </td>
                       <td className="px-2 py-2 align-middle">
                         <div className="truncate font-mono text-[11px] text-foreground" title={d.targetName}>

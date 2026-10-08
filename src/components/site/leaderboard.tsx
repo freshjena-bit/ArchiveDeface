@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Trophy, Flame, Crown } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -64,15 +65,24 @@ export function FullLeaderboard({ items, isLoading }: { items: LeaderEntry[]; is
                           `#${i + 1}`
                         )}
                       </span>
-                      <a
-                        href={`#/defacer/${encodeURIComponent(p.handle)}`}
+                      <Link
+                        href={`/defacer/${encodeURIComponent(p.handle)}`}
                         className="truncate font-mono text-xs font-bold text-foreground hover:text-primary"
                       >
                         {p.handle}
-                      </a>
+                      </Link>
                     </div>
                     <div className="truncate font-mono text-[10px] text-muted-foreground">
-                      {p.team ?? 'INDEPENDENT'} · {countryFlag(p.country)} {countryName(p.country)}
+                      {p.team ? (
+                        <Link
+                          href={`/team/${encodeURIComponent(p.team)}`}
+                          className="hover:text-primary"
+                        >
+                          {p.team}
+                        </Link>
+                      ) : (
+                        'INDEPENDENT'
+                      )} · {countryFlag(p.country)} {countryName(p.country)}
                     </div>
                   </div>
                   <span className="inline-flex items-center gap-1 font-mono text-sm font-bold text-primary tabular-nums">
@@ -121,15 +131,24 @@ export function FullLeaderboard({ items, isLoading }: { items: LeaderEntry[]; is
                       >
                         {e.handle.slice(0, 2).toUpperCase()}
                       </span>
-                      <a
-                        href={`#/defacer/${encodeURIComponent(e.handle)}`}
+                      <Link
+                        href={`/defacer/${encodeURIComponent(e.handle)}`}
                         className="truncate font-mono text-[11px] font-semibold text-foreground hover:text-primary"
                       >
                         {e.handle}
-                      </a>
+                      </Link>
                     </div>
                     <div className="col-span-3 truncate font-mono text-[10px] text-muted-foreground">
-                      {e.team ?? 'INDEPENDENT'}
+                      {e.team ? (
+                        <Link
+                          href={`/team/${encodeURIComponent(e.team)}`}
+                          className="hover:text-primary"
+                        >
+                          {e.team}
+                        </Link>
+                      ) : (
+                        'INDEPENDENT'
+                      )}
                     </div>
                     <div className="col-span-3 flex items-center gap-1.5 font-mono text-[10px] text-muted-foreground">
                       <span>{countryFlag(e.country)}</span>

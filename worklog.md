@@ -721,3 +721,26 @@ Stage Summary:
 - No JSX restructure or styling changes
 - Final sweep: 0 `useHashRoute` references in src/components/site, 0 `navigate(` call-sites in src/components/site. Only remaining `useHashRoute` reference is in src/lib/use-hash-route.ts itself (to be deleted in Task 8).
 - Ready for use-hash-route.ts deletion (Task 8)
+
+---
+Task ID: 7
+Agent: subagent (general-purpose)
+Task: Update 7 components to use Link with App Router paths + make team names clickable
+
+Work Log:
+- src/components/site/archive-table.tsx: added `import Link from 'next/link'`; converted defacer `<a href="#/defacer/${handle}">` -> `<Link href="/defacer/${handle}">` (preserving `onClick stopPropagation` + `className` + closing `</a>`->`</Link>`); wrapped the inner team-name `<div>` block with `<Link href="/team/${encodeURIComponent(team)}" onClick stopPropagation className="... hover:text-primary">{team}</Link>` (replacing the plain `<div>` with the same className + `hover:text-primary`). Target URL `<a target="_blank" rel="noreferrer">` intentionally kept as plain `<a>` (external).
+- src/components/site/leaderboard.tsx: added `import Link from 'next/link'`; podium section: defacer `<a href="#/defacer/${p.handle}">` -> `<Link>`; team-name text `{p.team ?? 'INDEPENDENT'}` -> conditional `{p.team ? <Link href="/team/${p.team}" className="hover:text-primary">{p.team}</Link> : 'INDEPENDENT'}` (rest of line `· {flag} {country}` left as plain text). Ranked-list section: defacer `<a href="#/defacer/${e.handle}">` -> `<Link>`; team-name cell `{e.team ?? 'INDEPENDENT'}` -> same conditional Link pattern.
+- src/components/site/special-archive-table.tsx: added `import Link from 'next/link'`; converted defacer `<a href="#/defacer/${handle}">` -> `<Link>` (preserving `onClick stopPropagation` + className + closing tag). NOTE: this table only displays defacer handle (no team-name text row), so Part B had no team-name to wrap here. Target URL `<a target="_blank" rel="noreferrer">` kept as plain `<a>`.
+- src/components/site/teams-leaderboard.tsx: added `import Link from 'next/link'`; podium section: `<a href="#/team/${t.team}">` -> `<Link>`; ranked-list section: `<a href="#/team/${t.team}">` -> `<Link>` (className preserved on both).
+- src/components/site/views/home-recent.tsx: added `import Link from 'next/link'`; converted defacer `<a href="#/defacer/${handle}">` -> `<Link>` (preserving `onClick stopPropagation` + className). Target URL `<a target="_blank" rel="noreferrer">` kept as plain `<a>`.
+- src/components/site/views/home-top-defacers.tsx: added `import Link from 'next/link'` (file already imports `useRouter` from `next/navigation` — both now present); avatar box `<a href="#/defacer/${e.handle}" style={...}>` -> `<Link>` (preserves className + inline style); handle-text `<a href="#/defacer/${e.handle}">` -> `<Link>`. The plain-text team line (`{e.team ?? 'INDEPENDENT'} · {flag}`) was NOT in the Part B scope (instructions explicitly listed only archive-table, special-archive-table, leaderboard), so left unchanged.
+- src/components/site/views/team-view.tsx: added `import Link from 'next/link'`; member-list `<a key={m.handle} href="#/defacer/${m.handle}">` -> `<Link>` (preserves `key` + className + inner spans); table-row defacer `<a href="#/defacer/${handle}" onClick stopPropagation>` -> `<Link>` (preserves onClick + className). Target URL `<a target="_blank" rel="noreferrer">` kept as plain `<a>`.
+
+Stage Summary:
+- 11 hash URLs converted to App Router paths (8 `#/defacer/` + 3 `#/team/`): archive-table(1), leaderboard(2 defacer), special-archive-table(1), teams-leaderboard(2 team), home-recent(1), home-top-defacers(2), team-view(2)
+- Team names wrapped with Link to /team/X (where they were plain text): archive-table.tsx (1 nested team Link inside defacer cell); leaderboard.tsx podium + ranked-list (2 conditional team Links)
+- All stopPropagation handlers preserved on nested Links inside clickable rows (archive-table, special-archive-table, home-recent, team-view table, plus the new nested team Link in archive-table)
+- External target-URL `<a target="_blank" rel="noreferrer">` links intentionally kept as plain `<a>` (not Link) in all 5 files where they appear (archive-table, special-archive-table, home-recent, team-view, plus leaderboard has none)
+- live-ticker.tsx intentionally skipped (button parent — nested links would be invalid HTML, per task constraints)
+- All `encodeURIComponent()` calls preserved on every dynamic segment (handles + team names)
+- Post-edit verification: grep `#/defacer/|#/team/` in src/components/site -> 0 matches. All 7 files now have `import Link from 'next/link'`. `npx tsc --noEmit` shows zero new errors from these edits (pre-existing status-type errors in defacer-view.tsx/team-view.tsx lines 83/241 remain — unrelated to Link migration).

@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import Link from 'next/link'
 import useSWR from 'swr'
 import { motion } from 'framer-motion'
 import {
@@ -134,9 +135,9 @@ export function TeamView({ name }: { name: string }) {
           {/* member list */}
           <div className="mt-2 flex flex-wrap gap-1.5">
             {data.memberList.map((m) => (
-              <a
+              <Link
                 key={m.handle}
-                href={`#/defacer/${encodeURIComponent(m.handle)}`}
+                href={`/defacer/${encodeURIComponent(m.handle)}`}
                 className="inline-flex items-center gap-1 rounded-sm border border-border/60 bg-card/40 px-1.5 py-0.5 font-mono text-[10px] text-foreground hover:border-primary/50 hover:text-primary"
               >
                 <span
@@ -147,7 +148,7 @@ export function TeamView({ name }: { name: string }) {
                 </span>
                 {m.handle}
                 <span className="text-muted-foreground">· {m.totalHits}</span>
-              </a>
+              </Link>
             ))}
           </div>
         </div>
@@ -260,8 +261,8 @@ export function TeamView({ name }: { name: string }) {
                       </span>
                     </td>
                     <td className="px-2 py-2.5 align-middle">
-                      <a
-                        href={`#/defacer/${encodeURIComponent(d.attacker.handle)}`}
+                      <Link
+                        href={`/defacer/${encodeURIComponent(d.attacker.handle)}`}
                         onClick={(e) => e.stopPropagation()}
                         className="flex items-center gap-2 hover:opacity-90"
                       >
@@ -274,7 +275,7 @@ export function TeamView({ name }: { name: string }) {
                         <span className="truncate font-mono text-[11px] font-semibold text-foreground group-hover:text-primary">
                           {d.attacker.handle}
                         </span>
-                      </a>
+                      </Link>
                     </td>
                     <td className="px-2 py-2.5 align-middle">
                       <div className="truncate font-mono text-[11px] text-foreground" title={d.targetName}>
