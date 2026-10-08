@@ -678,3 +678,46 @@ Stage Summary:
 - Project rebranded ZONEDEFACER. Repo live di GitHub: github.com/freshjena-bit/ArchiveDeface (branch main).
 - Token PAT dipakai sekali buat push, NGGAK disimpen di repo/config. User HARUS rotate token (udah terekam di chat history).
 - Cloudflare deploy-from-0 guide: di DEPLOY.md + ringkas di chat.
+
+---
+Task ID: 3
+Agent: subagent (general-purpose)
+Task: Create 10 new Next.js App Router page files for multi-page migration
+
+Work Log:
+- Created /home/z/my-project/src/app/archive/page.tsx -> renders ArchiveView
+- Created /home/z/my-project/src/app/special/page.tsx -> renders SpecialArchiveView
+- Created /home/z/my-project/src/app/onhold/page.tsx -> renders OnHoldView
+- Created /home/z/my-project/src/app/ranking/page.tsx -> renders RankingView
+- Created /home/z/my-project/src/app/submit/page.tsx -> renders SubmitView
+- Created /home/z/my-project/src/app/news/page.tsx -> renders NewsView
+- Created /home/z/my-project/src/app/about/page.tsx -> renders AboutView
+- Created /home/z/my-project/src/app/admin/page.tsx -> renders AdminView
+- Created /home/z/my-project/src/app/defacer/[handle]/page.tsx -> async server component rendering DefacerView with decoded handle
+- Created /home/z/my-project/src/app/team/[name]/page.tsx -> async server component rendering TeamView with decoded name
+
+Stage Summary:
+- All 10 page files created
+- Each page renders only its View component (header/footer in RootLayout)
+- Dynamic routes (defacer/[handle], team/[name]) use async server component pattern with awaited params Promise (Next.js 16 convention)
+
+---
+Task ID: 6
+Agent: subagent (general-purpose)
+Task: Update 7 view components to replace useHashRoute with useRouter (Next.js App Router)
+
+Work Log:
+- src/components/site/views/defacer-view.tsx: swapped `import { useHashRoute } from '@/lib/use-hash-route'` -> `import { useRouter } from 'next/navigation'`; `const { navigate } = useHashRoute()` -> `const router = useRouter()`; 2 navigate() calls -> router.push() (`/archive` back-button + `/ranking` back-button).
+- src/components/site/views/team-view.tsx: same import/hook swap; 2 navigate('/ranking') calls -> router.push('/ranking') (error-state back-button + main back-button).
+- src/components/site/views/home-view.tsx: same import/hook swap; 1 navigate('/archive') call -> router.push('/archive') inside `onViewAll` callback passed to HomeRecent.
+- src/components/site/views/home-top-defacers.tsx: same import/hook swap; 1 navigate('/ranking') call -> router.push('/ranking') on "full ranking" button. (Encountered a stray double-`}}` immediately after first edit due to old/new mismatch on trailing `}`; fixed via follow-up Edit so the line now reads `onClick={() => router.push('/ranking')}` with single closing brace.)
+- src/components/site/views/home-latest-news.tsx: same import/hook swap; 2 navigate('/news') calls -> router.push('/news') (header "all news" button + each news card motion.button). Required two separate Edits because both call-sites shared identical suffix; used surrounding JSX context to disambiguate.
+- src/components/site/live-ticker.tsx: same import/hook swap; 1 navigate('/archive') call -> router.push('/archive') on the marquee button.
+- src/components/site/submit-form.tsx: same import/hook swap; 1 navigate('/') call -> router.push('/') inside `setTimeout(..., 900)` post-submit redirect.
+
+Stage Summary:
+- All 7 view components migrated from useHashRoute to useRouter
+- 10 navigate() calls total replaced with router.push()
+- No JSX restructure or styling changes
+- Final sweep: 0 `useHashRoute` references in src/components/site, 0 `navigate(` call-sites in src/components/site. Only remaining `useHashRoute` reference is in src/lib/use-hash-route.ts itself (to be deleted in Task 8).
+- Ready for use-hash-route.ts deletion (Task 8)

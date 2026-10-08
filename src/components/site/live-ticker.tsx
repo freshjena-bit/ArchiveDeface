@@ -5,12 +5,12 @@ import useSWR from 'swr'
 import { Radio, ArrowRight } from 'lucide-react'
 import { countryFlag, severityMeta, timeAgo } from '@/lib/site'
 import type { Defacement } from '@/lib/types'
-import { useHashRoute } from '@/lib/use-hash-route'
+import { useRouter } from 'next/navigation'
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
 export function LiveTicker() {
-  const { navigate } = useHashRoute()
+  const router = useRouter()
   const { data } = useSWR<{ items: Defacement[] }>(
     '/api/defacements?limit=1',
     fetcher,
@@ -21,7 +21,7 @@ export function LiveTicker() {
   return (
     <div className="border-b border-border/70 bg-card/30">
       <button
-        onClick={() => navigate('/archive')}
+        onClick={() => router.push('/archive')}
         className="mx-auto flex w-full max-w-7xl items-center gap-2.5 px-4 py-2 text-left transition-colors hover:bg-primary/[0.04] sm:px-6"
       >
         <div className="flex shrink-0 items-center gap-1.5 border-r border-border/70 pr-2.5 font-mono text-[10px] font-bold uppercase tracking-wider text-primary">

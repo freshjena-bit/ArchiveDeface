@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { Terminal, Heart, Github } from 'lucide-react'
 
 export function SiteFooter() {
@@ -23,14 +24,14 @@ export function SiteFooter() {
           </div>
 
           <nav className="flex flex-wrap items-center gap-x-5 gap-y-2 font-mono text-[11px]">
-            <a href="#/" className="text-muted-foreground hover:text-primary">Home</a>
-            <a href="#/archive" className="text-muted-foreground hover:text-primary">Archive</a>
-            <a href="#/special" className="text-muted-foreground hover:text-primary">Archive Special</a>
-            <a href="#/onhold" className="text-muted-foreground hover:text-primary">On Hold</a>
-            <a href="#/ranking" className="text-muted-foreground hover:text-primary">Ranking</a>
-            <a href="#/submit" className="text-muted-foreground hover:text-primary">Submit</a>
-            <a href="#/news" className="text-muted-foreground hover:text-primary">News</a>
-            <a href="#/about" className="text-muted-foreground hover:text-primary">About</a>
+            <Link href="/" className="text-muted-foreground hover:text-primary">Home</Link>
+            <Link href="/archive" className="text-muted-foreground hover:text-primary">Archive</Link>
+            <Link href="/special" className="text-muted-foreground hover:text-primary">Archive Special</Link>
+            <Link href="/onhold" className="text-muted-foreground hover:text-primary">On Hold</Link>
+            <Link href="/ranking" className="text-muted-foreground hover:text-primary">Ranking</Link>
+            <Link href="/submit" className="text-muted-foreground hover:text-primary">Submit</Link>
+            <Link href="/news" className="text-muted-foreground hover:text-primary">News</Link>
+            <Link href="/about" className="text-muted-foreground hover:text-primary">About</Link>
           </nav>
 
           <div className="flex items-center gap-3 font-mono text-[10px] text-muted-foreground">

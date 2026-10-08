@@ -5,7 +5,7 @@ import useSWR from 'swr'
 import { motion } from 'framer-motion'
 import { Newspaper, Pin, ArrowRight, Clock } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useHashRoute } from '@/lib/use-hash-route'
+import { useRouter } from 'next/navigation'
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
@@ -25,7 +25,7 @@ function fmtDate(iso: string) {
 }
 
 export function HomeLatestNews() {
-  const { navigate } = useHashRoute()
+  const router = useRouter()
   const { data, isLoading } = useSWR<{ items: NewsItem[] }>('/api/news', fetcher, {
     refreshInterval: 60000,
   })
@@ -42,7 +42,7 @@ export function HomeLatestNews() {
           </h2>
         </div>
         <button
-          onClick={() => navigate('/news')}
+          onClick={() => router.push('/news')}
           className="inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-wider text-primary hover:underline"
         >
           all news
@@ -66,7 +66,7 @@ export function HomeLatestNews() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: i * 0.06 }}
-              onClick={() => navigate('/news')}
+              onClick={() => router.push('/news')}
               className={`group flex w-[230px] flex-shrink-0 flex-col rounded-md border bg-card/40 p-3 text-left transition-colors hover:border-primary/40 sm:w-auto ${
                 n.pinned ? 'border-primary/40 bg-primary/[0.04]' : 'border-border/70'
               }`}

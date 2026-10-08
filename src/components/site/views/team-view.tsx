@@ -13,7 +13,7 @@ import { countryFlag, countryName, severityMeta, timeAgo } from '@/lib/site'
 import { DefacementMarks } from '@/components/site/marks'
 import { MirrorViewer } from '@/components/site/mirror-viewer'
 import { teamColor } from '@/components/site/teams-leaderboard'
-import { useHashRoute } from '@/lib/use-hash-route'
+import { useRouter } from 'next/navigation'
 import type { Defacement } from '@/lib/types'
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
@@ -46,7 +46,7 @@ function fmtDate(iso: string) {
 }
 
 export function TeamView({ name }: { name: string }) {
-  const { navigate } = useHashRoute()
+  const router = useRouter()
   const { data, isLoading, error } = useSWR<TeamData>(
     `/api/team?name=${encodeURIComponent(name)}`,
     fetcher,
@@ -63,7 +63,7 @@ export function TeamView({ name }: { name: string }) {
           team not found: <span className="text-foreground">{name}</span>
         </p>
         <Button
-          onClick={() => navigate('/ranking')}
+          onClick={() => router.push('/ranking')}
           variant="outline"
           className="mt-4 gap-2 font-mono text-xs"
         >
@@ -103,7 +103,7 @@ export function TeamView({ name }: { name: string }) {
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
       {/* back */}
       <button
-        onClick={() => navigate('/ranking')}
+        onClick={() => router.push('/ranking')}
         className="mb-4 inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground hover:text-primary"
       >
         <ArrowLeft className="h-3.5 w-3.5" />

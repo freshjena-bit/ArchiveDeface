@@ -7,10 +7,10 @@ import { LiveTicker } from '@/components/site/live-ticker'
 import { HomeRecent } from './home-recent'
 import { HomeTopDefacers } from './home-top-defacers'
 import { HomeLatestNews } from './home-latest-news'
-import { useHashRoute } from '@/lib/use-hash-route'
+import { useRouter } from 'next/navigation'
 
 export function HomeView() {
-  const { navigate } = useHashRoute()
+  const router = useRouter()
 
   return (
     <>
@@ -32,7 +32,7 @@ export function HomeView() {
                 Latest Activity
               </h2>
             </div>
-            <HomeRecent onViewAll={() => navigate('/archive')} />
+            <HomeRecent onViewAll={() => router.push('/archive')} />
           </div>
           <div className="min-w-0 lg:col-span-4">
             <div className="mb-3" />

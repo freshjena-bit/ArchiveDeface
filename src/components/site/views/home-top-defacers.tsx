@@ -6,12 +6,12 @@ import { Trophy, Flame, Crown } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { countryFlag } from '@/lib/site'
 import type { LeaderEntry } from '@/lib/types'
-import { useHashRoute } from '@/lib/use-hash-route'
+import { useRouter } from 'next/navigation'
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
 export function HomeTopDefacers() {
-  const { navigate } = useHashRoute()
+  const router = useRouter()
   const { data, isLoading } = useSWR<{ items: LeaderEntry[] }>(
     '/api/leaderboard?mode=defacers',
     fetcher,
@@ -29,7 +29,7 @@ export function HomeTopDefacers() {
           </h2>
         </div>
         <button
-          onClick={() => navigate('/ranking')}
+          onClick={() => router.push('/ranking')}
           className="font-mono text-[10px] uppercase tracking-wider text-primary hover:underline"
         >
           full ranking →

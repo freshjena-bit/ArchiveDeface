@@ -11,7 +11,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
-import { useHashRoute } from '@/lib/use-hash-route'
+import { useRouter } from 'next/navigation'
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
@@ -62,7 +62,7 @@ const REASON_OPTIONS = [
 export function SubmitForm() {
   const { toast } = useToast()
   const { mutate } = useSWRConfig()
-  const { navigate } = useHashRoute()
+  const router = useRouter()
   const [submitting, setSubmitting] = React.useState(false)
   const [urlCount, setUrlCount] = React.useState(0)
   // fetch registered defacer handles for the attacker autocomplete + validation hint
@@ -109,7 +109,7 @@ export function SubmitForm() {
         mutate('/api/leaderboard'),
       ])
       // redirect to home after a short delay so the toast is readable
-      setTimeout(() => navigate('/'), 900)
+      setTimeout(() => router.push('/'), 900)
     } catch (err) {
       toast({ title: 'Submission rejected', description: (err as Error).message, variant: 'destructive' })
     } finally {
