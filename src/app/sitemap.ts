@@ -1,10 +1,13 @@
 import type { MetadataRoute } from 'next'
+import { db } from '@/lib/db'
 
 // Sitemap untuk Google Search Console.
-// Sekarang multi-page (App Router paths) — tiap route ke-index terpisah.
-// Dynamic routes (defacer/[handle], team/[name]) gak dimasukin soalnya
-// infinite combinations — Google bakal discover via internal links.
-export default function sitemap(): MetadataRoute.Sitemap {
+// Static routes + up to 200 most recent defacement detail URLs.
+// Older defacement pages are discovered by Google via /archive pagination
+// (internal links), so we only seed the latest 200 here.
+// Dynamic routes like /defacer/[handle] and /team/[name] are intentionally
+// omitted — infinite combinations, discovered via internal links.
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://defacer.zone.id'
   const now = new Date()
 
@@ -19,5 +22,25 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${baseUrl}/about`, lastModified: now, changeFrequency: 'monthly', priority: 0.4 },
   ]
 
-  return staticRoutes
+  // Dynamic defacement detail pages — fetch latest 200 IDs.
+  // Google discovers older ones via /archive internal links (pagination).
+  let defacementRoutes: MetadataRoute.Sitemap = []
+  try {
+    const recent = await db.defacement.findMany({
+      where: { status: { not: 'onhold' } },
+      select: { id: true, createdAt: true },
+      orderBy: { createdAt: 'desc' },
+      take: 200,
+    })
+    defacementRoutes = recent.map((d) => ({
+      url: `${baseUrl}/defacement/${d.id}`,
+      lastModified: d.createdAt,
+      changeFrequency: 'monthly' as const,
+      priority: 0.6,
+    }))
+  } catch {
+    // If DB is unreachable (e.g., build-time), skip dynamic URLs.
+  }
+
+  return [...staticRoutes, ...defacementRoutes]
 }

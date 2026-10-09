@@ -744,3 +744,18 @@ Stage Summary:
 - live-ticker.tsx intentionally skipped (button parent — nested links would be invalid HTML, per task constraints)
 - All `encodeURIComponent()` calls preserved on every dynamic segment (handles + team names)
 - Post-edit verification: grep `#/defacer/|#/team/` in src/components/site -> 0 matches. All 7 files now have `import Link from 'next/link'`. `npx tsc --noEmit` shows zero new errors from these edits (pre-existing status-type errors in defacer-view.tsx/team-view.tsx lines 83/241 remain — unrelated to Link migration).
+
+---
+Task ID: wire-up
+Agent: subagent (general-purpose)
+Task: Wire up archive list to detail page links + sitemap dynamic URLs
+
+Work Log:
+- archive-table.tsx: View button → Link to /defacement/{id}. Replaced the `<button aria-label="view mirror snapshot">` (lines ~280-288) with `<Link href={/defacement/${d.id}} onClick={e => e.stopPropagation()} aria-label="view record page">` while preserving the surrounding td layout, ExternalLink icon, and the same border/hover className. `import Link from 'next/link'` was already present (line 4). The `motion.tr` `onClick={() => onOpen(d)}` row-click modal behavior is untouched.
+- special-archive-table.tsx: Same change — View button (lines ~158-166) replaced with `<Link href={/defacement/${d.id}} onClick stopPropagation aria-label="view record page">` keeping the amber-tinted hover className and ExternalLink icon. `import Link from 'next/link'` already present (line 4). Row-click `motion.tr onClick={() => setSelected(d)}` modal behavior preserved (MirrorViewer still wired up).
+- sitemap.ts: Rewrote as `async function sitemap(): Promise<MetadataRoute.Sitemap>`. Added `import { db } from '@/lib/db'`. Kept the 8 static routes unchanged. Added a `try` block that calls `db.defacement.findMany({ where: { status: { not: 'onhold' } }, select: { id, createdAt }, orderBy: { createdAt: 'desc' }, take: 200 })`, then maps results to `{ url: ${baseUrl}/defacement/${id}, lastModified: d.createdAt, changeFrequency: 'monthly', priority: 0.6 }`. Wrapped in try/catch — if DB is unreachable at build time, dynamic URLs are skipped and only the 8 static routes are returned. Final return is `[...staticRoutes, ...defacementRoutes]`.
+
+Stage Summary:
+- Per-incident detail pages now linked from archive tables (both /archive and /special tables — View button navigates to /defacement/{id}; row click still opens the in-place mirror modal for quick preview)
+- Sitemap includes up to 200 most recent defacement URLs for Google indexing (older ones discovered via /archive pagination internal links)
+- TypeScript check: `npx tsc --noEmit` shows no new errors in the 3 edited files; remaining tsc errors are pre-existing and unrelated (examples/websocket, scripts/seed, skills/*).

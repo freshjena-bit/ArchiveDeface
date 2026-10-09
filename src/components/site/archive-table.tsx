@@ -277,15 +277,15 @@ function Row({ d, index, onOpen }: { d: Defacement; index: number; onOpen: (d: D
 
       {/* view */}
       <td className="px-2 py-2.5 text-center align-middle">
-        <button
-          type="button"
-          onClick={(e) => { e.stopPropagation(); onOpen(d) }}
+        <Link
+          href={`/defacement/${d.id}`}
+          onClick={(e) => e.stopPropagation()}
           className="grid h-6 w-6 place-items-center rounded-sm border border-border/50 text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary group-hover:border-primary/40"
-          title="view mirror snapshot"
-          aria-label="view mirror snapshot"
+          title="view record page"
+          aria-label="view record page"
         >
           <ExternalLink className="h-3 w-3" />
-        </button>
+        </Link>
       </td>
     </motion.tr>
   )
