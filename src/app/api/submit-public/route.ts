@@ -3,6 +3,9 @@ import { db } from '@/lib/db'
 import { deriveMeta, getHostname } from '@/lib/site'
 
 export const dynamic = 'force-dynamic'
+// Vercel serverless function timeout — default 10s gak cukup buat bulk DB ops.
+// 60s cukup buat ~200-300 incident per request. Kalau mau lebih, chunk di client.
+export const maxDuration = 60
 
 interface IncomingIncident {
   targetUrl: string
