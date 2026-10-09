@@ -1,6 +1,21 @@
 import type { MetadataRoute } from 'next'
 import { db } from '@/lib/db'
 
+// ISR: revalidate sitemap tiap 5 menit (300 detik).
+// Setelah incident baru di-submit, dalam ≤5 menit sitemap bakal include
+// URL /defacement/{id} yang baru. Default Next.js cache sitemap statis
+// selamanya sampai deploy baru — ISR bikin auto-refresh.
+//
+// Cara kerja ISR:
+// 1. Request pertama → generate sitemap, cache di Vercel edge
+// 2. Request berikutnya (dalam 5 menit) → serve dari cache (cepat)
+// 3. Setelah 5 menit → request berikutnya trigger background regeneration
+// 4. Setelah regen selesai → request berikutnya dapet versi baru
+//
+// Google re-crawl sitemap tiap beberapa jam sampe daily, jadi 5 menit
+// lebih dari cukup buat discovery window.
+export const revalidate = 300
+
 // Sitemap untuk Google Search Console.
 // Static routes + up to 200 most recent defacement detail URLs.
 // Older defacement pages are discovered by Google via /archive pagination
