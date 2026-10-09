@@ -161,7 +161,7 @@ export function SubmitForm() {
                 className="font-mono text-xs"
               />
               <p className="font-mono text-[10px] text-muted-foreground/70">
-                One URL per line. The system <span className="text-amber-400/80">fetches each target page</span> and checks for the attacker's signature: unreachable → rejected; no defacement on the page → rejected; your name → verified in ~10 min; another handle → held for review. <span className="text-term-red/80">Duplicate hostname (already in archive / onhold) → rejected</span> — submit a subdomain (e.g. <code>portal.</code>example.com) or a different domain.
+                One URL per line · <span className="text-primary/80">max 500 URLs</span> per submission. The system <span className="text-amber-400/80">fetches each target page</span> and checks for the attacker's signature: unreachable → rejected; no defacement on the page → rejected; your name → verified in ~10 min; another handle → held for review. <span className="text-term-red/80">Duplicate hostname (already in archive / onhold) → rejected</span> — submit a subdomain (e.g. <code>portal.</code>example.com) or a different domain.
               </p>
             </div>
 

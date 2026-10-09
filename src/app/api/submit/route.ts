@@ -4,6 +4,9 @@ import { deriveMeta, getHostname } from '@/lib/site'
 import { resolvePage } from '@/lib/page'
 
 export const dynamic = 'force-dynamic'
+// Vercel serverless timeout — 500 URLs × page fetch (5s timeout parallel) +
+// DB ops. Default 10s gak cukup. 60s aman buat ~200-500 URLs parallel fetch.
+export const maxDuration = 60
 
 // POST /api/submit
 // Body: { urls: string, attacker: string, team?: string, poc?: string, reason?: string }
@@ -42,9 +45,9 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       )
     }
-    if (list.length > 50) {
+    if (list.length > 500) {
       return NextResponse.json(
-        { ok: false, error: 'Too many URLs in one submission (max 50)' },
+        { ok: false, error: 'Too many URLs in one submission (max 500)' },
         { status: 400 }
       )
     }
