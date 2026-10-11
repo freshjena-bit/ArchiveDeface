@@ -59,7 +59,7 @@ export function DefacerView({ handle }: { handle: string }) {
     { refreshInterval: 30000 }
   )
   const [selected, setSelected] = React.useState<Defacement | null>(null)
-  const [filter, setFilter] = React.useState<'verified' | 'onhold'>('verified')
+  const [filter, setFilter] = React.useState<'verified' | 'special' | 'onhold'>('verified')
 
   if (isLoading) return <DefacerSkeleton />
   if (error || !data || !data.ok) {
@@ -83,10 +83,12 @@ export function DefacerView({ handle }: { handle: string }) {
   const h = data.hacker
   const c = data.counts
 
-  // client-side filter: verified (exclude onhold) / onhold only
-  const filteredItems = data.items.filter((d) =>
-    filter === 'onhold' ? d.status === 'onhold' : d.status !== 'onhold'
-  )
+  // client-side filter: verified (exclude onhold) / special (isSpecial=true) / onhold only
+  const filteredItems = data.items.filter((d) => {
+    if (filter === 'onhold') return d.status === 'onhold'
+    if (filter === 'special') return d.isSpecial
+    return d.status !== 'onhold' // 'verified'
+  })
 
   const statCards = [
     { label: 'Total Archive', value: c.total, icon: Database, tone: 'green' as const },
@@ -196,10 +198,11 @@ export function DefacerView({ handle }: { handle: string }) {
             {filteredItems.length}
           </span>
         </div>
-        {/* status filter: verified / onhold */}
+        {/* status filter: verified / special / onhold */}
         <div className="flex items-center gap-1.5 overflow-x-auto thin-scroll pb-1">
           {([
             { key: 'verified', label: 'Verified', count: c.archived + c.restored },
+            { key: 'special', label: 'Special', count: c.special },
             { key: 'onhold', label: 'On Hold', count: c.onhold },
           ] as const).map((f) => (
             <button
@@ -208,6 +211,8 @@ export function DefacerView({ handle }: { handle: string }) {
               className={`shrink-0 rounded-sm border px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider transition-colors ${
                 filter === f.key
                   ? f.key === 'onhold'
+                    ? 'border-amber-500/50 bg-amber-500/15 text-amber-400'
+                    : f.key === 'special'
                     ? 'border-amber-500/50 bg-amber-500/15 text-amber-400'
                     : 'border-primary/50 bg-primary/15 text-primary'
                   : 'border-border/50 bg-card/40 text-muted-foreground hover:border-primary/30 hover:text-foreground'

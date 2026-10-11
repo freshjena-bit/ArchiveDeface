@@ -45,6 +45,19 @@ export async function GET(req: NextRequest) {
     where.status = { not: 'onhold' }
   }
 
+  // Days filter: only show records from last N days.
+  // Used by main archive page (days=7) so it only shows recent incidents.
+  // Special archive and onhold views don't pass `days` → show all.
+  // Home-recent + live-ticker also don't pass `days` → show all.
+  const days = searchParams.get('days')
+  if (days && !special) {
+    const d = parseInt(days, 10)
+    if (!Number.isNaN(d) && d > 0) {
+      const cutoff = new Date(Date.now() - d * 24 * 60 * 60 * 1000)
+      where.createdAt = { gte: cutoff }
+    }
+  }
+
   if (special) {
     switch (special) {
       case 'gov':

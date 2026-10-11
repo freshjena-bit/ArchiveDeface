@@ -43,6 +43,9 @@ export function ArchiveTable({ mode = 'archive' }: { mode?: 'archive' | 'onhold'
   })
   if (debounced) params.set('q', debounced)
   if (isOnhold) params.set('onhold', 'true')
+  // Main archive: only show last 7 days (per user request).
+  // Onhold view: show all (no days filter).
+  if (!isOnhold) params.set('days', '7')
 
   const { data, isLoading } = useSWR<{ items: Defacement[]; total: number }>(
     `/api/defacements?${params}`,

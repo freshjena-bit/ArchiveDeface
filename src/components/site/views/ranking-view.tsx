@@ -12,20 +12,32 @@ import type { LeaderEntry } from '@/lib/types'
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
 type LbResponse =
-  | { mode: 'defacers'; year: string; years: number[]; items: LeaderEntry[] }
-  | { mode: 'teams'; year: string; years: number[]; items: TeamEntry[] }
+  | { mode: 'defacers'; year: string; month: string; years: number[]; months: number[]; items: LeaderEntry[] }
+  | { mode: 'teams'; year: string; month: string; years: number[]; months: number[]; items: TeamEntry[] }
+
+const MONTH_NAMES = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+]
 
 export function RankingView() {
   const [mode, setMode] = React.useState<'defacers' | 'teams'>('defacers')
   const [year, setYear] = React.useState<string>('all')
+  const [month, setMonth] = React.useState<string>('all')
+
+  // reset month when year changes to 'all'
+  React.useEffect(() => {
+    if (year === 'all') setMonth('all')
+  }, [year])
 
   const { data, isLoading } = useSWR<LbResponse>(
-    `/api/leaderboard?mode=${mode}&year=${year}`,
+    `/api/leaderboard?mode=${mode}&year=${year}&month=${month}`,
     fetcher,
     { refreshInterval: 30000 }
   )
 
   const years = data?.years ?? []
+  const months = data?.months ?? []
   const items = (data?.items ?? []) as never[]
 
   return (
@@ -48,6 +60,26 @@ export function RankingView() {
                 {years.map((y) => (
                   <option key={y} value={String(y)}>
                     {y}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {/* month selector (only enabled when a year is selected) */}
+            <div
+              className={`inline-flex items-center gap-1.5 rounded-md border border-border/70 bg-card/40 px-2 py-1 ${
+                year === 'all' ? 'opacity-40 pointer-events-none' : ''
+              }`}
+            >
+              <Calendar className="h-3 w-3 text-muted-foreground" />
+              <select
+                value={month}
+                onChange={(e) => setMonth(e.target.value)}
+                className="bg-transparent font-mono text-[11px] uppercase tracking-wider text-foreground outline-none"
+              >
+                <option value="all">All Months</option>
+                {months.map((m) => (
+                  <option key={m} value={String(m)}>
+                    {MONTH_NAMES[m - 1]}
                   </option>
                 ))}
               </select>

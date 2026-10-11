@@ -4,16 +4,19 @@ import { promoteDueOnhold } from '@/lib/promote'
 
 export const dynamic = 'force-dynamic'
 
-// GET /api/leaderboard?mode=defacers|teams&year=all|2026
+// GET /api/leaderboard?mode=defacers|teams&year=all|2026&month=all|1-12
 // Aggregates from the Defacement table. Only VERIFIED records
 // (archived / restored) are counted — on-hold records are excluded.
-// When a year is given, only incidents whose createdAt falls in that
-// calendar year are counted.
+// Filters:
+//   year=all → all time
+//   year=2026 → calendar year 2026
+//   year=2026&month=10 → October 2026 only (month only applies when year is set)
 export async function GET(req: NextRequest) {
   promoteDueOnhold()
   const { searchParams } = new URL(req.url)
   const mode = searchParams.get('mode') ?? 'defacers'
   const yearParam = searchParams.get('year') ?? 'all'
+  const monthParam = searchParams.get('month') ?? 'all'
 
   // available years (distinct, desc) for the selector — from verified records
   const allDates = await db.defacement.findMany({
@@ -24,12 +27,38 @@ export async function GET(req: NextRequest) {
   for (const d of allDates) yearSet.add(d.createdAt.getFullYear())
   const years = [...yearSet].sort((a, b) => b - a)
 
+  // available months for the selected year (for the month selector)
+  let months: number[] = []
+  if (yearParam !== 'all') {
+    const y = parseInt(yearParam, 10)
+    if (!Number.isNaN(y)) {
+      const monthSet = new Set<number>()
+      for (const d of allDates) {
+        if (d.createdAt.getFullYear() === y) {
+          monthSet.add(d.createdAt.getMonth() + 1) // 1-indexed
+        }
+      }
+      months = [...monthSet].sort((a, b) => a - b)
+    }
+  }
+
   // base filter: verified records only (exclude on-hold)
   const where: Record<string, unknown> = { status: { not: 'onhold' } }
+
+  // date range: year + optional month
   if (yearParam && yearParam !== 'all') {
     const y = parseInt(yearParam, 10)
     if (!Number.isNaN(y)) {
-      where.createdAt = { gte: new Date(y, 0, 1), lt: new Date(y + 1, 0, 1) }
+      if (monthParam && monthParam !== 'all') {
+        const m = parseInt(monthParam, 10)
+        if (!Number.isNaN(m) && m >= 1 && m <= 12) {
+          // specific month in specific year
+          where.createdAt = { gte: new Date(y, m - 1, 1), lt: new Date(y, m, 1) }
+        }
+      } else {
+        // entire year
+        where.createdAt = { gte: new Date(y, 0, 1), lt: new Date(y + 1, 0, 1) }
+      }
     }
   }
 
@@ -64,7 +93,7 @@ export async function GET(req: NextRequest) {
       .sort((a, b) => b.totalHits - a.totalHits)
       .map((t, i) => ({ ...t, rank: i + 1 }))
 
-    return NextResponse.json({ mode: 'teams', year: yearParam, years, items })
+    return NextResponse.json({ mode: 'teams', year: yearParam, month: monthParam, years, months, items })
   }
 
   // defacers
@@ -90,5 +119,5 @@ export async function GET(req: NextRequest) {
     .sort((a, b) => b.totalHits - a.totalHits)
     .map((d, i) => ({ ...d, rank: i + 1 }))
 
-  return NextResponse.json({ mode: 'defacers', year: yearParam, years, items })
+  return NextResponse.json({ mode: 'defacers', year: yearParam, month: monthParam, years, months, items })
 }
