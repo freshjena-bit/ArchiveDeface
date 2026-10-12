@@ -75,3 +75,5 @@ server.log
 /upload/
 # prevent vercel.json from being tracked (causes build failures)
 vercel.json
+# real target URLs (don't commit)
+list.txt

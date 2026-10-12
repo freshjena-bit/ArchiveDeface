@@ -1,0 +1,23 @@
+# Sample list.txt for bulk submit script.
+#
+# Replace the URLs below with your actual targets.
+# Format: one URL per line. Lines starting with # are comments (skipped).
+# Blank lines are also skipped.
+#
+# Usage:
+#   python3 scripts/submit.py list.txt GadaLuBau SonicNetwork
+#   python3 scripts/submit.py list.txt GadaLuBau SonicNetwork --url https://defacer.zone.id --severity high
+#
+# Optional env vars (override CLI defaults):
+#   API_URL=https://defacer.zone.id
+#   CHUNK_SIZE=100
+#   POC="SQL Injection"
+#   REASON="As a challenge"
+#   SEVERITY=high
+#   STATUS=archived
+
+https://example.gov.id/
+https://example.ac.id/
+https://example.go.id/path
+https://example.edu/
+https://example.gov/subpage
