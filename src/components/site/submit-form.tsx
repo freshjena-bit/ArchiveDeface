@@ -69,7 +69,7 @@ export function SubmitForm() {
   const { data: handlesData } = useSWR<{ items: { handle: string }[] }>(
     '/api/leaderboard?mode=defacers&year=all',
     fetcher,
-    { refreshInterval: 60000 }
+    { refreshInterval: 600000 }
   )
   const registeredHandles = (handlesData?.items ?? []).map((i) => i.handle)
 

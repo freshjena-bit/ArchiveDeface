@@ -9,7 +9,7 @@ import type { Stats } from '@/lib/types'
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
 export function StatsBar() {
-  const { data } = useSWR<Stats>('/api/stats', fetcher, { refreshInterval: 30000 })
+  const { data } = useSWR<Stats>('/api/stats', fetcher, { refreshInterval: 600000 })
   const c = data?.counters
 
   // derive "this month" from timeseries sum

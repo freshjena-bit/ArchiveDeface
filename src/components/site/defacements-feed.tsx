@@ -46,7 +46,7 @@ export function DefacementsFeed() {
   const { data, isLoading } = useSWR<{ items: Defacement[]; total: number }>(
     `/api/defacements?${params}`,
     fetcher,
-    { refreshInterval: 20000 }
+    { refreshInterval: 600000 }
   )
 
   const total = data?.total ?? 0

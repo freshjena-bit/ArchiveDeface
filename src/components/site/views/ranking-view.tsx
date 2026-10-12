@@ -33,7 +33,7 @@ export function RankingView() {
   const { data, isLoading } = useSWR<LbResponse>(
     `/api/leaderboard?mode=${mode}&year=${year}&month=${month}`,
     fetcher,
-    { refreshInterval: 30000 }
+    { refreshInterval: 600000 }
   )
 
   const years = data?.years ?? []

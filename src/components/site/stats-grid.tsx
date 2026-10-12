@@ -28,7 +28,7 @@ const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
 const BAR_COLORS = ['#22c55e', '#eab308', '#ef4444', '#06b6d4', '#a855f7', '#f97316']
 
 export function StatsGrid() {
-  const { data } = useSWR<Stats>('/api/stats', fetcher, { refreshInterval: 30000 })
+  const { data } = useSWR<Stats>('/api/stats', fetcher, { refreshInterval: 600000 })
   const c = data?.counters
 
   const cards = [

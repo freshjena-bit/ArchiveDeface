@@ -759,3 +759,20 @@ Stage Summary:
 - Per-incident detail pages now linked from archive tables (both /archive and /special tables — View button navigates to /defacement/{id}; row click still opens the in-place mirror modal for quick preview)
 - Sitemap includes up to 200 most recent defacement URLs for Google indexing (older ones discovered via /archive pagination internal links)
 - TypeScript check: `npx tsc --noEmit` shows no new errors in the 3 edited files; remaining tsc errors are pre-existing and unrelated (examples/websocket, scripts/seed, skills/*).
+
+---
+Task ID: neon-optimization
+Agent: subagent (general-purpose)
+Task: Reduce SWR refreshInterval + sitemap revalidate to reduce Neon compute hours
+
+Work Log:
+- 15 components: refreshInterval increased to 600000 (10 min) from 15-60s
+- admin-view.tsx: 2 hooks changed to 120000 (2 min) for fresher admin data
+- sitemap.ts: revalidate 300 → 3600 (1 hour)
+
+Stage Summary:
+- Neon DB now has 10-min windows between SWR queries → can auto-suspend
+  for ~5 min per 10-min cycle (50% sleep time vs 0% before)
+- Sitemap ISR: 1 query/hour instead of 12/hour
+- Estimated compute hour reduction: ~50-70% (from ~720h/month to ~200-300h/month)
+- Admin page still gets 2-min refresh for operational freshness

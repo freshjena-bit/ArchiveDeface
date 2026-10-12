@@ -27,7 +27,7 @@ function fmtDate(iso: string) {
 export function HomeLatestNews() {
   const router = useRouter()
   const { data, isLoading } = useSWR<{ items: NewsItem[] }>('/api/news', fetcher, {
-    refreshInterval: 60000,
+    refreshInterval: 600000,
   })
   // pinned items sort first, then most-recent. API already returns this order.
   const items = (data?.items ?? []).slice(0, 3)

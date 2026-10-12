@@ -46,7 +46,7 @@ export function AdminView() {
   const { data: onholdData, isLoading: onholdLoading } = useSWR<{ items: Defacement[]; total: number }>(
     '/api/defacements?onhold=true&limit=50',
     fetcher,
-    { refreshInterval: 30000 }
+    { refreshInterval: 120000 }
   )
   const onhold = onholdData?.items ?? []
 
@@ -54,7 +54,7 @@ export function AdminView() {
   const { data: newsData, isLoading: newsLoading } = useSWR<{ items: NewsItem[] }>(
     '/api/news',
     fetcher,
-    { refreshInterval: 60000 }
+    { refreshInterval: 120000 }
   )
   const news = newsData?.items ?? []
 

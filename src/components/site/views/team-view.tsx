@@ -51,7 +51,7 @@ export function TeamView({ name }: { name: string }) {
   const { data, isLoading, error } = useSWR<TeamData>(
     `/api/team?name=${encodeURIComponent(name)}`,
     fetcher,
-    { refreshInterval: 30000 }
+    { refreshInterval: 600000 }
   )
   const [selected, setSelected] = React.useState<Defacement | null>(null)
   const [filter, setFilter] = React.useState<'verified' | 'onhold'>('verified')

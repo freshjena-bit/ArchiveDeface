@@ -16,7 +16,7 @@ export function HomeTopDefacers() {
   const { data, isLoading } = useSWR<{ items: LeaderEntry[] }>(
     '/api/leaderboard?mode=defacers',
     fetcher,
-    { refreshInterval: 30000 }
+    { refreshInterval: 600000 }
   )
   const items = (data?.items ?? []).slice(0, 10)
 

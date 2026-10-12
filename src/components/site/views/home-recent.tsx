@@ -23,7 +23,7 @@ export function HomeRecent({ onViewAll }: { onViewAll: () => void }) {
   const { data, isLoading } = useSWR<{ items: Defacement[] }>(
     '/api/defacements?limit=10',
     fetcher,
-    { refreshInterval: 15000 }
+    { refreshInterval: 600000 }
   )
   const items = data?.items ?? []
 

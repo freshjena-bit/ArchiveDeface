@@ -14,7 +14,7 @@ export function LiveTicker() {
   const { data } = useSWR<{ items: Defacement[] }>(
     '/api/defacements?limit=1',
     fetcher,
-    { refreshInterval: 15000 }
+    { refreshInterval: 600000 }
   )
   const latest = data?.items?.[0]
 

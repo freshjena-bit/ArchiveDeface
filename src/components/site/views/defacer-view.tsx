@@ -56,7 +56,7 @@ export function DefacerView({ handle }: { handle: string }) {
   const { data, isLoading, error } = useSWR<DefacerData>(
     `/api/defacer?handle=${encodeURIComponent(handle)}`,
     fetcher,
-    { refreshInterval: 30000 }
+    { refreshInterval: 600000 }
   )
   const [selected, setSelected] = React.useState<Defacement | null>(null)
   const [filter, setFilter] = React.useState<'verified' | 'special' | 'onhold'>('verified')

@@ -10,7 +10,7 @@ import type { Stats } from '@/lib/types'
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
 export function Sidebar() {
-  const { data: stats } = useSWR<Stats>('/api/stats', fetcher, { refreshInterval: 30000 })
+  const { data: stats } = useSWR<Stats>('/api/stats', fetcher, { refreshInterval: 600000 })
 
   const today = stats?.timeseries?.[stats.timeseries.length - 1]?.count ?? 0
   const yesterday = stats?.timeseries?.[stats.timeseries.length - 2]?.count ?? 0

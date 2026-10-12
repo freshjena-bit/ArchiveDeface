@@ -26,7 +26,7 @@ function fmtDate(iso: string) {
 
 export function NewsView() {
   const { data, isLoading } = useSWR<{ items: NewsItem[] }>('/api/news', fetcher, {
-    refreshInterval: 60000,
+    refreshInterval: 600000,
   })
   const items = data?.items ?? []
 

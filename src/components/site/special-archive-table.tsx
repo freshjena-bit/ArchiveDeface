@@ -30,7 +30,7 @@ export function SpecialArchiveTable() {
   const { data, isLoading } = useSWR<{ items: Defacement[]; total: number }>(
     `/api/defacements?special=all&limit=${limit}`,
     fetcher,
-    { refreshInterval: 20000 }
+    { refreshInterval: 600000 }
   )
   const items = data?.items ?? []
   const total = data?.total ?? 0
