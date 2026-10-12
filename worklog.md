@@ -776,3 +776,31 @@ Stage Summary:
 - Sitemap ISR: 1 query/hour instead of 12/hour
 - Estimated compute hour reduction: ~50-70% (from ~720h/month to ~200-300h/month)
 - Admin page still gets 2-min refresh for operational freshness
+
+---
+Task ID: dual-db-update
+Agent: subagent (general-purpose)
+Task: Update all API routes to use readDb/writeDb for dual-DB support
+
+Work Log:
+- src/app/api/defacements/route.ts — wrapped Promise.all(findMany, count) in `readDb`
+- src/app/api/defacements/[id]/route.ts — wrapped findUnique in `readDb`
+- src/app/api/submit/route.ts — 6 ops updated: findMany (dedup) + findMany (handles) + findFirst (redeface) → `readDb`; upsert + create + update → `writeDb`
+- src/app/api/submit-public/route.ts — bulk-import loop: upsert + create + update + count + findFirst + findMany all wrapped (`writeDb` for writes, `readDb` for reads)
+- src/app/api/leaderboard/route.ts — 2 findMany calls (years list + records window) wrapped in `readDb`
+- src/app/api/defacer/route.ts — findUnique + 9-query Promise.all (8 counts + findMany) wrapped in `readDb`
+- src/app/api/team/route.ts — findMany (members) + 9-query Promise.all wrapped in `readDb`
+- src/app/api/stats/route.ts — 8 sequential reads (stat.findMany, 3×count, todayCount, monthCount, 14-day timeseries loop, category findMany) each wrapped in `readDb`
+- src/app/api/news/route.ts — GET findMany → `readDb`; POST create → `writeDb`
+- src/app/api/news/[id]/route.ts — DELETE → `writeDb`
+- src/app/api/admin/promote/route.ts — defacement.update → `writeDb`
+- src/lib/promote.ts — promoteDueOnhold() updateMany → `writeDb`
+- src/app/sitemap.ts — bonus: findMany (recent 200) → `readDb` (file imported `db` so updated for consistency)
+
+Stage Summary:
+- All reads wrapped in readDb() — try Neon, fallback Supabase
+- All writes wrapped in writeDb() — write Neon, sync Supabase, fallback Supabase
+- Backward compatible: if DATABASE_URL_SUPABASE not set, works as single-DB (Neon only)
+- All query options (where/include/select/orderBy/take/skip/distinct) preserved
+- All error handling, try/catch, and response shaping preserved
+- TypeScript type-check passes (no new errors introduced in any updated file)

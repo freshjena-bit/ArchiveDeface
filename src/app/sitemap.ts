@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next'
-import { db } from '@/lib/db'
+import { readDb } from '@/lib/db'
 
 // ISR: revalidate sitemap tiap 1 jam (3600 detik).
 // Setelah incident baru di-submit, dalam ≤1 jam sitemap bakal include
@@ -43,12 +43,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Google discovers older ones via /archive internal links (pagination).
   let defacementRoutes: MetadataRoute.Sitemap = []
   try {
-    const recent = await db.defacement.findMany({
-      where: { status: { not: 'onhold' } },
-      select: { id: true, createdAt: true },
-      orderBy: { createdAt: 'desc' },
-      take: 200,
-    })
+    const recent = await readDb((db) =>
+      db.defacement.findMany({
+        where: { status: { not: 'onhold' } },
+        select: { id: true, createdAt: true },
+        orderBy: { createdAt: 'desc' },
+        take: 200,
+      })
+    )
     defacementRoutes = recent.map((d) => ({
       url: `${baseUrl}/defacement/${d.id}`,
       lastModified: d.createdAt,

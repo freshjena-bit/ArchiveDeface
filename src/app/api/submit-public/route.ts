@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
+import { readDb, writeDb } from '@/lib/db'
 import { deriveMeta, getHostname } from '@/lib/site'
 
 export const dynamic = 'force-dynamic'
@@ -69,24 +69,28 @@ export async function POST(req: NextRequest) {
         }
 
         // Upsert hacker (auto-register on first submit)
-        const hacker = await db.hacker.upsert({
-          where: { handle: inc.attacker.trim() },
-          update: { team: inc.team?.trim() || undefined },
-          create: {
-            handle: inc.attacker.trim(),
-            team: inc.team?.trim() || 'INDEPENDENT',
-            country: 'ID',
-            avatarColor: '#22c55e',
-          },
-        })
+        const hacker = await writeDb((db) =>
+          db.hacker.upsert({
+            where: { handle: inc.attacker.trim() },
+            update: { team: inc.team?.trim() || undefined },
+            create: {
+              handle: inc.attacker.trim(),
+              team: inc.team?.trim() || 'INDEPENDENT',
+              country: 'ID',
+              avatarColor: '#22c55e',
+            },
+          })
+        )
         hackerIds.add(hacker.id)
 
         // Dedup check — skip if hostname already archived
         const hostname = getHostname(inc.targetUrl)
-        const candidates = await db.defacement.findMany({
-          where: { targetUrl: { contains: hostname } },
-          select: { targetUrl: true },
-        })
+        const candidates = await readDb((db) =>
+          db.defacement.findMany({
+            where: { targetUrl: { contains: hostname } },
+            select: { targetUrl: true },
+          })
+        )
         const existingHosts = new Set(candidates.map((c) => getHostname(c.targetUrl)))
         if (existingHosts.has(hostname)) {
           duplicateHosts.push(hostname)
@@ -95,35 +99,39 @@ export async function POST(req: NextRequest) {
 
         // Derive metadata from URL
         const meta = deriveMeta(inc.targetUrl)
-        const prior = await db.defacement.findFirst({
-          where: { targetUrl: inc.targetUrl },
-          select: { id: true },
-        })
+        const prior = await readDb((db) =>
+          db.defacement.findFirst({
+            where: { targetUrl: inc.targetUrl },
+            select: { id: true },
+          })
+        )
 
         // Allow caller to override isHomepage / isSpecial if provided
         const isHomepage = inc.isHomepage ?? meta.isHomepage
         const isSpecial = inc.isSpecial ?? (meta.specialDomain !== null)
 
-        const record = await db.defacement.create({
-          data: {
-            targetUrl: inc.targetUrl.trim(),
-            targetName: meta.targetName,
-            country: meta.country,
-            category: meta.category,
-            attackerId: hacker.id,
-            poc: inc.poc?.trim() || null,
-            reason: inc.reason?.trim() || null,
-            isHomepage,
-            isMass: false,
-            isRedeface: !!prior,
-            isSpecial,
-            status: inc.status || 'archived',
-            severity: inc.severity || 'medium',
-            mirrorUrl:
-              inc.mirrorUrl ||
-              `https://mirror.archive.test/snap-${Math.random().toString(36).slice(2, 10)}`,
-          },
-        })
+        const record = await writeDb((db) =>
+          db.defacement.create({
+            data: {
+              targetUrl: inc.targetUrl.trim(),
+              targetName: meta.targetName,
+              country: meta.country,
+              category: meta.category,
+              attackerId: hacker.id,
+              poc: inc.poc?.trim() || null,
+              reason: inc.reason?.trim() || null,
+              isHomepage,
+              isMass: false,
+              isRedeface: !!prior,
+              isSpecial,
+              status: inc.status || 'archived',
+              severity: inc.severity || 'medium',
+              mirrorUrl:
+                inc.mirrorUrl ||
+                `https://mirror.archive.test/snap-${Math.random().toString(36).slice(2, 10)}`,
+            },
+          })
+        )
         createdIds.push(record.id)
       } catch (e) {
         errors.push({ url: inc.targetUrl ?? '(none)', error: (e as Error).message })
@@ -132,11 +140,15 @@ export async function POST(req: NextRequest) {
 
     // Recompute totalHits for all hackers touched in this batch
     for (const hid of hackerIds) {
-      const count = await db.defacement.count({ where: { attackerId: hid } })
-      await db.hacker.update({
-        where: { id: hid },
-        data: { totalHits: { set: count } },
-      })
+      const count = await readDb((db) =>
+        db.defacement.count({ where: { attackerId: hid } })
+      )
+      await writeDb((db) =>
+        db.hacker.update({
+          where: { id: hid },
+          data: { totalHits: { set: count } },
+        })
+      )
     }
 
     return NextResponse.json({

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
+import { readDb } from '@/lib/db'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,10 +11,12 @@ export async function GET(
 ) {
   const { id } = await params
 
-  const d = await db.defacement.findUnique({
-    where: { id },
-    include: { attacker: true },
-  })
+  const d = await readDb((db) =>
+    db.defacement.findUnique({
+      where: { id },
+      include: { attacker: true },
+    })
+  )
 
   if (!d) {
     return NextResponse.json(

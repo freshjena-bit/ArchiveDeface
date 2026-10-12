@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
+import { readDb, writeDb } from '@/lib/db'
 import { deriveMeta, getHostname } from '@/lib/site'
 import { resolvePage } from '@/lib/page'
 
@@ -72,12 +72,14 @@ export async function POST(req: NextRequest) {
       // Broad filter: only fetch candidates whose targetUrl contains one of
       // the submitted hostnames. (targetUrl is stored as full URL, so we
       // post-filter for exact hostname match below.)
-      const candidates = await db.defacement.findMany({
-        where: {
-          OR: submittedHosts.map((h) => ({ targetUrl: { contains: h } })),
-        },
-        select: { targetUrl: true },
-      })
+      const candidates = await readDb((db) =>
+        db.defacement.findMany({
+          where: {
+            OR: submittedHosts.map((h) => ({ targetUrl: { contains: h } })),
+          },
+          select: { targetUrl: true },
+        })
+      )
       const existingHosts = new Set(
         candidates.map((c) => getHostname(c.targetUrl)).filter(Boolean)
       )
@@ -97,16 +99,18 @@ export async function POST(req: NextRequest) {
 
     // anyone can submit — the attacker handle is auto-registered if new.
     const ownHandleRaw = String(attacker).trim()
-    const hacker = await db.hacker.upsert({
-      where: { handle: ownHandleRaw },
-      update: { team: team?.trim() || undefined },
-      create: {
-        handle: ownHandleRaw,
-        team: team?.trim() || 'INDEPENDENT',
-        country: 'ID',
-        avatarColor: '#22c55e',
-      },
-    })
+    const hacker = await writeDb((db) =>
+      db.hacker.upsert({
+        where: { handle: ownHandleRaw },
+        update: { team: team?.trim() || undefined },
+        create: {
+          handle: ownHandleRaw,
+          team: team?.trim() || 'INDEPENDENT',
+          country: 'ID',
+          avatarColor: '#22c55e',
+        },
+      })
+    )
 
     const cleanPoc = poc?.trim() || null
     const cleanReason = reason?.trim() || null
@@ -114,7 +118,9 @@ export async function POST(req: NextRequest) {
     // the system FETCHES each target page and scans its content for an attacker's
     // signature (defacement activity), not the URL string.
     const ownHandle = ownHandleRaw.toLowerCase()
-    const allHackers = await db.hacker.findMany({ select: { handle: true } })
+    const allHackers = await readDb((db) =>
+      db.hacker.findMany({ select: { handle: true } })
+    )
     const lowerHandles = allHackers.map((h) => h.handle.toLowerCase()).filter(Boolean)
 
     // resolve every target page in parallel (real fetch with 5s timeout;
@@ -163,10 +169,12 @@ export async function POST(req: NextRequest) {
       // H — homepage defaced only when the URL targets the root (no path)
       const isHomepage = meta.isHomepage
       // R — redeface if this target URL was already archived before
-      const prior = await db.defacement.findFirst({
-        where: { targetUrl: url },
-        select: { id: true },
-      })
+      const prior = await readDb((db) =>
+        db.defacement.findFirst({
+          where: { targetUrl: url },
+          select: { id: true },
+        })
+      )
       const isRedeface = !!prior
       // S — special if the domain matches a special-archive pattern
       // (*.gov.* / *.go.* / *.ac.* / *.edu.*) — NOT severity-based.
@@ -178,33 +186,37 @@ export async function POST(req: NextRequest) {
       if (hasOwn) ownName += 1
       else otherName += 1
 
-      const record = await db.defacement.create({
-        data: {
-          targetUrl: url,
-          targetName: meta.targetName,
-          country: meta.country,
-          category: meta.category,
-          attackerId: hacker.id,
-          poc: cleanPoc,
-          reason: cleanReason,
-          isHomepage,
-          isMass,
-          isRedeface,
-          isSpecial,
-          severity: meta.severity,
-          status: 'onhold',
-          pendingUntil: recordPending,
-          mirrorUrl: `https://mirror.archive.test/snap-${Math.random().toString(36).slice(2, 10)}`,
-        },
-      })
+      const record = await writeDb((db) =>
+        db.defacement.create({
+          data: {
+            targetUrl: url,
+            targetName: meta.targetName,
+            country: meta.country,
+            category: meta.category,
+            attackerId: hacker.id,
+            poc: cleanPoc,
+            reason: cleanReason,
+            isHomepage,
+            isMass,
+            isRedeface,
+            isSpecial,
+            severity: meta.severity,
+            status: 'onhold',
+            pendingUntil: recordPending,
+            mirrorUrl: `https://mirror.archive.test/snap-${Math.random().toString(36).slice(2, 10)}`,
+          },
+        })
+      )
       created.push(record.id)
     }
 
     // bump hacker counters by the number of records created
-    await db.hacker.update({
-      where: { id: hacker.id },
-      data: { totalHits: { increment: list.length } },
-    })
+    await writeDb((db) =>
+      db.hacker.update({
+        where: { id: hacker.id },
+        data: { totalHits: { increment: list.length } },
+      })
+    )
 
     return NextResponse.json({
       ok: true,

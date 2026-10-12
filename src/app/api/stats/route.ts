@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { db } from '@/lib/db'
+import { readDb } from '@/lib/db'
 import { promoteDueOnhold } from '@/lib/promote'
 
 export const dynamic = 'force-dynamic'
@@ -7,30 +7,36 @@ export const dynamic = 'force-dynamic'
 // GET /api/stats — dashboard summary + 14-day timeseries + category breakdown
 export async function GET() {
   promoteDueOnhold()
-  const stats = await db.stat.findMany()
+  const stats = await readDb((db) => db.stat.findMany())
   const statMap = Object.fromEntries(stats.map((s) => [s.key, s.value]))
 
-  const totalDefacements = await db.defacement.count()
-  const totalAttackers = await db.hacker.count()
-  const distinctCountries = await db.defacement.findMany({
-    distinct: ['country'],
-    select: { country: true },
-  })
+  const totalDefacements = await readDb((db) => db.defacement.count())
+  const totalAttackers = await readDb((db) => db.hacker.count())
+  const distinctCountries = await readDb((db) =>
+    db.defacement.findMany({
+      distinct: ['country'],
+      select: { country: true },
+    })
+  )
 
   // dynamic "today" = records created since 00:00 today (local server time)
   const startOfToday = new Date()
   startOfToday.setHours(0, 0, 0, 0)
-  const todayCount = await db.defacement.count({
-    where: { createdAt: { gte: startOfToday } },
-  })
+  const todayCount = await readDb((db) =>
+    db.defacement.count({
+      where: { createdAt: { gte: startOfToday } },
+    })
+  )
 
   // dynamic "this month" = records in the current calendar month
   const monthStart = new Date()
   monthStart.setDate(1)
   monthStart.setHours(0, 0, 0, 0)
-  const monthCount = await db.defacement.count({
-    where: { createdAt: { gte: monthStart } },
-  })
+  const monthCount = await readDb((db) =>
+    db.defacement.count({
+      where: { createdAt: { gte: monthStart } },
+    })
+  )
 
   // 14-day timeseries
   const days: { date: string; count: number }[] = []
@@ -41,14 +47,18 @@ export async function GET() {
     start.setDate(start.getDate() - i)
     const end = new Date(start)
     end.setDate(end.getDate() + 1)
-    const count = await db.defacement.count({
-      where: { createdAt: { gte: start, lt: end } },
-    })
+    const count = await readDb((db) =>
+      db.defacement.count({
+        where: { createdAt: { gte: start, lt: end } },
+      })
+    )
     days.push({ date: start.toISOString().slice(0, 10), count })
   }
 
   // category breakdown
-  const all = await db.defacement.findMany({ select: { category: true, country: true } })
+  const all = await readDb((db) =>
+    db.defacement.findMany({ select: { category: true, country: true } })
+  )
   const byCategory: Record<string, number> = {}
   const byCountry: Record<string, number> = {}
   for (const r of all) {

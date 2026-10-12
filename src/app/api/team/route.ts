@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
+import { readDb } from '@/lib/db'
 import { promoteDueOnhold } from '@/lib/promote'
 
 export const dynamic = 'force-dynamic'
@@ -15,10 +15,12 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'Missing team name' }, { status: 400 })
   }
 
-  const members = await db.hacker.findMany({
-    where: { team: name },
-    orderBy: { totalHits: 'desc' },
-  })
+  const members = await readDb((db) =>
+    db.hacker.findMany({
+      where: { team: name },
+      orderBy: { totalHits: 'desc' },
+    })
+  )
 
   if (!members.length) {
     return NextResponse.json({ ok: false, error: 'Team not found' }, { status: 404 })
@@ -37,22 +39,24 @@ export async function GET(req: NextRequest) {
     redeface,
     homepage,
     items,
-  ] = await Promise.all([
-    db.defacement.count({ where }),
-    db.defacement.count({ where: { ...where, isSpecial: true } }),
-    db.defacement.count({ where: { ...where, status: 'onhold' } }),
-    db.defacement.count({ where: { ...where, status: 'archived' } }),
-    db.defacement.count({ where: { ...where, status: 'restored' } }),
-    db.defacement.count({ where: { ...where, isMass: true } }),
-    db.defacement.count({ where: { ...where, isRedeface: true } }),
-    db.defacement.count({ where: { ...where, isHomepage: true } }),
-    db.defacement.findMany({
-      where,
-      include: { attacker: true },
-      orderBy: { createdAt: 'desc' },
-      take: 200,
-    }),
-  ])
+  ] = await readDb(async (db) => {
+    return await Promise.all([
+      db.defacement.count({ where }),
+      db.defacement.count({ where: { ...where, isSpecial: true } }),
+      db.defacement.count({ where: { ...where, status: 'onhold' } }),
+      db.defacement.count({ where: { ...where, status: 'archived' } }),
+      db.defacement.count({ where: { ...where, status: 'restored' } }),
+      db.defacement.count({ where: { ...where, isMass: true } }),
+      db.defacement.count({ where: { ...where, isRedeface: true } }),
+      db.defacement.count({ where: { ...where, isHomepage: true } }),
+      db.defacement.findMany({
+        where,
+        include: { attacker: true },
+        orderBy: { createdAt: 'desc' },
+        take: 200,
+      }),
+    ])
+  })
 
   return NextResponse.json({
     ok: true,

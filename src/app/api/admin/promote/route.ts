@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
+import { writeDb } from '@/lib/db'
 import { parseAdminCookie } from '@/lib/auth'
 import { promoteDueOnhold } from '@/lib/promote'
 
@@ -18,11 +18,13 @@ export async function POST(req: NextRequest) {
     if (!id || typeof id !== 'string') {
       return NextResponse.json({ ok: false, error: 'Missing record id' }, { status: 400 })
     }
-    const record = await db.defacement.update({
-      where: { id },
-      data: { status: 'archived', pendingUntil: null },
-      select: { id: true, status: true },
-    })
+    const record = await writeDb((db) =>
+      db.defacement.update({
+        where: { id },
+        data: { status: 'archived', pendingUntil: null },
+        select: { id: true, status: true },
+      })
+    )
     return NextResponse.json({ ok: true, id: record.id, status: record.status })
   } catch (e) {
     return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 500 })

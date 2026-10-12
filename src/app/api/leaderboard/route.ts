@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
+import { readDb } from '@/lib/db'
 import { promoteDueOnhold } from '@/lib/promote'
 
 export const dynamic = 'force-dynamic'
@@ -19,10 +19,12 @@ export async function GET(req: NextRequest) {
   const monthParam = searchParams.get('month') ?? 'all'
 
   // available years (distinct, desc) for the selector — from verified records
-  const allDates = await db.defacement.findMany({
-    where: { status: { not: 'onhold' } },
-    select: { createdAt: true },
-  })
+  const allDates = await readDb((db) =>
+    db.defacement.findMany({
+      where: { status: { not: 'onhold' } },
+      select: { createdAt: true },
+    })
+  )
   const yearSet = new Set<number>()
   for (const d of allDates) yearSet.add(d.createdAt.getFullYear())
   const years = [...yearSet].sort((a, b) => b - a)
@@ -63,16 +65,18 @@ export async function GET(req: NextRequest) {
   }
 
   // fetch incidents (with attacker) for the window
-  const records = await db.defacement.findMany({
-    where,
-    select: {
-      attackerId: true,
-      attacker: {
-        select: { id: true, handle: true, team: true, country: true, avatarColor: true, bio: true, joinedAt: true },
+  const records = await readDb((db) =>
+    db.defacement.findMany({
+      where,
+      select: {
+        attackerId: true,
+        attacker: {
+          select: { id: true, handle: true, team: true, country: true, avatarColor: true, bio: true, joinedAt: true },
+        },
       },
-    },
-    orderBy: { createdAt: 'desc' },
-  })
+      orderBy: { createdAt: 'desc' },
+    })
+  )
 
   if (mode === 'teams') {
     const teams = new Map<string, { count: number; members: Set<string> }>()

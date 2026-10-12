@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
+import { readDb } from '@/lib/db'
 import { promoteDueOnhold } from '@/lib/promote'
 
 export const dynamic = 'force-dynamic'
@@ -80,16 +80,18 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  const [items, total] = await Promise.all([
-    db.defacement.findMany({
-      where,
-      include: { attacker: true },
-      orderBy: { createdAt: 'desc' },
-      take: limit,
-      skip: offset,
-    }),
-    db.defacement.count({ where }),
-  ])
+  const [items, total] = await readDb(async (db) => {
+    return await Promise.all([
+      db.defacement.findMany({
+        where,
+        include: { attacker: true },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        skip: offset,
+      }),
+      db.defacement.count({ where }),
+    ])
+  })
 
   return NextResponse.json({
     items: items.map((d) => ({

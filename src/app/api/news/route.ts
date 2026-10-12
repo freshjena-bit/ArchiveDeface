@@ -1,15 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
+import { readDb, writeDb } from '@/lib/db'
 import { parseAdminCookie, adminCredentials } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
 // GET /api/news — public list, pinned first then newest
 export async function GET() {
-  const items = await db.news.findMany({
-    orderBy: [{ pinned: 'desc' }, { createdAt: 'desc' }],
-    take: 50,
-  })
+  const items = await readDb((db) =>
+    db.news.findMany({
+      orderBy: [{ pinned: 'desc' }, { createdAt: 'desc' }],
+      take: 50,
+    })
+  )
   return NextResponse.json({
     items: items.map((n) => ({
       id: n.id,
@@ -35,14 +37,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: 'Title and body required' }, { status: 400 })
     }
     const cred = adminCredentials()
-    const news = await db.news.create({
-      data: {
-        title: String(title).trim(),
-        body: String(body).trim(),
-        author: cred.username,
-        pinned: !!pinned,
-      },
-    })
+    const news = await writeDb((db) =>
+      db.news.create({
+        data: {
+          title: String(title).trim(),
+          body: String(body).trim(),
+          author: cred.username,
+          pinned: !!pinned,
+        },
+      })
+    )
     return NextResponse.json({
       ok: true,
       id: news.id,

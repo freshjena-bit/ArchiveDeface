@@ -1,4 +1,4 @@
-import { db } from '@/lib/db'
+import { writeDb } from '@/lib/db'
 
 /**
  * Lazy promotion: any on-hold record whose verification window has elapsed
@@ -7,16 +7,18 @@ import { db } from '@/lib/db'
  */
 export async function promoteDueOnhold(): Promise<void> {
   try {
-    await db.defacement.updateMany({
-      where: {
-        status: 'onhold',
-        pendingUntil: { lt: new Date() },
-      },
-      data: {
-        status: 'archived',
-        pendingUntil: null,
-      },
-    })
+    await writeDb((db) =>
+      db.defacement.updateMany({
+        where: {
+          status: 'onhold',
+          pendingUntil: { lt: new Date() },
+        },
+        data: {
+          status: 'archived',
+          pendingUntil: null,
+        },
+      })
+    )
   } catch {
     // non-fatal — reads should still succeed
   }
