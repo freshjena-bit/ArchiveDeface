@@ -1,30 +1,21 @@
 #!/usr/bin/env python3
 """
 Bulk submit defacement incidents via /api/submit-public API.
+Errors are logged to error.txt.
 
 Usage:
     python3 scripts/submit.py list.txt GadaLuBau SonicNetwork
     python3 scripts/submit.py list.txt GadaLuBau SonicNetwork --url https://defacer.zone.id
     python3 scripts/submit.py list.txt GadaLuBau SonicNetwork --chunk 100 --severity high
 
-Environment variables (optional, override CLI defaults):
+Environment variables (optional):
     API_URL     — base URL (default: http://localhost:3000)
     CHUNK_SIZE  — incidents per request (default: 50)
     POC         — proof of concept string for ALL incidents
     REASON      — motivation string for ALL incidents
     SEVERITY    — low | medium | high | critical for ALL incidents
     STATUS      — archived | restored | live | onhold (default: archived)
-
-list.txt format:
-    One URL per line.
-    Lines starting with # are comments (skipped).
-    Blank lines are skipped.
-
-Example list.txt:
-    https://target1.gov.id/
-    https://target2.ac.id/path
-    # this is a comment — skipped
-    https://target3.go.id/
+    ERROR_FILE  — error log file (default: error.txt)
 """
 
 import argparse
@@ -34,13 +25,27 @@ import sys
 import time
 import urllib.request
 import urllib.error
+from datetime import datetime
+
+
+def log_error(error_file, message, url=None, error_detail=None):
+    """Append error to error.txt with timestamp."""
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    with open(error_file, 'a', encoding='utf-8') as f:
+        f.write(f'[{timestamp}] {message}\n')
+        if url:
+            f.write(f'  URL: {url}\n')
+        if error_detail:
+            # Truncate long errors
+            detail = str(error_detail)[:500]
+            f.write(f'  Error: {detail}\n')
+        f.write('\n')
 
 
 def main():
     parser = argparse.ArgumentParser(
         description='Bulk submit defacement incidents via /api/submit-public',
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=__doc__,
     )
     parser.add_argument('file', help='File containing URLs (one per line)')
     parser.add_argument('attacker', help='Hacker handle (e.g., GadaLuBau)')
@@ -67,11 +72,21 @@ def main():
                         help='Status (default: archived)')
     parser.add_argument('--dry-run', action='store_true',
                         help='Show what would be submitted without posting')
+    parser.add_argument(
+        '--error-file', dest='error_file',
+        default=os.environ.get('ERROR_FILE', 'error.txt'),
+        help='Error log file (default: error.txt)',
+    )
     args = parser.parse_args()
+
+    # Clear previous error file
+    if os.path.exists(args.error_file) and not args.dry_run:
+        os.remove(args.error_file)
 
     # Read URLs from file
     if not os.path.exists(args.file):
         print(f'Error: File not found: {args.file}', file=sys.stderr)
+        log_error(args.error_file, f'File not found: {args.file}')
         sys.exit(1)
 
     urls = []
@@ -84,11 +99,13 @@ def main():
     if not urls:
         print('Error: No URLs found in file (blank lines and # comments are skipped).',
               file=sys.stderr)
+        log_error(args.error_file, 'No URLs found in file')
         sys.exit(1)
 
     print(f'Loaded {len(urls)} URL(s) from {args.file}')
     print(f'Attacker: {args.attacker} | Team: {args.team}')
     print(f'API: {args.api_url} | Chunk: {args.chunk} per request')
+    print(f'Error log: {args.error_file}')
     if args.dry_run:
         print('DRY RUN — no requests will be sent\n')
     else:
@@ -129,7 +146,6 @@ def main():
     total_duplicates = 0
     total_errors = 0
     all_duplicate_hosts = []
-    all_error_details = []
     all_created_ids = []
 
     for i, chunk in enumerate(chunks):
@@ -149,8 +165,11 @@ def main():
                 result = json.loads(resp.read().decode('utf-8'))
 
             if not result.get('ok'):
-                print(f'FAIL: {result.get("error", "unknown")}')
+                err_msg = result.get('error', 'unknown')
+                print(f'FAIL: {err_msg}')
                 total_errors += len(chunk)
+                log_error(args.error_file,
+                          f'Batch {i+1} failed (URLs {start}-{end}): {err_msg}')
                 continue
 
             created = result.get('created', 0)
@@ -161,25 +180,40 @@ def main():
             total_errors += errors
             if result.get('duplicateHosts'):
                 all_duplicate_hosts.extend(result['duplicateHosts'])
-            if result.get('errorDetails'):
-                all_error_details.extend(result['errorDetails'])
             if result.get('ids'):
                 all_created_ids.extend(result['ids'])
 
             print(f'created={created} dup={duplicates} err={errors}')
 
+            # Log per-incident errors from API response
+            if result.get('errorDetails'):
+                for e in result['errorDetails']:
+                    log_error(args.error_file,
+                              'API error for incident',
+                              url=e.get('url', '?'),
+                              error_detail=e.get('error', ''))
+
         except urllib.error.HTTPError as e:
             body = e.read().decode('utf-8', errors='replace')[:200]
             print(f'HTTP {e.code}: {body}')
             total_errors += len(chunk)
+            log_error(args.error_file,
+                      f'Batch {i+1} HTTP error {e.code}',
+                      error_detail=body)
         except urllib.error.URLError as e:
             print(f'NETWORK ERROR: {e.reason}')
             total_errors += len(chunk)
+            log_error(args.error_file,
+                      f'Batch {i+1} network error',
+                      error_detail=str(e.reason))
         except Exception as e:
             print(f'ERROR: {e}')
             total_errors += len(chunk)
+            log_error(args.error_file,
+                      f'Batch {i+1} unexpected error',
+                      error_detail=str(e))
 
-        # small delay between batches to avoid overwhelming the server
+        # Small delay between batches
         if i < len(chunks) - 1:
             time.sleep(0.5)
 
@@ -202,22 +236,21 @@ def main():
         for h in sorted(set(all_duplicate_hosts)):
             print(f'  - {h}')
 
-    if all_error_details:
-        print(f'\nError details (first 5):')
-        for e in all_error_details[:5]:
-            err_msg = str(e.get('error', ''))[:100]
-            print(f'  {e.get("url", "?")}: {err_msg}')
-        if len(all_error_details) > 5:
-            print(f'  ... and {len(all_error_details) - 5} more')
+    # Check error file
+    if os.path.exists(args.error_file):
+        error_count = 0
+        with open(args.error_file, 'r') as f:
+            error_count = sum(1 for line in f if line.startswith('['))
+        print(f'\nErrors logged to {args.error_file} ({error_count} entries)')
+    else:
+        print(f'\nNo errors logged — {args.error_file} not created')
 
     print()
     if total_errors > 0:
-        print(f'Result: {total_created} created, {total_errors} errors '
-              f'(exit code 1)')
+        print(f'Result: {total_created} created, {total_errors} errors (exit 1)')
         sys.exit(1)
     else:
-        print(f'Result: {total_created} created, {total_duplicates} duplicates skipped '
-              f'(exit code 0)')
+        print(f'Result: {total_created} created, {total_duplicates} dup (exit 0)')
         sys.exit(0)
 
 
