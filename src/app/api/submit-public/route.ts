@@ -3,8 +3,6 @@ import { readDb, writeDb } from '@/lib/db'
 import { deriveMeta, getHostname } from '@/lib/site'
 
 export const dynamic = 'force-dynamic'
-// Vercel serverless function timeout — default 10s gak cukup buat bulk DB ops.
-// 60s cukup buat ~200-300 incident per request. Kalau mau lebih, chunk di client.
 export const maxDuration = 60
 
 interface IncomingIncident {
@@ -21,21 +19,11 @@ interface IncomingIncident {
 }
 
 // POST /api/submit-public
-//
-// Public bulk-import endpoint — NO limits on:
-//   - number of incidents per request (can submit 1 or 10000)
-//   - rate (call as many times as wanted)
-//   - content validation (no page fetch, no signature check)
-//
-// Still applies hostname deduplication (skips duplicate hostnames, returns
-// them in the response) — user explicitly asked for dedup earlier.
-//
-// Body:
-//   { incidents: [{ targetUrl, attacker, team?, poc?, reason?, status?,
-//                   severity?, mirrorUrl?, isHomepage?, isSpecial? }] }
-//
-// Returns:
-//   { ok, created, duplicates, errors, ids, duplicateHosts, errorDetails }
+// Optimized: 4 DB queries total (not 4×N per incident).
+// 1. Upsert hacker (once)
+// 2. Batch dedup check (single findMany for ALL hostnames)
+// 3. createMany (single INSERT for all non-duplicate records)
+// 4. Update totalHits (once)
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
@@ -52,113 +40,123 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const createdIds: string[] = []
-    const duplicateHosts: string[] = []
+    // Validate + extract hostnames
+    const valid: { inc: IncomingIncident; hostname: string; meta: ReturnType<typeof deriveMeta> }[] = []
     const errors: { url: string; error: string }[] = []
-    const hackerIds = new Set<string>()
 
     for (const inc of incidents) {
+      if (!inc.targetUrl?.trim()) {
+        errors.push({ url: inc.targetUrl ?? '(none)', error: 'Missing targetUrl' })
+        continue
+      }
+      if (!inc.attacker?.trim()) {
+        errors.push({ url: inc.targetUrl, error: 'Missing attacker' })
+        continue
+      }
+      const hostname = getHostname(inc.targetUrl)
+      const meta = deriveMeta(inc.targetUrl)
+      valid.push({ inc, hostname, meta })
+    }
+
+    if (valid.length === 0) {
+      return NextResponse.json({
+        ok: true, created: 0, duplicates: 0, errors: errors.length,
+        ids: [], duplicateHosts: [], errorDetails: errors,
+      })
+    }
+
+    // 1. Upsert hacker ONCE (all incidents share same attacker)
+    const firstInc = valid[0].inc
+    const hacker = await writeDb((db) =>
+      db.hacker.upsert({
+        where: { handle: firstInc.attacker.trim() },
+        update: { team: firstInc.team?.trim() || undefined },
+        create: {
+          handle: firstInc.attacker.trim(),
+          team: firstInc.team?.trim() || 'INDEPENDENT',
+          country: 'ID',
+          avatarColor: '#22c55e',
+        },
+      })
+    )
+
+    // 2. Batch dedup check — single findMany for ALL hostnames
+    const allHostnames = [...new Set(valid.map((v) => v.hostname))]
+    const candidates = await readDb((db) =>
+      db.defacement.findMany({
+        where: { OR: allHostnames.map((h) => ({ targetUrl: { contains: h } })) },
+        select: { targetUrl: true },
+      })
+    )
+    const existingHosts = new Set(candidates.map((c) => getHostname(c.targetUrl)))
+
+    // Split into toCreate vs duplicates
+    const toCreate = valid.filter((v) => !existingHosts.has(v.hostname))
+    const duplicateHosts = valid.filter((v) => existingHosts.has(v.hostname)).map((v) => v.hostname)
+
+    // 3. Batch insert via createMany — single INSERT for all records
+    let createdCount = 0
+    let createErrors: { url: string; error: string }[] = []
+
+    if (toCreate.length > 0) {
+      const records = toCreate.map((v) => ({
+        targetUrl: v.inc.targetUrl.trim(),
+        targetName: v.meta.targetName,
+        country: v.meta.country,
+        category: v.meta.category,
+        attackerId: hacker.id,
+        poc: v.inc.poc?.trim() || null,
+        reason: v.inc.reason?.trim() || null,
+        isHomepage: v.inc.isHomepage ?? v.meta.isHomepage,
+        isMass: true,
+        isRedeface: false,
+        isSpecial: v.inc.isSpecial ?? (v.meta.specialDomain !== null),
+        status: v.inc.status || 'archived',
+        severity: v.inc.severity || 'medium',
+        mirrorUrl: v.inc.mirrorUrl || `https://mirror.archive.test/snap-${Math.random().toString(36).slice(2, 10)}`,
+      }))
+
       try {
-        if (!inc.targetUrl || typeof inc.targetUrl !== 'string' || !inc.targetUrl.trim()) {
-          errors.push({ url: inc.targetUrl ?? '(none)', error: 'Missing targetUrl' })
-          continue
-        }
-        if (!inc.attacker || typeof inc.attacker !== 'string' || !inc.attacker.trim()) {
-          errors.push({ url: inc.targetUrl, error: 'Missing attacker handle' })
-          continue
-        }
-
-        // Upsert hacker (auto-register on first submit)
-        const hacker = await writeDb((db) =>
-          db.hacker.upsert({
-            where: { handle: inc.attacker.trim() },
-            update: { team: inc.team?.trim() || undefined },
-            create: {
-              handle: inc.attacker.trim(),
-              team: inc.team?.trim() || 'INDEPENDENT',
-              country: 'ID',
-              avatarColor: '#22c55e',
-            },
-          })
+        const result = await writeDb((db) =>
+          db.defacement.createMany({ data: records, skipDuplicates: true })
         )
-        hackerIds.add(hacker.id)
-
-        // Dedup check — skip if hostname already archived
-        const hostname = getHostname(inc.targetUrl)
-        const candidates = await readDb((db) =>
-          db.defacement.findMany({
-            where: { targetUrl: { contains: hostname } },
-            select: { targetUrl: true },
-          })
-        )
-        const existingHosts = new Set(candidates.map((c) => getHostname(c.targetUrl)))
-        if (existingHosts.has(hostname)) {
-          duplicateHosts.push(hostname)
-          continue
-        }
-
-        // Derive metadata from URL
-        const meta = deriveMeta(inc.targetUrl)
-        const prior = await readDb((db) =>
-          db.defacement.findFirst({
-            where: { targetUrl: inc.targetUrl },
-            select: { id: true },
-          })
-        )
-
-        // Allow caller to override isHomepage / isSpecial if provided
-        const isHomepage = inc.isHomepage ?? meta.isHomepage
-        const isSpecial = inc.isSpecial ?? (meta.specialDomain !== null)
-
-        const record = await writeDb((db) =>
-          db.defacement.create({
-            data: {
-              targetUrl: inc.targetUrl.trim(),
-              targetName: meta.targetName,
-              country: meta.country,
-              category: meta.category,
-              attackerId: hacker.id,
-              poc: inc.poc?.trim() || null,
-              reason: inc.reason?.trim() || null,
-              isHomepage,
-              isMass: false,
-              isRedeface: !!prior,
-              isSpecial,
-              status: inc.status || 'archived',
-              severity: inc.severity || 'medium',
-              mirrorUrl:
-                inc.mirrorUrl ||
-                `https://mirror.archive.test/snap-${Math.random().toString(36).slice(2, 10)}`,
-            },
-          })
-        )
-        createdIds.push(record.id)
+        createdCount = result.count
       } catch (e) {
-        errors.push({ url: inc.targetUrl ?? '(none)', error: (e as Error).message })
+        // If createMany fails (e.g., constraint error), try individual creates
+        for (const r of records) {
+          try {
+            await writeDb((db) => db.defacement.create({ data: r }))
+            createdCount++
+          } catch (e2) {
+            createErrors.push({ url: r.targetUrl, error: (e2 as Error).message.slice(0, 100) })
+          }
+        }
       }
     }
 
-    // Recompute totalHits for all hackers touched in this batch
-    for (const hid of hackerIds) {
-      const count = await readDb((db) =>
-        db.defacement.count({ where: { attackerId: hid } })
+    // 4. Update totalHits ONCE
+    try {
+      const totalCount = await readDb((db) =>
+        db.defacement.count({ where: { attackerId: hacker.id } })
       )
       await writeDb((db) =>
         db.hacker.update({
-          where: { id: hid },
-          data: { totalHits: { set: count } },
+          where: { id: hacker.id },
+          data: { totalHits: { set: totalCount } },
         })
       )
+    } catch (e) {
+      // Non-critical: totalHits update failed
     }
 
     return NextResponse.json({
       ok: true,
-      created: createdIds.length,
+      created: createdCount,
       duplicates: duplicateHosts.length,
-      errors: errors.length,
-      ids: createdIds,
-      duplicateHosts,
-      errorDetails: errors,
+      errors: errors.length + createErrors.length,
+      ids: [],
+      duplicateHosts: [...new Set(duplicateHosts)],
+      errorDetails: [...errors, ...createErrors],
     })
   } catch (e) {
     return NextResponse.json(
