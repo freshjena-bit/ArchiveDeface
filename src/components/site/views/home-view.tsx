@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import { Activity } from 'lucide-react'
+import type { Stats } from '@/lib/types'
 import { StatsBar } from '@/components/site/stats-bar'
 import { LiveTicker } from '@/components/site/live-ticker'
 import { HomeRecent } from './home-recent'
@@ -9,12 +10,12 @@ import { HomeTopDefacers } from './home-top-defacers'
 import { HomeLatestNews } from './home-latest-news'
 import { useRouter } from 'next/navigation'
 
-export function HomeView() {
+export function HomeView({ initialStats }: { initialStats?: Stats }) {
   const router = useRouter()
 
   return (
     <>
-      <StatsBar />
+      <StatsBar initialStats={initialStats} />
       <LiveTicker />
 
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
