@@ -9,14 +9,14 @@ import { useRouter } from 'next/navigation'
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
-export function LiveTicker() {
+export function LiveTicker({ initialLatest }: { initialLatest?: Defacement }) {
   const router = useRouter()
   const { data } = useSWR<{ items: Defacement[] }>(
     '/api/defacements?limit=1',
     fetcher,
-    { refreshInterval: 600000 }
+    { refreshInterval: 600000, fallbackData: initialLatest ? { items: [initialLatest] } : undefined }
   )
-  const latest = data?.items?.[0]
+  const latest = data?.items?.[0] ?? initialLatest
 
   return (
     <div className="border-b border-border/70 bg-card/30">

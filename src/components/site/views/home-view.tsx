@@ -2,29 +2,45 @@
 
 import * as React from 'react'
 import { Activity } from 'lucide-react'
-import type { Stats } from '@/lib/types'
+import { useRouter } from 'next/navigation'
+import type { Stats, LeaderEntry, Defacement } from '@/lib/types'
 import { StatsBar } from '@/components/site/stats-bar'
 import { LiveTicker } from '@/components/site/live-ticker'
 import { HomeRecent } from './home-recent'
 import { HomeTopDefacers } from './home-top-defacers'
 import { HomeLatestNews } from './home-latest-news'
-import { useRouter } from 'next/navigation'
 
-export function HomeView({ initialStats }: { initialStats?: Stats }) {
+type NewsItem = {
+  id: string
+  title: string
+  body: string
+  author: string
+  pinned: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export function HomeView({
+  initialStats,
+  initialLeaderboard,
+  initialRecent,
+  initialNews,
+}: {
+  initialStats?: Stats
+  initialLeaderboard?: LeaderEntry[]
+  initialRecent?: Defacement[]
+  initialNews?: NewsItem[]
+}) {
   const router = useRouter()
 
   return (
     <>
       <StatsBar initialStats={initialStats} />
-      <LiveTicker />
-
+      <LiveTicker initialLatest={initialRecent?.[0]} />
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
-        {/* Latest news (top, full-width, 3-col on lg) */}
         <div className="mb-6">
-          <HomeLatestNews />
+          <HomeLatestNews initialItems={initialNews} />
         </div>
-
-        {/* Recent preview + Top defacers (2-col) */}
         <div className="grid gap-5 lg:grid-cols-12">
           <div className="min-w-0 lg:col-span-8">
             <div className="mb-3 flex items-center gap-2">
@@ -33,11 +49,11 @@ export function HomeView({ initialStats }: { initialStats?: Stats }) {
                 Latest Activity
               </h2>
             </div>
-            <HomeRecent onViewAll={() => router.push('/archive')} />
+            <HomeRecent items={initialRecent} onViewAll={() => router.push('/archive')} />
           </div>
           <div className="min-w-0 lg:col-span-4">
             <div className="mb-3" />
-            <HomeTopDefacers />
+            <HomeTopDefacers initialItems={initialLeaderboard} />
           </div>
         </div>
       </div>

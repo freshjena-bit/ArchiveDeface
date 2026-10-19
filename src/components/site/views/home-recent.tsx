@@ -19,13 +19,13 @@ function fmtDate(iso: string) {
   return `${dd}-${mm} ${hh}:${mi}`
 }
 
-export function HomeRecent({ onViewAll }: { onViewAll: () => void }) {
+export function HomeRecent({ onViewAll, items: initialItems }: { onViewAll: () => void; items?: Defacement[] }) {
   const { data, isLoading } = useSWR<{ items: Defacement[] }>(
     '/api/defacements?limit=10',
     fetcher,
-    { refreshInterval: 600000 }
+    { refreshInterval: 600000, fallbackData: initialItems ? { items: initialItems } : undefined }
   )
-  const items = data?.items ?? []
+  const items = data?.items ?? initialItems ?? []
 
   return (
     <div className="overflow-hidden rounded-md border border-border/70 bg-card/40">

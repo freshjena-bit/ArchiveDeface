@@ -24,13 +24,14 @@ function fmtDate(iso: string) {
   return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
-export function HomeLatestNews() {
+export function HomeLatestNews({ initialItems }: { initialItems?: NewsItem[] }) {
   const router = useRouter()
   const { data, isLoading } = useSWR<{ items: NewsItem[] }>('/api/news', fetcher, {
     refreshInterval: 600000,
+    fallbackData: initialItems ? { items: initialItems } : undefined,
   })
   // pinned items sort first, then most-recent. API already returns this order.
-  const items = (data?.items ?? []).slice(0, 3)
+  const items = (data?.items ?? initialItems ?? []).slice(0, 3)
 
   return (
     <div>

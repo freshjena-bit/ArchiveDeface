@@ -11,14 +11,14 @@ import { useRouter } from 'next/navigation'
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
-export function HomeTopDefacers() {
+export function HomeTopDefacers({ initialItems }: { initialItems?: LeaderEntry[] }) {
   const router = useRouter()
   const { data, isLoading } = useSWR<{ items: LeaderEntry[] }>(
     '/api/leaderboard?mode=defacers',
     fetcher,
-    { refreshInterval: 600000 }
+    { refreshInterval: 600000, fallbackData: initialItems ? { items: initialItems } : undefined }
   )
-  const items = (data?.items ?? []).slice(0, 10)
+  const items = (data?.items ?? initialItems ?? []).slice(0, 10)
 
   return (
     <div className="overflow-hidden rounded-md border border-border/70 bg-card/40">
