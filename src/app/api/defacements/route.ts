@@ -38,11 +38,12 @@ export async function GET(req: NextRequest) {
     ]
   }
   // onhold vs verified filter
+  // Note: Turso/SQLite doesn't support { not: 'onhold' } — use { in: [...] } instead
   if (onhold === 'true') {
     where.status = 'onhold'
   } else {
     // default: only verified records (exclude on-hold)
-    where.status = { not: 'onhold' }
+    where.status = { in: ['archived', 'restored', 'live'] }
   }
 
   // Days filter: only show records from last N days.
