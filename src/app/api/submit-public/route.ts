@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { readDb, writeDb } from '@/lib/db'
 import { deriveMeta, getHostname } from '@/lib/site'
+import { invalidateStatsCache } from '@/lib/cache'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -154,6 +155,11 @@ export async function POST(req: NextRequest) {
       )
     } catch (e) {
       // Non-critical: totalHits update failed
+    }
+
+    // Invalidate Stat-table cache so the next /api/stats read sees fresh counts.
+    if (createdCount > 0) {
+      await invalidateStatsCache()
     }
 
     return NextResponse.json({

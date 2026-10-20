@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { getLeaderboard } from '@/lib/leaderboard'
+import { cached } from '@/lib/cache'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,9 +12,11 @@ export async function GET(req: NextRequest) {
     const month = searchParams.get('month') ?? 'all'
 
     const result = await getLeaderboard({ mode, year, month })
-    return NextResponse.json(result)
+    // Leaderboard reads from Hacker table (~1 row in DB, super cheap).
+    // Cache 10 min at edge since hackers rarely change ranking.
+    return cached(result, { sMaxAgeSec: 600, swrSec: 1800 })
   } catch (e) {
-    return NextResponse.json(
+    return Response.json(
       { ok: false, error: (e as Error).message },
       { status: 500 }
     )

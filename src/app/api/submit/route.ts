@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { readDb, writeDb } from '@/lib/db'
 import { deriveMeta, getHostname } from '@/lib/site'
 import { resolvePage } from '@/lib/page'
+import { invalidateStatsCache } from '@/lib/cache'
 
 export const dynamic = 'force-dynamic'
 // Vercel serverless timeout — 500 URLs × page fetch (5s timeout parallel) +
@@ -217,6 +218,9 @@ export async function POST(req: NextRequest) {
         data: { totalHits: { increment: list.length } },
       })
     )
+
+    // Invalidate Stat-table cache so the next /api/stats read sees fresh counts.
+    await invalidateStatsCache()
 
     return NextResponse.json({
       ok: true,

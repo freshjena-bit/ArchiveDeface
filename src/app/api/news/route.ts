@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { readDb, writeDb } from '@/lib/db'
 import { parseAdminCookie, adminCredentials } from '@/lib/auth'
+import { cached } from '@/lib/cache'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,7 +13,7 @@ export async function GET() {
       take: 50,
     })
   )
-  return NextResponse.json({
+  return cached({
     items: items.map((n) => ({
       id: n.id,
       title: n.title,
@@ -22,7 +23,7 @@ export async function GET() {
       createdAt: n.createdAt.toISOString(),
       updatedAt: n.updatedAt.toISOString(),
     })),
-  })
+  }, { sMaxAgeSec: 300, swrSec: 600 })
 }
 
 // POST /api/news { title, body, pinned? } — admin only

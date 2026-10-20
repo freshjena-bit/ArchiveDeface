@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { readDb } from '@/lib/db'
 import { promoteDueOnhold } from '@/lib/promote'
+import { cached, getCachedInt } from '@/lib/cache'
 
 export const dynamic = 'force-dynamic'
 
@@ -90,7 +91,26 @@ export async function GET(req: NextRequest) {
       skip: offset,
     })
   )
-  const total = await readDb((db) => db.defacement.count({ where }))
+
+  // Total count: cached per "shape" of the where-clause.
+  // The `total` is used for pagination ("page X of Y"). For the unfiltered
+  // default, we cache the full-table count under a stable key; for any
+  // filtered variant, fall back to a direct count() — but the CDN cache
+  // (s-maxage=60) ensures the same filtered URL only hits DB once per min.
+  const whereKeys = Object.keys(where).sort()
+  const isUnfiltered =
+    whereKeys.length === 1 && whereKeys[0] === 'status'
+  let total: number
+  if (isUnfiltered) {
+    // Unfiltered (only the default status filter) — use the cached total
+    total = await getCachedInt(
+      'defacements:totalVerified',
+      () => readDb((db) => db.defacement.count({ where })),
+      300 // 5 min
+    )
+  } else {
+    total = await readDb((db) => db.defacement.count({ where }))
+  }
 
   // Get attacker info separately (avoid JOIN/include)
   const attackerIds = [...new Set(items.map((d) => d.attackerId))]
@@ -103,7 +123,7 @@ export async function GET(req: NextRequest) {
     : []
   const attackerMap = new Map(attackers.map((a) => [a.id, a]))
 
-  return NextResponse.json({
+  return cached({
     items: items.map((d) => {
       const a = attackerMap.get(d.attackerId)
       return {
@@ -134,5 +154,5 @@ export async function GET(req: NextRequest) {
     total,
     limit,
     offset,
-  })
+  }, { sMaxAgeSec: 60, swrSec: 300 }) // 1 min cache, 5 min stale-while-revalidate
 }

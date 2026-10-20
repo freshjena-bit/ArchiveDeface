@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { readDb } from '@/lib/db'
 import { promoteDueOnhold } from '@/lib/promote'
+import { cached } from '@/lib/cache'
 
 export const dynamic = 'force-dynamic'
 
@@ -58,7 +59,7 @@ export async function GET(req: NextRequest) {
     ])
   })
 
-  return NextResponse.json({
+  return cached({
     ok: true,
     team: {
       name,
@@ -105,5 +106,5 @@ export async function GET(req: NextRequest) {
         country: d.attacker.country,
       },
     })),
-  })
+  }, { sMaxAgeSec: 300, swrSec: 600 })
 }

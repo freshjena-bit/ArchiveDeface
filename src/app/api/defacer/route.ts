@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDefacerData } from '@/lib/defacer'
+import { cached } from '@/lib/cache'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,5 +13,7 @@ export async function GET(req: NextRequest) {
   if (!data) {
     return NextResponse.json({ ok: false, error: 'Defacer not found' }, { status: 404 })
   }
-  return NextResponse.json(data)
+  // Per-defacer profile changes only when new defacements are attributed
+  // to them — cache 5 min at edge.
+  return cached(data, { sMaxAgeSec: 300, swrSec: 600 })
 }
