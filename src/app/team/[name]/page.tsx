@@ -1,3 +1,5 @@
+export const revalidate = 300
+
 import { TeamView } from '@/components/site/views/team-view'
 
 export default async function Page({

@@ -1,3 +1,5 @@
+export const revalidate = 300
+
 import { DefacementView } from '@/components/site/views/defacement-view'
 
 export default async function Page({
