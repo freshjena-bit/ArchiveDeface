@@ -16,6 +16,12 @@ interface IncomingIncident {
   mirrorUrl?: string
   isHomepage?: boolean
   isSpecial?: boolean
+  isMass?: boolean
+  isRedeface?: boolean
+  category?: string
+  country?: string
+  targetName?: string
+  createdAt?: string // ISO timestamp — preserves original submission time
 }
 
 // POST /api/submit-public
@@ -101,19 +107,20 @@ export async function POST(req: NextRequest) {
     if (toCreate.length > 0) {
       const records = toCreate.map((v) => ({
         targetUrl: v.inc.targetUrl.trim(),
-        targetName: v.meta.targetName,
-        country: v.meta.country,
-        category: v.meta.category,
+        targetName: v.inc.targetName?.trim() || v.meta.targetName,
+        country: v.inc.country?.trim() || v.meta.country,
+        category: v.inc.category?.trim() || v.meta.category,
         attackerId: hacker.id,
         poc: v.inc.poc?.trim() || null,
         reason: v.inc.reason?.trim() || null,
         isHomepage: v.inc.isHomepage ?? v.meta.isHomepage,
-        isMass: true,
-        isRedeface: false,
+        isMass: v.inc.isMass ?? true,
+        isRedeface: v.inc.isRedeface ?? false,
         isSpecial: v.inc.isSpecial ?? (v.meta.specialDomain !== null),
         status: v.inc.status || 'archived',
         severity: v.inc.severity || 'medium',
         mirrorUrl: v.inc.mirrorUrl || `https://mirror.archive.test/snap-${Math.random().toString(36).slice(2, 10)}`,
+        ...(v.inc.createdAt ? { createdAt: new Date(v.inc.createdAt) } : {}),
       }))
 
       try {
