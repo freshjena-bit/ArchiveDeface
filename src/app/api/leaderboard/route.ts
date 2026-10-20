@@ -1,127 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { readDb } from '@/lib/db'
-import { promoteDueOnhold } from '@/lib/promote'
+import { getLeaderboard } from '@/lib/leaderboard'
 
 export const dynamic = 'force-dynamic'
 
-// GET /api/leaderboard?mode=defacers|teams&year=all|2026&month=all|1-12
-// Aggregates from the Defacement table. Only VERIFIED records
-// (archived / restored) are counted — on-hold records are excluded.
-// Filters:
-//   year=all → all time
-//   year=2026 → calendar year 2026
-//   year=2026&month=10 → October 2026 only (month only applies when year is set)
 export async function GET(req: NextRequest) {
-  promoteDueOnhold()
-  const { searchParams } = new URL(req.url)
-  const mode = searchParams.get('mode') ?? 'defacers'
-  const yearParam = searchParams.get('year') ?? 'all'
-  const monthParam = searchParams.get('month') ?? 'all'
+  try {
+    const { searchParams } = new URL(req.url)
+    const mode = (searchParams.get('mode') ?? 'defacers') as 'defacers' | 'teams'
+    const year = searchParams.get('year') ?? 'all'
+    const month = searchParams.get('month') ?? 'all'
 
-  // available years (distinct, desc) for the selector — from verified records
-  const allDates = await readDb((db) =>
-    db.defacement.findMany({
-      where: { status: { not: 'onhold' } },
-      select: { createdAt: true },
-    })
-  )
-  const yearSet = new Set<number>()
-  for (const d of allDates) yearSet.add(d.createdAt.getFullYear())
-  const years = [...yearSet].sort((a, b) => b - a)
-
-  // available months for the selected year (for the month selector)
-  let months: number[] = []
-  if (yearParam !== 'all') {
-    const y = parseInt(yearParam, 10)
-    if (!Number.isNaN(y)) {
-      const monthSet = new Set<number>()
-      for (const d of allDates) {
-        if (d.createdAt.getFullYear() === y) {
-          monthSet.add(d.createdAt.getMonth() + 1) // 1-indexed
-        }
-      }
-      months = [...monthSet].sort((a, b) => a - b)
-    }
+    const result = await getLeaderboard({ mode, year, month })
+    return NextResponse.json(result)
+  } catch (e) {
+    return NextResponse.json(
+      { ok: false, error: (e as Error).message },
+      { status: 500 }
+    )
   }
-
-  // base filter: verified records only (exclude on-hold)
-  const where: Record<string, unknown> = { status: { not: 'onhold' } }
-
-  // date range: year + optional month
-  if (yearParam && yearParam !== 'all') {
-    const y = parseInt(yearParam, 10)
-    if (!Number.isNaN(y)) {
-      if (monthParam && monthParam !== 'all') {
-        const m = parseInt(monthParam, 10)
-        if (!Number.isNaN(m) && m >= 1 && m <= 12) {
-          // specific month in specific year
-          where.createdAt = { gte: new Date(y, m - 1, 1), lt: new Date(y, m, 1) }
-        }
-      } else {
-        // entire year
-        where.createdAt = { gte: new Date(y, 0, 1), lt: new Date(y + 1, 0, 1) }
-      }
-    }
-  }
-
-  // fetch incidents (with attacker) for the window
-  const records = await readDb((db) =>
-    db.defacement.findMany({
-      where,
-      select: {
-        attackerId: true,
-        attacker: {
-          select: { id: true, handle: true, team: true, country: true, avatarColor: true, bio: true, joinedAt: true },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    })
-  )
-
-  if (mode === 'teams') {
-    const teams = new Map<string, { count: number; members: Set<string> }>()
-    for (const r of records) {
-      const team = (r.attacker.team || 'INDEPENDENT').trim() || 'INDEPENDENT'
-      const entry = teams.get(team) ?? { count: 0, members: new Set<string>() }
-      entry.count += 1
-      entry.members.add(r.attackerId)
-      teams.set(team, entry)
-    }
-    const items = [...teams.entries()]
-      .map(([team, e], i) => ({
-        team,
-        members: e.members.size,
-        totalHits: e.count,
-        rank: i + 1,
-      }))
-      .sort((a, b) => b.totalHits - a.totalHits)
-      .map((t, i) => ({ ...t, rank: i + 1 }))
-
-    return NextResponse.json({ mode: 'teams', year: yearParam, month: monthParam, years, months, items })
-  }
-
-  // defacers
-  const defacers = new Map<string, { attacker: typeof records[number]['attacker']; count: number }>()
-  for (const r of records) {
-    const entry = defacers.get(r.attackerId) ?? { attacker: r.attacker, count: 0 }
-    entry.count += 1
-    defacers.set(r.attackerId, entry)
-  }
-  const items = [...defacers.entries()]
-    .map(([id, e], i) => ({
-      id,
-      handle: e.attacker.handle,
-      team: e.attacker.team,
-      country: e.attacker.country,
-      color: e.attacker.avatarColor,
-      bio: e.attacker.bio,
-      totalHits: e.count,
-      rank: i + 1,
-      joinedAt: e.attacker.joinedAt.toISOString(),
-      badges: [] as string[],
-    }))
-    .sort((a, b) => b.totalHits - a.totalHits)
-    .map((d, i) => ({ ...d, rank: i + 1 }))
-
-  return NextResponse.json({ mode: 'defacers', year: yearParam, month: monthParam, years, months, items })
 }
