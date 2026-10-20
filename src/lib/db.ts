@@ -1,36 +1,63 @@
 import { PrismaClient } from '@prisma/client'
+import { PrismaLibSQL } from '@prisma/adapter-libsql'
+import { createClient } from '@libsql/client'
 
-// ─── Database: Supabase (primary) + optional fallback ───
+// ─── Database: Turso (primary, free forever 9GB) + optional fallback ───
 //
-// DATABASE_URL          → Supabase connection string (PRIMARY, required)
-// DATABASE_URL_FALLBACK → Optional fallback (e.g., Neon) for when Supabase is down
+// DATABASE_URL          → Turso libSQL connection string (PRIMARY, required)
+//                          Format: libsql://xxx.tur.so?authToken=xxx
+// DATABASE_URL_FALLBACK → Optional fallback (e.g., Supabase postgresql) for when Turso is down
 //
-// Reads: try Supabase first, fallback to FALLBACK DB on connection error.
-// Writes: write to Supabase first. If Supabase succeeds, also sync to
-//         FALLBACK DB (non-blocking). If Supabase fails, write to FALLBACK.
+// If DATABASE_URL starts with "libsql:" → use Turso adapter
+// If DATABASE_URL starts with "postgresql:" → use standard PrismaClient (fallback)
 //
-// If DATABASE_URL_FALLBACK is not set, single-DB mode (Supabase only).
+// Reads: try primary first, fallback on connection error.
+// Writes: write to primary first. If primary succeeds, also sync to
+//         fallback (non-blocking). If primary fails, write to fallback.
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
   prismaFallback: PrismaClient | undefined
 }
 
-// Primary: Supabase (uses DATABASE_URL from env/schema.prisma)
+// Detect database type from URL
+const dbUrl = process.env.DATABASE_URL ?? ''
+const isTurso = dbUrl.startsWith('libsql:')
+const isPostgres = dbUrl.startsWith('postgresql:') || dbUrl.startsWith('postgres:')
+
+// Primary: Turso (libSQL) or PostgreSQL
+function createPrismaClient(url: string): PrismaClient {
+  if (url.startsWith('libsql:')) {
+    // Turso / libSQL — use adapter
+    const libsql = createClient({
+      url: url.split('?')[0],
+      authToken: new URL(url).searchParams.get('authToken') ?? undefined,
+    })
+    const adapter = new PrismaLibSQL(libsql)
+    return new PrismaClient({ adapter } as ConstructorParameters<typeof PrismaClient>[0])
+  }
+  // PostgreSQL (Supabase/Neon fallback)
+  if (url.startsWith('postgresql:') || url.startsWith('postgres:')) {
+    return new PrismaClient({ datasources: { db: { url } }, log: ['error'] })
+  }
+  // Fallback: standard (uses DATABASE_URL from schema)
+  return new PrismaClient({ log: ['error', 'warn'] })
+}
+
+// Primary DB
 export const db =
   globalForPrisma.prisma ??
-  new PrismaClient({
-    log: ['error', 'warn'],
-  })
+  (isTurso
+    ? createPrismaClient(dbUrl)
+    : isPostgres
+      ? new PrismaClient({ datasources: { db: { url: dbUrl } }, log: ['error', 'warn'] })
+      : new PrismaClient({ log: ['error', 'warn'] }))
 
-// Optional fallback (e.g., Neon — uses DATABASE_URL_FALLBACK, if set)
+// Optional fallback (e.g., Supabase PostgreSQL)
 const fallbackUrl = process.env.DATABASE_URL_FALLBACK
 export const dbFallback =
   fallbackUrl && !globalForPrisma.prismaFallback
-    ? new PrismaClient({
-        datasources: { db: { url: fallbackUrl } },
-        log: ['error'],
-      })
+    ? createPrismaClient(fallbackUrl)
     : globalForPrisma.prismaFallback ?? null
 
 if (process.env.NODE_ENV !== 'production') {
