@@ -168,9 +168,9 @@ def fix_defacements_chunked(turso_url, turso_token, chunk=50000):
     if not mm:
         print('  Cannot get rowid range — table may not exist')
         return
-    mn = mm[0].get('mn') or 0
-    mx = mm[0].get('mx') or 0
-    cnt = mm[0].get('cnt') or 0
+    mn = int(mm[0].get('mn') or 0)
+    mx = int(mm[0].get('mx') or 0)
+    cnt = int(mm[0].get('cnt') or 0)
     print(f'  Total: {cnt} rows | rowid range: {mn}..{mx}')
 
     # Count how many need fixing
