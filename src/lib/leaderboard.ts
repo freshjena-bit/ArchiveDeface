@@ -2,8 +2,6 @@ import { readDb } from '@/lib/db'
 import { promoteDueOnhold } from '@/lib/promote'
 import type { LeaderEntry } from '@/lib/types'
 
-// Optimized leaderboard fetcher — uses GROUP BY instead of fetch-all.
-// Egress reduction: ~360K rows → ~2 rows (99.99% reduction).
 export async function getLeaderboard(opts?: {
   mode?: 'defacers' | 'teams'
   year?: string
@@ -21,32 +19,33 @@ export async function getLeaderboard(opts?: {
   const yearParam = opts?.year ?? 'all'
   const monthParam = opts?.month ?? 'all'
 
-  // Build date filter
-  const where: Record<string, unknown> = { status: { not: 'onhold' } }
+  // GROUP BY via raw SQL — more reliable with SQLite/Turso
+  let dateFilter = ''
   if (yearParam !== 'all') {
     const y = parseInt(yearParam, 10)
     if (!Number.isNaN(y)) {
       if (monthParam !== 'all') {
         const m = parseInt(monthParam, 10)
         if (!Number.isNaN(m) && m >= 1 && m <= 12) {
-          where.createdAt = { gte: new Date(y, m - 1, 1), lt: new Date(y, m, 1) }
+          dateFilter = `AND "createdAt" >= '${y}-${String(m).padStart(2,'0')}-01' AND "createdAt" < '${y}-${String(m+1).padStart(2,'0')}-01'`
         }
       } else {
-        where.createdAt = { gte: new Date(y, 0, 1), lt: new Date(y + 1, 0, 1) }
+        dateFilter = `AND "createdAt" >= '${y}-01-01' AND "createdAt" < '${y+1}-01-01'`
       }
     }
   }
 
-  // GROUP BY attackerId — returns ~N rows (one per attacker), not 360K rows
-  const grouped = await readDb((db) =>
-    db.defacement.groupBy({
-      by: ['attackerId'],
-      _count: { _all: true },
-      where: where,
-    })
-  )
+  const grouped = await readDb(async (db) =>
+    db.$queryRawUnsafe(`
+      SELECT "attackerId" as attackerId, COUNT(*) as count
+      FROM "Defacement"
+      WHERE "status" != 'onhold' ${dateFilter}
+      GROUP BY "attackerId"
+      ORDER BY count DESC
+    `)
+  ) as { attackerId: string; count: number }[]
 
-  // Fetch hacker details only for attackers in the result set (small)
+  // Fetch hacker details
   const attackerIds = grouped.map((g) => g.attackerId)
   const hackers = attackerIds.length > 0
     ? await readDb((db) =>
@@ -62,7 +61,7 @@ export async function getLeaderboard(opts?: {
 
   const hackerMap = new Map(hackers.map((h) => [h.id, h]))
 
-  // Years: get oldest + newest record (2 rows instead of 360K)
+  // Years: get oldest + newest
   let years: number[] = []
   try {
     const oldest = await readDb((db) =>
@@ -86,28 +85,24 @@ export async function getLeaderboard(opts?: {
     }
   } catch {}
 
-  // Months: if year selected, return 1-12 (let frontend handle empty months)
   let months: number[] = []
   if (yearParam !== 'all') {
     months = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
   }
 
-  // Build result
+  // Teams mode
   if (mode === 'teams') {
-    // Aggregate by team in JS (small — only ~2 attackers)
     const teams = new Map<string, { count: number; members: Set<string> }>()
     for (const g of grouped) {
       const h = hackerMap.get(g.attackerId)
       const team = (h?.team || 'INDEPENDENT').trim() || 'INDEPENDENT'
       const entry = teams.get(team) ?? { count: 0, members: new Set<string>() }
-      entry.count += g._count._all
+      entry.count += g.count
       entry.members.add(g.attackerId)
       teams.set(team, entry)
     }
     const items = [...teams.entries()]
-      .map(([team, e]) => ({
-        team, members: e.members.size, totalHits: e.count, rank: 0,
-      }))
+      .map(([team, e]) => ({ team, members: e.members.size, totalHits: e.count, rank: 0 }))
       .sort((a, b) => b.totalHits - a.totalHits)
       .map((t, i) => ({ ...t, rank: i + 1 }))
 
@@ -126,7 +121,7 @@ export async function getLeaderboard(opts?: {
         country: h.country,
         color: h.avatarColor,
         bio: h.bio,
-        totalHits: g._count._all,
+        totalHits: g.count,
         rank: 0,
         joinedAt: h.joinedAt.toISOString(),
         badges: [] as string[],
@@ -140,7 +135,6 @@ export async function getLeaderboard(opts?: {
 }
 
 // Fetch latest N defacements for LiveTicker + HomeRecent
-// Already optimized — take: limit means only N rows fetched
 export async function getRecentDefacements(limit: number = 10) {
   return readDb((db) =>
     db.defacement.findMany({
