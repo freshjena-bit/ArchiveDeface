@@ -80,44 +80,56 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  const [items, total] = await readDb(async (db) => {
-    return await Promise.all([
-      db.defacement.findMany({
-        where,
-        include: { attacker: true },
-        orderBy: { createdAt: 'desc' },
-        take: limit,
-        skip: offset,
-      }),
-      db.defacement.count({ where }),
-    ])
-  })
+  // Sequential queries (SQLite/Turso doesn't support JOIN well via adapter)
+  const items = await readDb((db) =>
+    db.defacement.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+      skip: offset,
+    })
+  )
+  const total = await readDb((db) => db.defacement.count({ where }))
+
+  // Get attacker info separately (avoid JOIN/include)
+  const attackerIds = [...new Set(items.map((d) => d.attackerId))]
+  const attackers = attackerIds.length > 0
+    ? await readDb((db) =>
+        db.hacker.findMany({
+          where: { id: { in: attackerIds } },
+        })
+      )
+    : []
+  const attackerMap = new Map(attackers.map((a) => [a.id, a]))
 
   return NextResponse.json({
-    items: items.map((d) => ({
-      id: d.id,
-      targetUrl: d.targetUrl,
-      targetName: d.targetName,
-      country: d.country,
-      category: d.category,
-      severity: d.severity,
-      status: d.status,
-      note: d.note,
-      poc: d.poc,
-      reason: d.reason,
-      mirrorUrl: d.mirrorUrl,
-      isHomepage: d.isHomepage,
-      isMass: d.isMass,
-      isRedeface: d.isRedeface,
-      isSpecial: d.isSpecial,
-      createdAt: d.createdAt.toISOString(),
-      attacker: {
-        handle: d.attacker.handle,
-        team: d.attacker.team,
-        color: d.attacker.avatarColor,
-        country: d.attacker.country,
-      },
-    })),
+    items: items.map((d) => {
+      const a = attackerMap.get(d.attackerId)
+      return {
+        id: d.id,
+        targetUrl: d.targetUrl,
+        targetName: d.targetName,
+        country: d.country,
+        category: d.category,
+        severity: d.severity,
+        status: d.status,
+        note: d.note,
+        poc: d.poc,
+        reason: d.reason,
+        mirrorUrl: d.mirrorUrl,
+        isHomepage: d.isHomepage,
+        isMass: d.isMass,
+        isRedeface: d.isRedeface,
+        isSpecial: d.isSpecial,
+        createdAt: d.createdAt.toISOString(),
+        attacker: {
+          handle: a?.handle ?? 'unknown',
+          team: a?.team ?? null,
+          color: a?.avatarColor ?? '#22c55e',
+          country: a?.country ?? null,
+        },
+      }
+    }),
     total,
     limit,
     offset,

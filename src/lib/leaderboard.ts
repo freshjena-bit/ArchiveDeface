@@ -123,15 +123,27 @@ export async function getLeaderboard(opts?: {
 
 // Fetch latest N defacements for LiveTicker + HomeRecent
 export async function getRecentDefacements(limit: number = 10) {
-  return readDb((db) =>
+  const items = await readDb((db) =>
     db.defacement.findMany({
       where: { status: { not: 'onhold' } },
-      include: { attacker: true },
       orderBy: { createdAt: 'desc' },
       take: limit,
     })
-  ).then((items) =>
-    items.map((d) => ({
+  )
+  // Get attacker info separately (avoid JOIN/include with Turso)
+  const attackerIds = [...new Set(items.map((d) => d.attackerId))]
+  const attackers = attackerIds.length > 0
+    ? await readDb((db) =>
+        db.hacker.findMany({
+          where: { id: { in: attackerIds } },
+        })
+      )
+    : []
+  const attackerMap = new Map(attackers.map((a) => [a.id, a]))
+
+  return items.map((d) => {
+    const a = attackerMap.get(d.attackerId)
+    return {
       id: d.id,
       targetUrl: d.targetUrl,
       targetName: d.targetName,
@@ -149,13 +161,13 @@ export async function getRecentDefacements(limit: number = 10) {
       isSpecial: d.isSpecial,
       createdAt: d.createdAt.toISOString(),
       attacker: {
-        handle: d.attacker.handle,
-        team: d.attacker.team,
-        color: d.attacker.avatarColor,
-        country: d.attacker.country,
+        handle: a?.handle ?? 'unknown',
+        team: a?.team ?? null,
+        color: a?.avatarColor ?? '#22c55e',
+        country: a?.country ?? null,
       },
-    }))
-  )
+    }
+  })
 }
 
 // Fetch latest N news items
