@@ -41,8 +41,8 @@ export async function getLeaderboard(opts?: {
   const grouped = await readDb((db) =>
     db.defacement.groupBy({
       by: ['attackerId'],
-      _count: { attackerId: true },
-      where: where as Record<string, never>,
+      _count: { _all: true },
+      where: where,
     })
   )
 
@@ -100,7 +100,7 @@ export async function getLeaderboard(opts?: {
       const h = hackerMap.get(g.attackerId)
       const team = (h?.team || 'INDEPENDENT').trim() || 'INDEPENDENT'
       const entry = teams.get(team) ?? { count: 0, members: new Set<string>() }
-      entry.count += g._count.attackerId
+      entry.count += g._count._all
       entry.members.add(g.attackerId)
       teams.set(team, entry)
     }
@@ -126,7 +126,7 @@ export async function getLeaderboard(opts?: {
         country: h.country,
         color: h.avatarColor,
         bio: h.bio,
-        totalHits: g._count.attackerId,
+        totalHits: g._count._all,
         rank: 0,
         joinedAt: h.joinedAt.toISOString(),
         badges: [] as string[],
