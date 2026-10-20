@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client'
-import { PrismaLibSQL } from '@prisma/adapter-libsql'
+import { PrismaLibSql } from '@prisma/adapter-libsql'
 import { createClient } from '@libsql/client'
 
 // ─── Database: Turso (primary, free forever 9GB) + optional fallback ───
@@ -33,7 +33,7 @@ function createPrismaClient(url: string): PrismaClient {
       url: url.split('?')[0],
       authToken: new URL(url).searchParams.get('authToken') ?? undefined,
     })
-    const adapter = new PrismaLibSQL(libsql)
+    const adapter = new PrismaLibSql(libsql)
     return new PrismaClient({ adapter } as ConstructorParameters<typeof PrismaClient>[0])
   }
   // PostgreSQL (Supabase/Neon fallback)
