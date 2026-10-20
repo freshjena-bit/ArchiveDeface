@@ -24,14 +24,23 @@ import urllib.request
 import urllib.error
 
 
-def fetch_supabase(url, key, table, offset, limit=1000):
-    """Fetch records from Supabase REST API."""
-    req = urllib.request.Request(
-        f'{url}/rest/v1/{table}?select=*&offset={offset}&limit={limit}',
-        headers={'apikey': key, 'Authorization': f'Bearer {key}'},
-    )
-    with urllib.request.urlopen(req, timeout=30) as resp:
-        return json.loads(resp.read().decode('utf-8'))
+def fetch_supabase(url, key, table, offset, limit=1000, retries=3):
+    """Fetch records from Supabase REST API with retry."""
+    for attempt in range(retries):
+        try:
+            req = urllib.request.Request(
+                f'{url}/rest/v1/{table}?select=*&offset={offset}&limit={limit}',
+                headers={'apikey': key, 'Authorization': f'Bearer {key}'},
+            )
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                return json.loads(resp.read().decode('utf-8'))
+        except Exception as e:
+            if attempt < retries - 1:
+                wait = (attempt + 1) * 5
+                print(f'  ⚠️ Fetch failed (attempt {attempt+1}/{retries}), retrying in {wait}s: {e}')
+                time.sleep(wait)
+            else:
+                raise
 
 
 def turso_execute(turso_host, turso_token, sql):
@@ -163,6 +172,7 @@ def main():
     parser.add_argument('--turso-url', required=True, help='libsql://xxx.tur.so')
     parser.add_argument('--turso-token', required=True, help='Turso auth token')
     parser.add_argument('--batch', type=int, default=500, help='Rows per INSERT (default: 500)')
+    parser.add_argument('--start-offset', type=int, default=0, help='Resume from offset (skip already-migrated records)')
     args = parser.parse_args()
 
     print('=' * 60)
@@ -171,6 +181,8 @@ def main():
     print(f'Supabase: {args.supabase_url}')
     print(f'Turso:    {args.turso_url}')
     print(f'Batch:   {args.batch} rows per INSERT')
+    if args.start_offset > 0:
+        print(f'Resume:  starting from offset {args.start_offset}')
     print()
 
     total_migrated = 0
@@ -203,8 +215,8 @@ def main():
 
     # === 2. Defacements ===
     print('--- Defacements ---')
-    offset = 0
-    batch_num = 0
+    offset = args.start_offset
+    batch_num = args.start_offset // args.batch
     while True:
         records = fetch_supabase(args.supabase_url, args.supabase_key, 'Defacement', offset, args.batch)
         if not records:
@@ -221,7 +233,6 @@ def main():
         except urllib.error.HTTPError as e:
             body = e.read().decode('utf-8', errors='replace')[:200]
             print(f'  Batch {batch_num}: HTTP {e.code} — {body}')
-            # Retry with smaller batch
             if len(records) > 50:
                 print(f'  Retrying with smaller batch (50)...')
                 for i in range(0, len(records), 50):
@@ -243,7 +254,11 @@ def main():
         if len(records) < args.batch:
             break
         offset += args.batch
-        time.sleep(0.5)  # Small delay to avoid rate limiting
+        time.sleep(0.5)
+
+        # Print resume hint every 100 batches
+        if batch_num % 100 == 0:
+            print(f'  💡 To resume if crash: --start-offset {offset}')  # Small delay to avoid rate limiting
 
     print(f'  Total defacements: {total_migrated} migrated, {total_errors} errors')
     print()
