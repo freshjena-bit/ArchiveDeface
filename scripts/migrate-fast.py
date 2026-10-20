@@ -69,8 +69,46 @@ def turso_execute(turso_host, turso_token, sql):
         return json.loads(resp.read().decode('utf-8'))
 
 
-def escape_sql(val):
-    """Escape a value for SQL."""
+def normalize_dt(val):
+    """Convert a Postgres datetime string to strict ISO 8601 format
+    that the Prisma LibSQL adapter can parse: YYYY-MM-DDTHH:MM:SS.sssZ
+    (3-digit milliseconds + Z suffix).
+
+    Postgres commonly stores e.g. '2026-10-07T06:19:56.09' (2-digit ms, no Z),
+    which makes Prisma throw "Conversion failed: expected a datetime string".
+    """
+    if val is None:
+        return None
+    if isinstance(val, (int, float)):
+        import datetime as _dt
+        return _dt.datetime.utcfromtimestamp(val).strftime('%Y-%m-%dT%H:%M:%S') + '.000Z'
+    s = str(val).strip()
+    if not s:
+        return None
+    import re
+    if re.match(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$', s):
+        return s
+    import datetime as _dt
+    iso = s[:-1] + '+00:00' if s.endswith('Z') else s
+    try:
+        dt = _dt.datetime.fromisoformat(iso)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=_dt.timezone.utc)
+        dt_utc = dt.astimezone(_dt.timezone.utc)
+        return dt_utc.strftime('%Y-%m-%dT%H:%M:%S.') + f'{dt_utc.microsecond // 1000:03d}Z'
+    except Exception:
+        m = re.match(r'^(\d{4}-\d{2}-\d{2})[T ](\d{2}:\d{2}:\d{2})(\.(\d{1,6}))?', s)
+        if not m:
+            return s
+        date_part, time_part, _, frac = m.groups()
+        ms = (frac.ljust(3, '0'))[:3] if frac else '000'
+        return f'{date_part}T{time_part}.{ms}Z'
+
+
+def escape_sql(val, is_dt=False):
+    """Escape a value for SQL. If is_dt=True, normalize as datetime first."""
+    if is_dt:
+        val = normalize_dt(val)
     if val is None:
         return 'NULL'
     if isinstance(val, bool):
@@ -98,7 +136,7 @@ def build_hacker_insert(hackers):
             escape_sql(h.get('totalHits', 0)),
             escape_sql(h.get('badges', '[]')),
             escape_sql(h.get('bio')),
-            escape_sql(h.get('joinedAt')),
+            escape_sql(h.get('joinedAt'), is_dt=True),
         ]
         rows.append(f'({",".join(vals)})')
     return f'INSERT INTO "Hacker" {cols} VALUES {",".join(rows)} ON CONFLICT ("id") DO NOTHING;'
@@ -126,10 +164,10 @@ def build_defacement_insert(records):
             escape_sql(d.get('isMass')),
             escape_sql(d.get('isRedeface')),
             escape_sql(d.get('isSpecial')),
-            escape_sql(d.get('pendingUntil')),
+            escape_sql(d.get('pendingUntil'), is_dt=True),
             escape_sql(d.get('status')),
             escape_sql(d.get('severity')),
-            escape_sql(d.get('createdAt')),
+            escape_sql(d.get('createdAt'), is_dt=True),
         ]
         rows.append(f'({",".join(vals)})')
     return f'INSERT INTO "Defacement" {cols} VALUES {",".join(rows)} ON CONFLICT ("id") DO NOTHING;'
@@ -147,8 +185,8 @@ def build_news_insert(news_items):
             escape_sql(n.get('body')),
             escape_sql(n.get('author')),
             escape_sql(n.get('pinned')),
-            escape_sql(n.get('createdAt')),
-            escape_sql(n.get('updatedAt')),
+            escape_sql(n.get('createdAt'), is_dt=True),
+            escape_sql(n.get('updatedAt'), is_dt=True),
         ]
         rows.append(f'({",".join(vals)})')
     return f'INSERT INTO "News" {cols} VALUES {",".join(rows)} ON CONFLICT ("id") DO NOTHING;'

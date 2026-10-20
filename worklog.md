@@ -804,3 +804,23 @@ Stage Summary:
 - All query options (where/include/select/orderBy/take/skip/distinct) preserved
 - All error handling, try/catch, and response shaping preserved
 - TypeScript type-check passes (no new errors introduced in any updated file)
+
+---
+Task ID: TURSO-DTFIX
+Agent: Main (Z.ai Code)
+Task: Fix Turso datetime parsing error causing 500 on /api/leaderboard and /api/defacements
+
+Work Log:
+- Root cause identified: migrate-fast.py copied Postgres datetime strings directly into Turso SQLite. Postgres stores e.g. `2026-10-07T06:19:56.09` (2-digit ms, no Z suffix). The Prisma LibSQL adapter requires strict ISO 8601 `2026-10-07T06:19:56.090Z` (3-digit ms + Z). Throws "Inconsistent column data: Conversion failed: expected a datetime string in column 'joinedAt'".
+- Affected columns: Hacker.joinedAt, Defacement.createdAt, Defacement.pendingUntil, News.createdAt, News.updatedAt.
+- Created scripts/fix-dates.py: connects to Turso via HTTP API, reads every row, re-formats all DateTime columns to strict ISO 8601 with 3-digit ms + Z, UPDATEs back. Handles 1/2/3/6-digit ms, space/T separators, tz offsets, already-correct values (no-op), null values. Tested with the exact bad value from the error: `2026-10-07T06:19:56.09` -> `2026-10-07T06:19:56.090Z`.
+- Patched scripts/migrate-fast.py: added normalize_dt() and is_dt flag on escape_sql() so future re-runs of the migration write correctly-formatted datetimes (prevent recurrence).
+- Verified both Python scripts pass syntax check. Verified normalize_dt() on 7 test cases including None.
+
+Stage Summary:
+- scripts/fix-dates.py ready to run against Turso. Usage:
+    python3 scripts/fix-dates.py --turso-url libsql://xxx.tur.so --turso-token eyJxxx
+  (or pass URL with ?authToken= embedded and omit --turso-token)
+- After running, /api/leaderboard and /api/defacements should return 200 because Prisma can parse the now-strict ISO 8601 datetime strings.
+- No code changes needed in src/ — the queries themselves are fine; only the stored data format was wrong.
+- Pending: user must run fix-dates.py once against production Turso DB (credentials are on Vercel). Then verify endpoints.
