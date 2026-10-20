@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client'
-import { PrismaLibSql } from '@prisma/adapter-libsql'
+import { PrismaLibSQL } from '@prisma/adapter-libsql'
 import { createClient } from '@libsql/client'
 
 // ─── Database: Turso (primary) + optional fallback ───
@@ -20,7 +20,7 @@ function createPrismaClient(url: string): PrismaClient {
   if (url.startsWith('libsql:')) {
     // Turso — pass FULL URL (createClient parses authToken automatically)
     const libsql = createClient({ url })
-    const adapter = new PrismaLibSql(libsql)
+    const adapter = new PrismaLibSQL(libsql)
     return new PrismaClient({ adapter } as never)
   }
   if (url.startsWith('postgresql:') || url.startsWith('postgres:')) {
