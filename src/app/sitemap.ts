@@ -1,29 +1,8 @@
 import type { MetadataRoute } from 'next'
 import { readDb } from '@/lib/db'
 
-// ISR: revalidate sitemap tiap 1 jam (3600 detik).
-// Setelah incident baru di-submit, dalam ≤1 jam sitemap bakal include
-// URL /defacement/{id} yang baru. Default Next.js cache sitemap statis
-// selamanya sampai deploy baru — ISR bikin auto-refresh.
-//
-// Cara kerja ISR:
-// 1. Request pertama → generate sitemap, cache di Vercel edge
-// 2. Request berikutnya (dalam 1 jam) → serve dari cache (cepat)
-// 3. Setelah 1 jam → request berikutnya trigger background regeneration
-// 4. Setelah regen selesai → request berikutnya dapet versi baru
-//
-// Google re-crawl sitemap tiap beberapa jam sampe daily, jadi 1 jam
-// lebih dari cukup buat discovery window. Revalidate dinaikkan dari
-// 300 (5 mnt) ke 3600 (1 jam) buat nurunin beban DB Neon free plan
-// (auto-suspend 5 mnt → query sitemap 1x/jam cukup ringan).
 export const revalidate = 3600
 
-// Sitemap untuk Google Search Console.
-// Static routes + up to 200 most recent defacement detail URLs.
-// Older defacement pages are discovered by Google via /archive pagination
-// (internal links), so we only seed the latest 200 here.
-// Dynamic routes like /defacer/[handle] and /team/[name] are intentionally
-// omitted — infinite combinations, discovered via internal links.
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://defacer.zone.id'
   const now = new Date()
@@ -39,27 +18,68 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/about`, lastModified: now, changeFrequency: 'monthly', priority: 0.4 },
   ]
 
-  // Dynamic defacement detail pages — fetch latest 200 IDs.
-  // Google discovers older ones via /archive internal links (pagination).
-  let defacementRoutes: MetadataRoute.Sitemap = []
+  let dynamicRoutes: MetadataRoute.Sitemap = []
   try {
-    const recent = await readDb((db) =>
-      db.defacement.findMany({
-        where: { status: { not: 'onhold' } },
-        select: { id: true, createdAt: true },
-        orderBy: { createdAt: 'desc' },
-        take: 200,
-      })
+    // Fetch defacements + hackers + teams in parallel
+    const [recent, hackers, teams] = await Promise.all([
+      readDb((db) =>
+        db.defacement.findMany({
+          where: { status: { not: 'onhold' } },
+          select: { id: true, createdAt: true },
+          orderBy: { createdAt: 'desc' },
+          take: 200,
+        })
+      ),
+      // All defacer profiles — each gets a /defacer/{handle} URL
+      readDb((db) =>
+        db.hacker.findMany({
+          select: { handle: true, joinedAt: true },
+          orderBy: { totalHits: 'desc' },
+          take: 500,
+        })
+      ),
+      // All team profiles — each gets a /team/{name} URL
+      readDb((db) =>
+        db.hacker.findMany({
+          where: { team: { not: null } },
+          select: { team: true },
+          distinct: ['team'],
+        })
+      ).then((rows) => rows.map((r) => r.team!).filter(Boolean)),
+    ])
+
+    // /defacement/{id} — 200 most recent
+    dynamicRoutes.push(
+      ...recent.map((d) => ({
+        url: `${baseUrl}/defacement/${d.id}`,
+        lastModified: d.createdAt,
+        changeFrequency: 'monthly' as const,
+        priority: 0.6,
+      }))
     )
-    defacementRoutes = recent.map((d) => ({
-      url: `${baseUrl}/defacement/${d.id}`,
-      lastModified: d.createdAt,
-      changeFrequency: 'monthly' as const,
-      priority: 0.6,
-    }))
+
+    // /defacer/{handle} — up to 500 hackers
+    dynamicRoutes.push(
+      ...hackers.map((h) => ({
+        url: `${baseUrl}/defacer/${encodeURIComponent(h.handle)}`,
+        lastModified: h.joinedAt,
+        changeFrequency: 'weekly' as const,
+        priority: 0.7,
+      }))
+    )
+
+    // /team/{name} — all teams
+    dynamicRoutes.push(
+      ...teams.map((team) => ({
+        url: `${baseUrl}/team/${encodeURIComponent(team)}`,
+        lastModified: now,
+        changeFrequency: 'weekly' as const,
+        priority: 0.6,
+      }))
+    )
   } catch {
-    // If DB is unreachable (e.g., build-time), skip dynamic URLs.
+    // If DB is unreachable, skip dynamic URLs.
   }
 
-  return [...staticRoutes, ...defacementRoutes]
+  return [...staticRoutes, ...dynamicRoutes]
 }

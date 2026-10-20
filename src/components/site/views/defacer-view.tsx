@@ -51,18 +51,18 @@ function fmtDate(iso: string) {
   return `${dd}-${mm}-${yy} ${hh}:${mi}`
 }
 
-export function DefacerView({ handle }: { handle: string }) {
+export function DefacerView({ handle, initialData }: { handle: string; initialData?: DefacerData | null }) {
   const router = useRouter()
   const { data, isLoading, error } = useSWR<DefacerData>(
     `/api/defacer?handle=${encodeURIComponent(handle)}`,
     fetcher,
-    { refreshInterval: 600000 }
+    { refreshInterval: 600000, fallbackData: initialData ?? undefined }
   )
   const [selected, setSelected] = React.useState<Defacement | null>(null)
   const [filter, setFilter] = React.useState<'verified' | 'special' | 'onhold'>('verified')
 
-  if (isLoading) return <DefacerSkeleton />
-  if (error || !data || !data.ok) {
+  if (!data && !initialData && isLoading) return <DefacerSkeleton />
+  if (!data && !initialData && (error || !data?.ok)) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-16 text-center sm:px-6">
         <p className="font-mono text-sm text-muted-foreground">
@@ -80,14 +80,16 @@ export function DefacerView({ handle }: { handle: string }) {
     )
   }
 
-  const h = data.hacker
-  const c = data.counts
+  const d = data ?? initialData
+  if (!d || !d.ok) return <DefacerSkeleton />
+  const h = d.hacker
+  const c = d.counts
 
   // client-side filter: verified (exclude onhold) / special (isSpecial=true) / onhold only
-  const filteredItems = data.items.filter((d) => {
-    if (filter === 'onhold') return d.status === 'onhold'
-    if (filter === 'special') return d.isSpecial
-    return d.status !== 'onhold' // 'verified'
+  const filteredItems = d.items.filter((dd) => {
+    if (filter === 'onhold') return dd.status === 'onhold'
+    if (filter === 'special') return dd.isSpecial
+    return dd.status !== 'onhold' // 'verified'
   })
 
   const statCards = [
