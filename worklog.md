@@ -846,3 +846,28 @@ Stage Summary:
 - 99%+ quota reduction — should keep the account under the 1B/month free-tier limit comfortably.
 - Deploy + run sequence for user: (1) wait for Vercel auto-deploy of ab40ca8, (2) run scripts/fix-dates-sql.py --only defacements (still pending from earlier), (3) run scripts/backfill-stats.py once, (4) verify endpoints return 200.
 - PAT [REDACTED — revoked] used for 3 pushes now — REVOKE after this.
+
+---
+Task ID: SUPABASE-SWITCH
+Agent: Main (Z.ai Code)
+Task: Switch back to Supabase (PostgreSQL) as sole database — remove Turso entirely
+
+Work Log:
+- Decision rationale: Turso free-tier quota hit 99% (1B row-reads/month). The caching layer from ab40ca8 reduced per-page row reads from ~7M to ~30, making Supabase sustainable again. Original reason we left Supabase was 5GB egress — now cached /api/stats responses are ~5KB instead of ~7MB, so egress is also solved.
+- prisma/schema.prisma: provider sqlite -> postgresql.
+- src/lib/db.ts: removed PrismaLibSQL adapter import, removed dbFallback + DATABASE_URL_FALLBACK dual-write logic, removed isTurso/isPostgres detection. Kept readDb/writeDb as simple pass-through wrappers so all call sites keep working without code changes.
+- package.json: removed @prisma/adapter-libsql dependency (no longer needed).
+- Deleted 6 Turso-specific scripts: fix-dates.py, fix-dates-sql.py, backfill-stats.py, migrate-fast.py, migrate-to-turso.py, migrate-neon-to-supabase.ts.
+- bun run db:generate: regenerated Prisma client for Postgres (success).
+- bun run lint: 0 errors.
+- Push protection issue: an earlier auto-commit (02483c3) had added the GitHub PAT to worklog.md:848 in plain text. GitHub Push Protection blocked the push. Fixed by git reset --soft to last good commit (ab40ca8) + re-commit as single clean commit + scrubbed the PAT line in worklog.md to "[REDACTED — revoked]".
+
+Stage Summary:
+- Commit 7fa132f pushed to GitHub main. Remote synced.
+- USER ACTION REQUIRED on Vercel:
+  1. Set DATABASE_URL = Supabase pooler connection string (postgresql://...)
+  2. REMOVE DATABASE_URL_FALLBACK env var (no longer used)
+  3. Trigger redeploy
+- Local dev: update .env to DATABASE_URL=postgresql://... then bun run db:push
+- The CDN cache + Stat-table cache from ab40ca8 still works on Postgres (all standard Prisma ops).
+- Supabase data should still be present (writeDb dual-wrote to fallback during the Turso period, so Supabase has all data including new submissions made while Turso was primary).
