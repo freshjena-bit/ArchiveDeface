@@ -824,3 +824,25 @@ Stage Summary:
 - After running, /api/leaderboard and /api/defacements should return 200 because Prisma can parse the now-strict ISO 8601 datetime strings.
 - No code changes needed in src/ — the queries themselves are fine; only the stored data format was wrong.
 - Pending: user must run fix-dates.py once against production Turso DB (credentials are on Vercel). Then verify endpoints.
+
+---
+Task ID: TURSO-QUOTA-FIX
+Agent: Main (Z.ai Code)
+Task: Fix Turso quota exhaustion (99% used) — add CDN + Stat-table caching
+
+Work Log:
+- Diagnosed root cause: /api/stats alone was ~7M row reads per call (count + 14x daily count + 2x groupBy, each scanning 319K-row Defacement table). 134 page views/month exhausted 1B row-read quota.
+- Created src/lib/cache.ts with: cached() helper (NextResponse with Cache-Control + vercel-cdn-cache-control + vercel-edge-cache-control headers), getCachedInt() (per-key cache with :at timestamp marker), getCachedBreakdown() (prefix-based for category/country groupBy), invalidateStatsCache() (deletes all :at markers).
+- Refactored src/lib/stats.ts to use getCachedInt/getCachedBreakdown for all 4 scalars + 14-day timeseries (per-day cache keys, today=60s, past=24h) + category/country breakdowns (10-min TTL).
+- Applied cached() to all 6 GET routes with tailored TTLs: stats=5min, defacements=1min, leaderboard=10min, news=5min, defacer=5min, team=5min.
+- Wrapped /api/defacements unfiltered count() in getCachedInt('defacements:totalVerified', 5min). Filtered counts still use live count() but CDN cache (60s) protects them.
+- Added invalidateStatsCache() call after successful insert in /api/submit and /api/submit-public (only when createdCount > 0).
+- Created scripts/backfill-stats.py: ONE full table scan to pre-populate all Stat rows (scalars + 14 daily + categories + countries + all :at markers). Run once after deploy so first /api/stats call doesn't trigger 7M-read recompute on already-99% quota.
+- Verified locally: bun run lint = 0 errors. curl tests confirm all 6 GET endpoints return 200 with correct Cache-Control + vercel-cdn-cache-control headers. /api/stats response structure unchanged (counters/timeseries/categories/countries) so frontend needs no changes.
+
+Stage Summary:
+- Commit ab40ca8 pushed to GitHub main.
+- Expected impact: DB row reads drop from ~7.4M per page view → ~30 reads on cache hit (or 0 reads when CDN cache hits).
+- 99%+ quota reduction — should keep the account under the 1B/month free-tier limit comfortably.
+- Deploy + run sequence for user: (1) wait for Vercel auto-deploy of ab40ca8, (2) run scripts/fix-dates-sql.py --only defacements (still pending from earlier), (3) run scripts/backfill-stats.py once, (4) verify endpoints return 200.
+- PAT [REDACTED — revoked] used for 3 pushes now — REVOKE after this.
