@@ -283,7 +283,7 @@ def main():
     parser = argparse.ArgumentParser(
         description='Emergency migration: Supabase A → Supabase B via REST API')
     parser.add_argument('--source-url', required=True,
-                        help='https://xxx.supabase.co (project A — at 100% egress)')
+                        help='https://xxx.supabase.co (project A — at quota limit)')
     parser.add_argument('--source-key', required=True,
                         help='Project A anon key (or service_role)')
     parser.add_argument('--dest-url', required=True,
