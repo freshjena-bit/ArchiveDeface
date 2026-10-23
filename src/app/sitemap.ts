@@ -4,6 +4,11 @@ import { readDb } from '@/lib/db'
 // Sitemap revalidate — 24 hours.
 export const revalidate = 86400
 
+// Force dynamic — don't prerender at build time (causes TypeError
+// during build because generateSitemaps passes id param that breaks
+// static generation). Generate on-demand at runtime instead.
+export const dynamic = 'force-dynamic'
+
 const BASE_URL = 'https://defacer.zone.id'
 
 // Multiple sitemaps — Google caps each sitemap at 50,000 URLs.
@@ -34,12 +39,18 @@ export function generateSitemaps() {
 export default async function sitemap({
   id,
 }: {
-  id: string
+  id?: string | string[] | unknown
 }): Promise<MetadataRoute.Sitemap> {
+  // Normalize id to string (Next.js sometimes passes differently during build)
+  const idStr = typeof id === 'string' ? id
+    : Array.isArray(id) ? id[0]
+    : ''
+  if (!idStr) return []
+
   const now = new Date()
 
   // ─── Static + profile routes (homepage, sections, defacers, teams, news) ──
-  if (id === 'static') {
+  if (idStr === 'static') {
     const routes: MetadataRoute.Sitemap = [
       { url: BASE_URL, lastModified: now, changeFrequency: 'daily', priority: 1 },
       { url: `${BASE_URL}/archive`, lastModified: now, changeFrequency: 'daily', priority: 0.9 },
@@ -107,8 +118,8 @@ export default async function sitemap({
   }
 
   // ─── Defacement detail pages — 50K per sub-sitemap ─────────────────
-  // id format: "defacements-N" where N starts at 1
-  const match = id.match(/^defacements-(\d+)$/)
+  // idStr format: "defacements-N" where N starts at 1
+  const match = idStr.match(/^defacements-(\d+)$/)
   if (!match) return []
 
   const pageNum = parseInt(match[1], 10)
