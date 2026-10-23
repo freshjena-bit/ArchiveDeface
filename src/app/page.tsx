@@ -1,16 +1,17 @@
 import type { Metadata } from 'next'
 import { HomeView } from '@/components/site/views/home-view'
-import { getStats } from '@/lib/stats'
-import { getLeaderboard, getRecentDefacements, getLatestNews } from '@/lib/leaderboard'
 import type { Stats, LeaderEntry, Defacement } from '@/lib/types'
 
 // Force dynamic — don't prerender at build time (build was failing
-// because DB queries timeout during static generation with
-// connection_limit=1 + pool_timeout=10). Page is rendered at runtime
-// instead. CDN edge cache (via Cache-Control in layout) handles
-// caching; Stat-table cache (src/lib/cache.ts) handles DB query caching.
+// because DB queries timeout during static generation).
 export const dynamic = 'force-dynamic'
 
+// Use fetch() to call API endpoints instead of calling getStats() etc.
+// directly. This leverages CDN edge cache:
+// - Cache hit → 0 DB queries → instant response
+// - Cache miss → API route queries DB → caches at edge
+// Previous approach (calling functions directly) did 20+ sequential
+// DB queries per render → 10-30s timeout with connection_limit=1.
 export const metadata: Metadata = {
   title: 'DEFACERZONEID — Defacement Archive & Top Defacers Leaderboard',
   description:
@@ -25,23 +26,31 @@ export const metadata: Metadata = {
   },
 }
 
+const BASE_URL = 'https://defacer.zone.id'
+
 export default async function Home() {
-  // SEQUENTIAL data fetches (NOT Promise.all) — avoids connection pool
-  // contention with connection_limit=1 (PgBouncer transaction mode).
-  // Each function does multiple DB queries; running them in parallel
-  // causes timeout → .catch() returns undefined → UI shows zeros.
-  // Sequential = each function's queries complete before next starts.
-  const stats = await getStats().catch(() => undefined as Stats | undefined)
-  const leaderboard = await getLeaderboard({ mode: 'defacers' }).catch(() => undefined)
-  const recent = await getRecentDefacements(10).catch(() => [] as Defacement[])
-  const news = await getLatestNews(3).catch(() => [])
+  // 4 parallel fetch() calls to API endpoints.
+  // CDN cache (s-maxage=300 for stats, etc.) handles caching.
+  // Cache hit = instant (0 DB queries). Cache miss = API queries DB.
+  // All 4 run in parallel — total time = max(individual), not sum.
+  const [statsRes, leaderboardRes, recentRes, newsRes] = await Promise.all([
+    fetch(`${BASE_URL}/api/stats`, { next: { revalidate: 60 } }).catch(() => null),
+    fetch(`${BASE_URL}/api/leaderboard?mode=defacers`, { next: { revalidate: 60 } }).catch(() => null),
+    fetch(`${BASE_URL}/api/defacements?limit=10`, { next: { revalidate: 60 } }).catch(() => null),
+    fetch(`${BASE_URL}/api/news`, { next: { revalidate: 60 } }).catch(() => null),
+  ])
+
+  const stats = statsRes?.ok ? await statsRes.json().catch(() => undefined) : undefined
+  const leaderboard = leaderboardRes?.ok ? await leaderboardRes.json().catch(() => undefined) : undefined
+  const recent = recentRes?.ok ? await recentRes.json().catch(() => undefined) : undefined
+  const news = newsRes?.ok ? await newsRes.json().catch(() => undefined) : undefined
 
   return (
     <HomeView
       initialStats={stats as Stats | undefined}
       initialLeaderboard={leaderboard?.items as LeaderEntry[] | undefined}
-      initialRecent={recent as Defacement[]}
-      initialNews={news}
+      initialRecent={recent?.items as Defacement[] | undefined}
+      initialNews={news?.items ?? []}
     />
   )
 }
