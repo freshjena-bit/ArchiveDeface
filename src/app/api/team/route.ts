@@ -7,6 +7,10 @@ export const dynamic = 'force-dynamic'
 
 // GET /api/team?name=PHANTOM%20CREW
 // Returns the team profile + count breakdown + members + their defacements.
+//
+// Uses SEQUENTIAL queries (not Promise.all) to avoid connection pool
+// contention when connection_limit=1 (PgBouncer transaction mode).
+// Each count() is ~100-500ms with index on attackerId, total ~1-3s.
 export async function GET(req: NextRequest) {
   try {
     promoteDueOnhold()
@@ -31,57 +35,45 @@ export async function GET(req: NextRequest) {
     const ids = members.map((m) => m.id)
     const where = { attackerId: { in: ids } }
 
-    // Build a map of attacker info from members (avoid JOIN).
+    // Build attacker lookup map from members (avoid JOIN).
     const attackerMap = new Map(members.map((m) => [m.id, m]))
 
-    const [
-      total,
-      special,
-      onhold,
-      archived,
-      restored,
-      mass,
-      redeface,
-      homepage,
-      items,
-    ] = await readDb(async (db) => {
-      return await Promise.all([
-        db.defacement.count({ where }),
-        db.defacement.count({ where: { ...where, isSpecial: true } }),
-        db.defacement.count({ where: { ...where, status: 'onhold' } }),
-        db.defacement.count({ where: { ...where, status: 'archived' } }),
-        db.defacement.count({ where: { ...where, status: 'restored' } }),
-        db.defacement.count({ where: { ...where, isMass: true } }),
-        db.defacement.count({ where: { ...where, isRedeface: true } }),
-        db.defacement.count({ where: { ...where, isHomepage: true } }),
-        // NO `include: { attacker: true }` JOIN — use separate attacker lookup.
-        // The items belong to attackers in `members`, which we already have.
-        db.defacement.findMany({
-          where,
-          orderBy: { createdAt: 'desc' },
-          take: 200,
-          select: {
-            id: true,
-            targetUrl: true,
-            targetName: true,
-            country: true,
-            category: true,
-            severity: true,
-            status: true,
-            note: true,
-            poc: true,
-            reason: true,
-            mirrorUrl: true,
-            isHomepage: true,
-            isMass: true,
-            isRedeface: true,
-            isSpecial: true,
-            createdAt: true,
-            attackerId: true,
-          },
-        }),
-      ])
-    })
+    // Sequential queries — no Promise.all, avoids connection pool timeout
+    // with connection_limit=1.
+    const total = await readDb((db) => db.defacement.count({ where }))
+    const special = await readDb((db) => db.defacement.count({ where: { ...where, isSpecial: true } }))
+    const onhold = await readDb((db) => db.defacement.count({ where: { ...where, status: 'onhold' } }))
+    const archived = await readDb((db) => db.defacement.count({ where: { ...where, status: 'archived' } }))
+    const restored = await readDb((db) => db.defacement.count({ where: { ...where, status: 'restored' } }))
+    const mass = await readDb((db) => db.defacement.count({ where: { ...where, isMass: true } }))
+    const redeface = await readDb((db) => db.defacement.count({ where: { ...where, isRedeface: true } }))
+    const homepage = await readDb((db) => db.defacement.count({ where: { ...where, isHomepage: true } }))
+    const items = await readDb((db) =>
+      db.defacement.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        take: 200,
+        select: {
+          id: true,
+          targetUrl: true,
+          targetName: true,
+          country: true,
+          category: true,
+          severity: true,
+          status: true,
+          note: true,
+          poc: true,
+          reason: true,
+          mirrorUrl: true,
+          isHomepage: true,
+          isMass: true,
+          isRedeface: true,
+          isSpecial: true,
+          createdAt: true,
+          attackerId: true,
+        },
+      })
+    )
 
     return cached({
       ok: true,

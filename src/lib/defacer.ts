@@ -4,10 +4,10 @@ import { promoteDueOnhold } from '@/lib/promote'
 // Shared defacer fetcher — used by /api/defacer route AND
 // server-side page rendering for SEO.
 //
-// FIX vs old version: removed `include: { attacker: true }` JOIN
-// (which was causing failures). Now uses separate query for attacker
-// info. Also added try/catch so the function returns null on error
-// instead of throwing (which caused empty API responses).
+// Uses SEQUENTIAL queries (not Promise.all) to avoid connection pool
+// contention when connection_limit=1 (PgBouncer transaction mode).
+// Also wraps in try/catch — returns null on error instead of throwing
+// (which caused empty API responses before).
 export async function getDefacerData(handle: string) {
   try {
     promoteDueOnhold()
@@ -19,54 +19,46 @@ export async function getDefacerData(handle: string) {
 
     const where = { attackerId: hacker.id }
 
-    // Run all count queries in parallel — they each scan the table.
-    // On 360K-row Defacement this is ~2.4M row reads total, but with
-    // the Stat-table cache layer (see src/lib/cache.ts), these are
-    // cached per-key.
-    const [
-      total, special, onhold, archived, restored, mass, redeface, homepage, items,
-    ] = await readDb(async (db) => {
-      return await Promise.all([
-        db.defacement.count({ where }),
-        db.defacement.count({ where: { ...where, isSpecial: true } }),
-        db.defacement.count({ where: { ...where, status: 'onhold' } }),
-        db.defacement.count({ where: { ...where, status: 'archived' } }),
-        db.defacement.count({ where: { ...where, status: 'restored' } }),
-        db.defacement.count({ where: { ...where, isMass: true } }),
-        db.defacement.count({ where: { ...where, isRedeface: true } }),
-        db.defacement.count({ where: { ...where, isHomepage: true } }),
-        // NO `include: { attacker: true }` — use separate query instead.
-        // (Previously caused failures; JOIN may also have issues with
-        // PgBouncer transaction mode.)
-        db.defacement.findMany({
-          where,
-          orderBy: { createdAt: 'desc' },
-          take: 200,
-          select: {
-            id: true,
-            targetUrl: true,
-            targetName: true,
-            country: true,
-            category: true,
-            severity: true,
-            status: true,
-            note: true,
-            poc: true,
-            reason: true,
-            mirrorUrl: true,
-            isHomepage: true,
-            isMass: true,
-            isRedeface: true,
-            isSpecial: true,
-            createdAt: true,
-            attackerId: true,
-          },
-        }),
-      ])
-    })
+    // Sequential queries — no Promise.all.
+    // Each count() uses index on attackerId, ~100-500ms each.
+    // Total ~1-3s for all 8 counts + 1 findMany.
+    const total = await readDb((db) => db.defacement.count({ where }))
+    const special = await readDb((db) => db.defacement.count({ where: { ...where, isSpecial: true } }))
+    const onhold = await readDb((db) => db.defacement.count({ where: { ...where, status: 'onhold' } }))
+    const archived = await readDb((db) => db.defacement.count({ where: { ...where, status: 'archived' } }))
+    const restored = await readDb((db) => db.defacement.count({ where: { ...where, status: 'restored' } }))
+    const mass = await readDb((db) => db.defacement.count({ where: { ...where, isMass: true } }))
+    const redeface = await readDb((db) => db.defacement.count({ where: { ...where, isRedeface: true } }))
+    const homepage = await readDb((db) => db.defacement.count({ where: { ...where, isHomepage: true } }))
 
-    // Get attacker info separately (avoid JOIN).
-    // All items belong to the same attacker (the hacker we already have).
+    // NO `include: { attacker: true }` JOIN — use already-fetched hacker.
+    const items = await readDb((db) =>
+      db.defacement.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        take: 200,
+        select: {
+          id: true,
+          targetUrl: true,
+          targetName: true,
+          country: true,
+          category: true,
+          severity: true,
+          status: true,
+          note: true,
+          poc: true,
+          reason: true,
+          mirrorUrl: true,
+          isHomepage: true,
+          isMass: true,
+          isRedeface: true,
+          isSpecial: true,
+          createdAt: true,
+          attackerId: true,
+        },
+      })
+    )
+
     return {
       ok: true as const,
       hacker: {
@@ -107,7 +99,7 @@ export async function getDefacerData(handle: string) {
       })),
     }
   } catch (e) {
-    // Log and return null — caller can show "not found" instead of crashing.
+    // Log and return null — caller shows "not found" instead of crashing.
     console.error('[getDefacerData] failed for handle:', handle, e)
     return null
   }
