@@ -167,8 +167,8 @@ export async function POST(req: NextRequest) {
       // by Googlebot without waiting for the 24h revalidate cycle).
       try {
         revalidatePath('/sitemap.xml')
-        revalidatePath('/sitemap-static.xml')
-        revalidatePath('/sitemap-defacements-1.xml')
+        revalidatePath('/sitemap/0')
+        revalidatePath('/sitemap/1')
         revalidatePath('/')
         revalidatePath('/archive')
         revalidatePath('/ranking')
