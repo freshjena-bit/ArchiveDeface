@@ -14,10 +14,6 @@ const BASE_URL = 'https://defacer.zone.id'
 //
 // The remaining ~310K older defacements are discoverable via internal
 // links from the /archive page's pagination (which Googlebot crawls).
-//
-// (Previous attempt at generateSitemaps() to split into 8 sub-sitemaps
-// failed with TypeError during prerender, even with force-dynamic.
-// Reverted to single-sitemap approach for reliability.)
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date()
 
@@ -34,30 +30,34 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ]
 
   // ─── Profile URLs: defacers, teams, news ─────────────────────────────
+  // SEQUENTIAL queries (not Promise.all) — avoids connection pool
+  // contention with connection_limit=1 (PgBouncer transaction mode).
+  // Each query is fast (~100-500ms), total ~1-2s for all 3.
   try {
-    const [hackers, teams, newsItems] = await Promise.all([
-      readDb((db) =>
-        db.hacker.findMany({
-          select: { handle: true, joinedAt: true },
-          orderBy: { totalHits: 'desc' },
-          take: 500,
-        })
-      ),
-      readDb((db) =>
-        db.hacker.findMany({
-          where: { team: { not: null } },
-          select: { team: true },
-          distinct: ['team'],
-        })
-      ).then((rows) => rows.map((r) => r.team!).filter(Boolean)),
-      readDb((db) =>
-        db.news.findMany({
-          select: { id: true, updatedAt: true },
-          orderBy: { createdAt: 'desc' },
-          take: 100,
-        })
-      ),
-    ])
+    const hackers = await readDb((db) =>
+      db.hacker.findMany({
+        select: { handle: true, joinedAt: true },
+        orderBy: { totalHits: 'desc' },
+        take: 500,
+      })
+    )
+
+    const teamRows = await readDb((db) =>
+      db.hacker.findMany({
+        where: { team: { not: null } },
+        select: { team: true },
+        distinct: ['team'],
+      })
+    )
+    const teams = teamRows.map((r) => r.team!).filter(Boolean)
+
+    const newsItems = await readDb((db) =>
+      db.news.findMany({
+        select: { id: true, updatedAt: true },
+        orderBy: { createdAt: 'desc' },
+        take: 100,
+      })
+    )
 
     routes.push(
       ...hackers.map((h) => ({
@@ -83,8 +83,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: 0.6,
       }))
     )
-  } catch {
-    // DB unreachable — keep static routes only
+  } catch (e) {
+    console.error('[sitemap] profile fetch failed:', e)
+    // Keep static routes only — but DON'T cache this failed result.
+    // Return immediately so caller knows it's partial.
+    return routes
   }
 
   // ─── Defacement detail pages — top 49K (most recent) ────────────────
@@ -108,8 +111,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: 0.6,
       }))
     )
-  } catch {
-    // DB unreachable — skip defacement URLs
+  } catch (e) {
+    console.error('[sitemap] defacement fetch failed:', e)
+    // Skip defacement URLs — keep what we have (static + profiles)
   }
 
   return routes
