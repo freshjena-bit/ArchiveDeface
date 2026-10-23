@@ -1,150 +1,116 @@
 import type { MetadataRoute } from 'next'
 import { readDb } from '@/lib/db'
 
-// Sitemap revalidate — 24 hours.
-export const revalidate = 86400
-
-// Force dynamic — don't prerender at build time (causes TypeError
-// during build because generateSitemaps passes id param that breaks
-// static generation). Generate on-demand at runtime instead.
-export const dynamic = 'force-dynamic'
+// Sitemap revalidate — 1 hour. Frequent enough that new submissions
+// appear quickly (also triggered on-demand by revalidatePath in
+// /api/submit routes).
+export const revalidate = 3600
 
 const BASE_URL = 'https://defacer.zone.id'
 
-// Multiple sitemaps — Google caps each sitemap at 50,000 URLs.
-// 360K defacements / 50K = 8 sub-sitemaps for defacements.
-// Plus 1 sub-sitemap for static + profile routes.
-// Total: 9 sub-sitemaps.
+// Single sitemap approach — Google caps each sitemap at 50K URLs.
+// We include the top 49K defacements (most recent) + static routes
+// + defacer/team/news profile URLs.
 //
-// generateSitemaps returns array of { id } objects. Next.js generates:
-//   /sitemap.xml              → sitemap index (lists all sub-sitemaps)
-//   /sitemap-static.xml       → static + profile routes
-//   /sitemap-defacements-1.xml → first 50K defacements
-//   /sitemap-defacements-2.xml → next 50K
-//   ... up to /sitemap-defacements-8.xml
-export function generateSitemaps() {
-  return [
-    { id: 'static' },
-    { id: 'defacements-1' },
-    { id: 'defacements-2' },
-    { id: 'defacements-3' },
-    { id: 'defacements-4' },
-    { id: 'defacements-5' },
-    { id: 'defacements-6' },
-    { id: 'defacements-7' },
-    { id: 'defacements-8' },
-  ]
-}
-
-export default async function sitemap({
-  id,
-}: {
-  id?: string | string[] | unknown
-}): Promise<MetadataRoute.Sitemap> {
-  // Normalize id to string (Next.js sometimes passes differently during build)
-  const idStr = typeof id === 'string' ? id
-    : Array.isArray(id) ? id[0]
-    : ''
-  if (!idStr) return []
-
+// The remaining ~310K older defacements are discoverable via internal
+// links from the /archive page's pagination (which Googlebot crawls).
+//
+// (Previous attempt at generateSitemaps() to split into 8 sub-sitemaps
+// failed with TypeError during prerender, even with force-dynamic.
+// Reverted to single-sitemap approach for reliability.)
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date()
 
-  // ─── Static + profile routes (homepage, sections, defacers, teams, news) ──
-  if (idStr === 'static') {
-    const routes: MetadataRoute.Sitemap = [
-      { url: BASE_URL, lastModified: now, changeFrequency: 'daily', priority: 1 },
-      { url: `${BASE_URL}/archive`, lastModified: now, changeFrequency: 'daily', priority: 0.9 },
-      { url: `${BASE_URL}/special`, lastModified: now, changeFrequency: 'daily', priority: 0.8 },
-      { url: `${BASE_URL}/onhold`, lastModified: now, changeFrequency: 'hourly', priority: 0.7 },
-      { url: `${BASE_URL}/ranking`, lastModified: now, changeFrequency: 'daily', priority: 0.8 },
-      { url: `${BASE_URL}/submit`, lastModified: now, changeFrequency: 'weekly', priority: 0.5 },
-      { url: `${BASE_URL}/news`, lastModified: now, changeFrequency: 'hourly', priority: 0.9 },
-      { url: `${BASE_URL}/about`, lastModified: now, changeFrequency: 'monthly', priority: 0.4 },
-    ]
+  // ─── Static routes (homepage + section pages) ────────────────────────
+  const routes: MetadataRoute.Sitemap = [
+    { url: BASE_URL, lastModified: now, changeFrequency: 'daily', priority: 1 },
+    { url: `${BASE_URL}/archive`, lastModified: now, changeFrequency: 'daily', priority: 0.9 },
+    { url: `${BASE_URL}/special`, lastModified: now, changeFrequency: 'daily', priority: 0.8 },
+    { url: `${BASE_URL}/onhold`, lastModified: now, changeFrequency: 'hourly', priority: 0.7 },
+    { url: `${BASE_URL}/ranking`, lastModified: now, changeFrequency: 'daily', priority: 0.8 },
+    { url: `${BASE_URL}/submit`, lastModified: now, changeFrequency: 'weekly', priority: 0.5 },
+    { url: `${BASE_URL}/news`, lastModified: now, changeFrequency: 'hourly', priority: 0.9 },
+    { url: `${BASE_URL}/about`, lastModified: now, changeFrequency: 'monthly', priority: 0.4 },
+  ]
 
-    try {
-      const [hackers, teams, newsItems] = await Promise.all([
-        readDb((db) =>
-          db.hacker.findMany({
-            select: { handle: true, joinedAt: true },
-            orderBy: { totalHits: 'desc' },
-            take: 500,
-          })
-        ),
-        readDb((db) =>
-          db.hacker.findMany({
-            where: { team: { not: null } },
-            select: { team: true },
-            distinct: ['team'],
-          })
-        ).then((rows) => rows.map((r) => r.team!).filter(Boolean)),
-        readDb((db) =>
-          db.news.findMany({
-            select: { id: true, updatedAt: true },
-            orderBy: { createdAt: 'desc' },
-            take: 100,
-          })
-        ),
-      ])
+  // ─── Profile URLs: defacers, teams, news ─────────────────────────────
+  try {
+    const [hackers, teams, newsItems] = await Promise.all([
+      readDb((db) =>
+        db.hacker.findMany({
+          select: { handle: true, joinedAt: true },
+          orderBy: { totalHits: 'desc' },
+          take: 500,
+        })
+      ),
+      readDb((db) =>
+        db.hacker.findMany({
+          where: { team: { not: null } },
+          select: { team: true },
+          distinct: ['team'],
+        })
+      ).then((rows) => rows.map((r) => r.team!).filter(Boolean)),
+      readDb((db) =>
+        db.news.findMany({
+          select: { id: true, updatedAt: true },
+          orderBy: { createdAt: 'desc' },
+          take: 100,
+        })
+      ),
+    ])
 
-      routes.push(
-        ...hackers.map((h) => ({
-          url: `${BASE_URL}/defacer/${encodeURIComponent(h.handle)}`,
-          lastModified: h.joinedAt,
-          changeFrequency: 'weekly' as const,
-          priority: 0.7,
-        }))
-      )
-      routes.push(
-        ...teams.map((team) => ({
-          url: `${BASE_URL}/team/${encodeURIComponent(team)}`,
-          lastModified: now,
-          changeFrequency: 'weekly' as const,
-          priority: 0.6,
-        }))
-      )
-      routes.push(
-        ...newsItems.map((n) => ({
-          url: `${BASE_URL}/news/${n.id}`,
-          lastModified: n.updatedAt,
-          changeFrequency: 'monthly' as const,
-          priority: 0.6,
-        }))
-      )
-    } catch {
-      // DB unreachable — keep static routes only
-    }
-    return routes
+    routes.push(
+      ...hackers.map((h) => ({
+        url: `${BASE_URL}/defacer/${encodeURIComponent(h.handle)}`,
+        lastModified: h.joinedAt,
+        changeFrequency: 'weekly' as const,
+        priority: 0.7,
+      }))
+    )
+    routes.push(
+      ...teams.map((team) => ({
+        url: `${BASE_URL}/team/${encodeURIComponent(team)}`,
+        lastModified: now,
+        changeFrequency: 'weekly' as const,
+        priority: 0.6,
+      }))
+    )
+    routes.push(
+      ...newsItems.map((n) => ({
+        url: `${BASE_URL}/news/${n.id}`,
+        lastModified: n.updatedAt,
+        changeFrequency: 'monthly' as const,
+        priority: 0.6,
+      }))
+    )
+  } catch {
+    // DB unreachable — keep static routes only
   }
 
-  // ─── Defacement detail pages — 50K per sub-sitemap ─────────────────
-  // idStr format: "defacements-N" where N starts at 1
-  const match = idStr.match(/^defacements-(\d+)$/)
-  if (!match) return []
-
-  const pageNum = parseInt(match[1], 10)
-  const skip = (pageNum - 1) * 50000
-
+  // ─── Defacement detail pages — top 49K (most recent) ────────────────
+  // Google caps single-sitemap at 50K URLs. We leave headroom for the
+  // static + profile URLs above (~600). The remaining ~310K older
+  // defacements are discoverable via /archive page pagination links.
   try {
-    // Select only id + createdAt — minimizes Supabase egress
-    // (~1.5MB per sitemap query, cached 24h at edge).
-    const defacements = await readDb((db) =>
+    const recent = await readDb((db) =>
       db.defacement.findMany({
         where: { status: { in: ['archived', 'restored', 'live'] } },
         select: { id: true, createdAt: true },
         orderBy: { createdAt: 'desc' },
-        take: 50000,
-        skip,
+        take: 49000,
       })
     )
-
-    return defacements.map((d) => ({
-      url: `${BASE_URL}/defacement/${d.id}`,
-      lastModified: d.createdAt,
-      changeFrequency: 'monthly' as const,
-      priority: 0.6,
-    }))
+    routes.push(
+      ...recent.map((d) => ({
+        url: `${BASE_URL}/defacement/${d.id}`,
+        lastModified: d.createdAt,
+        changeFrequency: 'monthly' as const,
+        priority: 0.6,
+      }))
+    )
   } catch {
-    return []
+    // DB unreachable — skip defacement URLs
   }
+
+  return routes
 }
