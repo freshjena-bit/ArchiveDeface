@@ -4,9 +4,14 @@ import { getStats } from '@/lib/stats'
 import { getLeaderboard, getRecentDefacements, getLatestNews } from '@/lib/leaderboard'
 import type { Stats, LeaderEntry, Defacement } from '@/lib/types'
 
-// Cache SSR result for 60 seconds — reduces DB queries from
-// every-request to every-60s. Major egress reduction.
-export const revalidate = 60
+// Force dynamic — don't prerender at build time (build was failing
+// because DB queries timeout during static generation with
+// connection_limit=1 + pool_timeout=10). Page is rendered at runtime
+// instead. CDN edge cache (via Cache-Control in layout) handles
+// caching; Stat-table cache (src/lib/cache.ts) handles DB query caching.
+export const dynamic = 'force-dynamic'
+// Revalidate removed — force-dynamic takes precedence.
+// CDN cache via Cache-Control headers handles response caching.
 
 export const metadata: Metadata = {
   title: 'DEFACERZONEID — Defacement Archive & Top Defacers Leaderboard',
@@ -23,6 +28,9 @@ export const metadata: Metadata = {
 }
 
 export default async function Home() {
+  // All data fetches have .catch() — if DB is unreachable, render with
+  // undefined/empty data. The client-side components handle fetching
+  // from /api/* as fallback.
   const [stats, leaderboard, recent, news] = await Promise.all([
     getStats().catch(() => undefined),
     getLeaderboard({ mode: 'defacers' }).catch(() => undefined),
