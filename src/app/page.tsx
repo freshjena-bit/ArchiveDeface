@@ -10,8 +10,6 @@ import type { Stats, LeaderEntry, Defacement } from '@/lib/types'
 // instead. CDN edge cache (via Cache-Control in layout) handles
 // caching; Stat-table cache (src/lib/cache.ts) handles DB query caching.
 export const dynamic = 'force-dynamic'
-// Revalidate removed — force-dynamic takes precedence.
-// CDN cache via Cache-Control headers handles response caching.
 
 export const metadata: Metadata = {
   title: 'DEFACERZONEID — Defacement Archive & Top Defacers Leaderboard',
@@ -28,15 +26,15 @@ export const metadata: Metadata = {
 }
 
 export default async function Home() {
-  // All data fetches have .catch() — if DB is unreachable, render with
-  // undefined/empty data. The client-side components handle fetching
-  // from /api/* as fallback.
-  const [stats, leaderboard, recent, news] = await Promise.all([
-    getStats().catch(() => undefined),
-    getLeaderboard({ mode: 'defacers' }).catch(() => undefined),
-    getRecentDefacements(10).catch(() => [] as Defacement[]),
-    getLatestNews(3).catch(() => []),
-  ])
+  // SEQUENTIAL data fetches (NOT Promise.all) — avoids connection pool
+  // contention with connection_limit=1 (PgBouncer transaction mode).
+  // Each function does multiple DB queries; running them in parallel
+  // causes timeout → .catch() returns undefined → UI shows zeros.
+  // Sequential = each function's queries complete before next starts.
+  const stats = await getStats().catch(() => undefined as Stats | undefined)
+  const leaderboard = await getLeaderboard({ mode: 'defacers' }).catch(() => undefined)
+  const recent = await getRecentDefacements(10).catch(() => [] as Defacement[])
+  const news = await getLatestNews(3).catch(() => [])
 
   return (
     <HomeView
