@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { readDb, writeDb } from '@/lib/db'
 import { deriveMeta, getHostname } from '@/lib/site'
 import { invalidateStatsCache } from '@/lib/cache'
+import { revalidatePath } from 'next/cache'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -160,6 +161,27 @@ export async function POST(req: NextRequest) {
     // Invalidate Stat-table cache so the next /api/stats read sees fresh counts.
     if (createdCount > 0) {
       await invalidateStatsCache()
+
+      // Trigger on-demand ISR revalidation so sitemap + key pages
+      // regenerate immediately (new defacement URL becomes discoverable
+      // by Googlebot without waiting for the 24h revalidate cycle).
+      try {
+        revalidatePath('/sitemap.xml')
+        revalidatePath('/sitemap-static.xml')
+        revalidatePath('/sitemap-defacements-1.xml')
+        revalidatePath('/')
+        revalidatePath('/archive')
+        revalidatePath('/ranking')
+        // Defacer profile page — new submission updates their totalHits
+        revalidatePath(`/defacer/${encodeURIComponent(firstInc.inc.attacker.trim())}`)
+        // Team page if team is set
+        if (firstInc.inc.team?.trim()) {
+          revalidatePath(`/team/${encodeURIComponent(firstInc.inc.team.trim())}`)
+        }
+      } catch (e) {
+        console.error('[submit-public] revalidatePath failed:', e)
+        // Non-fatal — ISR will still regenerate on its own schedule
+      }
     }
 
     return NextResponse.json({

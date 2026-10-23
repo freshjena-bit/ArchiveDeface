@@ -3,6 +3,7 @@ import { readDb, writeDb } from '@/lib/db'
 import { deriveMeta, getHostname } from '@/lib/site'
 import { resolvePage } from '@/lib/page'
 import { invalidateStatsCache } from '@/lib/cache'
+import { revalidatePath } from 'next/cache'
 
 export const dynamic = 'force-dynamic'
 // Vercel serverless timeout — 500 URLs × page fetch (5s timeout parallel) +
@@ -221,6 +222,25 @@ export async function POST(req: NextRequest) {
 
     // Invalidate Stat-table cache so the next /api/stats read sees fresh counts.
     await invalidateStatsCache()
+
+    // Trigger on-demand ISR revalidation so sitemap + key pages
+    // regenerate immediately (new defacement URLs become discoverable
+    // by Googlebot without waiting for the 24h revalidate cycle).
+    try {
+      revalidatePath('/sitemap.xml')
+      revalidatePath('/sitemap-static.xml')
+      revalidatePath('/sitemap-defacements-1.xml')
+      revalidatePath('/')
+      revalidatePath('/archive')
+      revalidatePath('/ranking')
+      revalidatePath(`/defacer/${encodeURIComponent(ownHandleRaw)}`)
+      if (team?.trim()) {
+        revalidatePath(`/team/${encodeURIComponent(team.trim())}`)
+      }
+    } catch (e) {
+      console.error('[submit] revalidatePath failed:', e)
+      // Non-fatal — ISR will still regenerate on its own schedule
+    }
 
     return NextResponse.json({
       ok: true,
