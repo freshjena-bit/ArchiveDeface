@@ -38,16 +38,45 @@ export async function GET(req: NextRequest) {
     // Build attacker lookup map from members (avoid JOIN).
     const attackerMap = new Map(members.map((m) => [m.id, m]))
 
-    // Sequential queries — no Promise.all, avoids connection pool timeout
-    // with connection_limit=1.
-    const total = await readDb((db) => db.defacement.count({ where }))
-    const special = await readDb((db) => db.defacement.count({ where: { ...where, isSpecial: true } }))
-    const onhold = await readDb((db) => db.defacement.count({ where: { ...where, status: 'onhold' } }))
-    const archived = await readDb((db) => db.defacement.count({ where: { ...where, status: 'archived' } }))
-    const restored = await readDb((db) => db.defacement.count({ where: { ...where, status: 'restored' } }))
-    const mass = await readDb((db) => db.defacement.count({ where: { ...where, isMass: true } }))
-    const redeface = await readDb((db) => db.defacement.count({ where: { ...where, isRedeface: true } }))
-    const homepage = await readDb((db) => db.defacement.count({ where: { ...where, isHomepage: true } }))
+    // SINGLE aggregate query — replaces 8 separate count() queries.
+    // Postgres FILTER (WHERE ...) + ANY($1) for attackerId IN (...).
+    // Total: 2 DB queries (1 aggregate + 1 findMany) instead of 10.
+    const statsResult = await readDb(async (db) => {
+      const rows = await db.$queryRawUnsafe<{
+        total: bigint
+        special: bigint
+        onhold: bigint
+        archived: bigint
+        restored: bigint
+        mass: bigint
+        redeface: bigint
+        homepage: bigint
+      }[]>(`
+        SELECT
+          COUNT(*) as total,
+          COUNT(*) FILTER (WHERE "isSpecial" = true) as special,
+          COUNT(*) FILTER (WHERE status = 'onhold') as onhold,
+          COUNT(*) FILTER (WHERE status = 'archived') as archived,
+          COUNT(*) FILTER (WHERE status = 'restored') as restored,
+          COUNT(*) FILTER (WHERE "isMass" = true) as mass,
+          COUNT(*) FILTER (WHERE "isRedeface" = true) as redeface,
+          COUNT(*) FILTER (WHERE "isHomepage" = true) as homepage
+        FROM "Defacement"
+        WHERE "attackerId" = ANY($1::text[])
+      `, ids)
+      const r = rows[0] ?? {}
+      return {
+        total: Number(r.total ?? 0),
+        special: Number(r.special ?? 0),
+        onhold: Number(r.onhold ?? 0),
+        archived: Number(r.archived ?? 0),
+        restored: Number(r.restored ?? 0),
+        mass: Number(r.mass ?? 0),
+        redeface: Number(r.redeface ?? 0),
+        homepage: Number(r.homepage ?? 0),
+      }
+    })
+
     const items = await readDb((db) =>
       db.defacement.findMany({
         where,
@@ -80,7 +109,7 @@ export async function GET(req: NextRequest) {
       team: {
         name,
         members: members.length,
-        totalHits: total,
+        totalHits: statsResult.total,
       },
       memberList: members.map((m) => ({
         handle: m.handle,
@@ -89,14 +118,14 @@ export async function GET(req: NextRequest) {
         totalHits: m.totalHits,
       })),
       counts: {
-        total,
-        special,
-        onhold,
-        archived,
-        restored,
-        mass,
-        redeface,
-        homepage,
+        total: statsResult.total,
+        special: statsResult.special,
+        onhold: statsResult.onhold,
+        archived: statsResult.archived,
+        restored: statsResult.restored,
+        mass: statsResult.mass,
+        redeface: statsResult.redeface,
+        homepage: statsResult.homepage,
       },
       items: items.map((d) => {
         const a = attackerMap.get(d.attackerId)
