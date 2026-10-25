@@ -11,8 +11,8 @@ type Params = Promise<{ id: string }>
 // Body: { handle?, totalArchive?, mirror?, country?, team?, notes? }
 export async function PUT(req: NextRequest, { params }: { params: Params }) {
   try {
-    const auth = parseAdminCookie(req)
-    if (!auth.ok) {
+    const isAdmin = parseAdminCookie(req.headers.get('cookie'))
+    if (!isAdmin) {
       return NextResponse.json(
         { ok: false, error: 'Unauthorized — admin login required' },
         { status: 401 }
@@ -58,8 +58,8 @@ export async function PUT(req: NextRequest, { params }: { params: Params }) {
 // Admin only — delete an entry.
 export async function DELETE(req: NextRequest, { params }: { params: Params }) {
   try {
-    const auth = parseAdminCookie(req)
-    if (!auth.ok) {
+    const isAdmin = parseAdminCookie(req.headers.get('cookie'))
+    if (!isAdmin) {
       return NextResponse.json(
         { ok: false, error: 'Unauthorized — admin login required' },
         { status: 401 }

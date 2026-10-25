@@ -49,8 +49,8 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     // Auth check
-    const auth = parseAdminCookie(req)
-    if (!auth.ok) {
+    const isAdmin = parseAdminCookie(req.headers.get('cookie'))
+    if (!isAdmin) {
       return NextResponse.json(
         { ok: false, error: 'Unauthorized — admin login required' },
         { status: 401 }

@@ -51,7 +51,7 @@ export default function AdminMirrorsPage() {
       const res = await fetch('/api/auth/me')
       if (res.ok) {
         const data = await res.json()
-        if (data.ok && data.user) {
+        if (data.admin) {
           setAuthed(true)
         } else {
           router.push('/admin')
