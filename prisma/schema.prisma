@@ -69,3 +69,25 @@ model News {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+// Cross-mirror hall of fame — aggregates top defacers from ALL
+// defacement archive mirrors (DEFACERZONEID, Zone-H, Zone-Ar,
+// Hack-Mirror, etc.). Manually maintained by admin since external
+// mirrors don't expose APIs we can query.
+//
+// Used by /mirrors public page + /admin/mirrors CRUD.
+model MirrorRanking {
+  id           String   @id @default(cuid())
+  handle       String                     // defacer handle/alias
+  totalArchive  Int      @default(0)      // total defacements on that mirror
+  mirror       String                     // mirror site name (DEFACERZONEID, ZONE-H, ZONE-AR, etc.)
+  country      String?                    // defacer origin country (ISO code)
+  team         String?                    // group / crew affiliation
+  notes        String?                    // optional notes (e.g., "active 2015-2020")
+  updatedAt    DateTime @updatedAt
+  createdAt    DateTime @default(now())
+
+  @@unique([handle, mirror])              // one entry per handle per mirror
+  @@index([mirror])                       // filter by mirror
+  @@index([totalArchive])                 // sort by totalArchive
+}

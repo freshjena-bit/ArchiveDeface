@@ -61,6 +61,7 @@ async function getStaticAndProfileUrls() {
     { url: `${BASE_URL}/submit`, lastModified: now, changeFrequency: 'weekly', priority: 0.5 },
     { url: `${BASE_URL}/news`, lastModified: now, changeFrequency: 'hourly', priority: 0.9 },
     { url: `${BASE_URL}/about`, lastModified: now, changeFrequency: 'monthly', priority: 0.4 },
+    { url: `${BASE_URL}/mirrors`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
   ]
 
   // SEQUENTIAL queries — avoid connection pool contention
