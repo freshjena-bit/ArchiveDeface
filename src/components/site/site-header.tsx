@@ -13,6 +13,7 @@ const NAV: { path: string; label: string }[] = [
   { path: '/special', label: 'Archive Special' },
   { path: '/onhold', label: 'On Hold' },
   { path: '/ranking', label: 'Ranking' },
+  { path: '/mirrors', label: 'Hall of Fame' },
   { path: '/submit', label: 'Submit' },
   { path: '/news', label: 'News' },
   { path: '/about', label: 'About' },
