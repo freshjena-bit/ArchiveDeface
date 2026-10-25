@@ -71,6 +71,18 @@ export function FullLeaderboard({ items, isLoading }: { items: LeaderEntry[]; is
                       >
                         {p.handle}
                       </Link>
+                      {p.tags && p.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {p.tags.map((tag) => (
+                            <span
+                              key={tag}
+                              className="inline-flex items-center rounded bg-primary/15 px-1.5 py-0.5 font-mono text-[9px] font-semibold text-primary"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     <div className="truncate font-mono text-[10px] text-muted-foreground">
                       {p.team ? (
@@ -137,6 +149,18 @@ export function FullLeaderboard({ items, isLoading }: { items: LeaderEntry[]; is
                       >
                         {e.handle}
                       </Link>
+                      {e.tags && e.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-0.5 mt-0.5">
+                          {e.tags.map((tag) => (
+                            <span
+                              key={tag}
+                              className="inline-flex items-center rounded bg-primary/15 px-1 py-0.5 font-mono text-[9px] font-semibold text-primary"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     <div className="col-span-3 truncate font-mono text-[10px] text-muted-foreground">
                       {e.team ? (

@@ -48,4 +48,5 @@ export type LeaderEntry = {
   rank: number
   joinedAt: string
   badges: string[]
+  tags?: string[]
 }

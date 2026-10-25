@@ -27,6 +27,7 @@ type DefacerData = {
     bio: string | null
     joinedAt: string
     totalHits: number
+    tags?: string[]
   }
   counts: {
     total: number
@@ -150,6 +151,18 @@ export function DefacerView({ handle, initialData }: { handle: string; initialDa
             )}
             <span>joined {new Date(h.joinedAt).toISOString().slice(0, 10)}</span>
           </div>
+          {h.tags && h.tags.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {h.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center rounded-full bg-primary/15 px-2.5 py-0.5 font-mono text-[10px] font-semibold text-primary"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
           {h.bio && (
             <p className="mt-2 font-mono text-xs leading-relaxed text-muted-foreground/80 whitespace-pre-wrap break-words">
               “{h.bio}”
