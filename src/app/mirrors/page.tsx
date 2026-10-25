@@ -112,13 +112,7 @@ export default async function MirrorsPage() {
                     {entry.totalArchive.toLocaleString()}
                   </td>
                   <td className="py-3 px-4 font-mono text-xs">
-                    <span
-                      className={`px-2 py-0.5 rounded ${
-                        entry.mirror.toUpperCase() === 'DEFACERZONEID'
-                          ? 'bg-primary/20 text-primary font-bold'
-                          : 'bg-muted text-muted-foreground'
-                      }`}
-                    >
+                    <span className="px-2 py-0.5 rounded bg-muted text-muted-foreground">
                       {entry.mirror}
                     </span>
                   </td>
