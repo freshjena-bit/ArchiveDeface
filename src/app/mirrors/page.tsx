@@ -81,6 +81,7 @@ export default async function MirrorsPage() {
                 <th className="text-left py-3 px-4 font-semibold">Mirror</th>
                 <th className="text-left py-3 px-4 font-semibold">Team</th>
                 <th className="text-left py-3 px-4 font-semibold">Country</th>
+                <th className="text-left py-3 px-4 font-semibold">Notes</th>
               </tr>
             </thead>
             <tbody>
@@ -126,6 +127,9 @@ export default async function MirrorsPage() {
                   </td>
                   <td className="py-3 px-4 text-muted-foreground">
                     {entry.country ?? '—'}
+                  </td>
+                  <td className="py-3 px-4 text-xs text-muted-foreground">
+                    {entry.notes ?? '—'}
                   </td>
                 </tr>
               ))}
