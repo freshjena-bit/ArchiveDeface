@@ -223,6 +223,20 @@ export function AdminView() {
         </Button>
       </div>
 
+      {/* admin sub-pages */}
+      <div className="mb-5 flex flex-wrap gap-2">
+        <a href="/admin/mirrors" className="inline-flex">
+          <Button variant="outline" size="sm" className="gap-1.5 font-mono text-xs">
+            🏆 Mirror Rankings
+          </Button>
+        </a>
+        <a href="/admin/tags" className="inline-flex">
+          <Button variant="outline" size="sm" className="gap-1.5 font-mono text-xs">
+            🏷️ Defacer Tags
+          </Button>
+        </a>
+      </div>
+
       {/* on-hold records pending manual review */}
       <div className="mb-3 flex items-center gap-2">
         <Pause className="h-4 w-4 text-amber-400" />

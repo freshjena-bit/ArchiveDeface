@@ -98,6 +98,7 @@ export async function getDefacerData(handle: string) {
         bio: hacker.bio,
         joinedAt: hacker.joinedAt.toISOString(),
         totalHits: hacker.totalHits,
+        tags: JSON.parse(hacker.tags || '[]') as string[],
       },
       counts: statsResult,
       items: items.map((d) => ({

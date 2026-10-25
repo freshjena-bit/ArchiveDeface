@@ -20,6 +20,7 @@ model Hacker {
   rank        Int      @default(0) // computed score
   totalHits   Int      @default(0)
   badges      String   @default("[]") // JSON array of badge ids
+  tags        String   @default("[]") // JSON array of admin-curated tags/julukan (e.g., "Legend", "Sang Peretas")
   bio         String?
   joinedAt    DateTime @default(now())
   defacements Defacement[]

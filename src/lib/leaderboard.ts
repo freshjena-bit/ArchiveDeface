@@ -61,6 +61,7 @@ export async function getLeaderboard(opts?: {
     rank: i + 1,
     joinedAt: h.joinedAt.toISOString(),
     badges: [],
+    tags: JSON.parse(h.tags || '[]') as string[],
   }))
 
   return { mode: 'defacers', year: yearParam, month: monthParam, years, months, items }
