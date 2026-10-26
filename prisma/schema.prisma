@@ -92,3 +92,15 @@ model MirrorRanking {
   @@index([mirror])                       // filter by mirror
   @@index([totalArchive])                 // sort by totalArchive
 }
+
+// Rate limiting — logs each successful submit per IP.
+// Used to enforce 1000 submits/day limit.
+// Only SUCCESSFUL submissions are logged (rejected/duplicate ones don't count).
+model SubmitLog {
+  id        String   @id @default(cuid())
+  ip        String                          // client IP address
+  count     Int      @default(1)             // number of records created in this submit
+  createdAt DateTime @default(now())
+
+  @@index([ip, createdAt])                   // rate limit query: WHERE ip = ? AND createdAt > ?
+}

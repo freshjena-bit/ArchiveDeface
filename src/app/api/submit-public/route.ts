@@ -3,6 +3,7 @@ import { readDb, writeDb } from '@/lib/db'
 import { deriveMeta, getHostname } from '@/lib/site'
 import { invalidateStatsCache } from '@/lib/cache'
 import { revalidatePath } from 'next/cache'
+import { getClientIP, checkSubmitLimit, logSuccessfulSubmit } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -45,6 +46,50 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { ok: false, error: 'No incidents provided (expected: { incidents: [...] } or [...])' },
         { status: 400 }
+      )
+    }
+
+    // ─── URL validation: EVERY incident MUST have targetUrl ─────────
+    // If any incident has no targetUrl, reject the ENTIRE request.
+    // User must provide URLs for all incidents before submitting.
+    const missingUrl = incidents.find((inc) => !inc.targetUrl?.trim())
+    if (missingUrl) {
+      return NextResponse.json(
+        { ok: false, error: 'URL is required for every incident. Please provide a targetUrl for all entries.' },
+        { status: 400 }
+      )
+    }
+
+    // ─── Rate limit check: max 1000 records per IP per 24h ──────────
+    // Only SUCCESSFUL submissions count (rejected/duplicate don't).
+    const clientIP = getClientIP(req)
+    const limit = await checkSubmitLimit(clientIP)
+    if (!limit.allowed) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: `Daily submit limit exceeded (${limit.limit}/day). You have used ${limit.used} submissions. Try again tomorrow.`,
+          rateLimited: true,
+          used: limit.used,
+          limit: limit.limit,
+        },
+        { status: 429 }
+      )
+    }
+
+    // Check if this batch would exceed the limit
+    const validCount = incidents.filter((inc) => inc.targetUrl?.trim() && inc.attacker?.trim()).length
+    if (limit.used + validCount > limit.limit) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: `Daily submit limit would be exceeded. You have ${limit.remaining} remaining, but this request has ${validCount} incidents. Reduce the batch size or try tomorrow.`,
+          rateLimited: true,
+          used: limit.used,
+          remaining: limit.remaining,
+          limit: limit.limit,
+        },
+        { status: 429 }
       )
     }
 
@@ -156,6 +201,13 @@ export async function POST(req: NextRequest) {
       )
     } catch (e) {
       // Non-critical: totalHits update failed
+    }
+
+    // ─── Log successful submit for rate limiting ─────────────────────
+    // Only counts ACTUALLY CREATED records (not duplicates/rejected).
+    // Rejected submissions are NOT logged → don't count toward limit.
+    if (createdCount > 0) {
+      await logSuccessfulSubmit(clientIP, createdCount)
     }
 
     // Invalidate Stat-table cache so the next /api/stats read sees fresh counts.

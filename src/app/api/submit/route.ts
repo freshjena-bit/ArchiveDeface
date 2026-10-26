@@ -4,6 +4,7 @@ import { deriveMeta, getHostname } from '@/lib/site'
 import { resolvePage } from '@/lib/page'
 import { invalidateStatsCache } from '@/lib/cache'
 import { revalidatePath } from 'next/cache'
+import { getClientIP, checkSubmitLimit, logSuccessfulSubmit } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 // Vercel serverless timeout — 500 URLs × page fetch (5s timeout parallel) +
@@ -51,6 +52,36 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { ok: false, error: 'Too many URLs in one submission (max 500)' },
         { status: 400 }
+      )
+    }
+
+    // ─── Rate limit check: max 1000 records per IP per 24h ──────────
+    // Only SUCCESSFUL submissions count (rejected/duplicate don't).
+    const clientIP = getClientIP(req)
+    const limit = await checkSubmitLimit(clientIP)
+    if (!limit.allowed) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: `Daily submit limit exceeded (${limit.limit}/day). You have used ${limit.used} submissions. Try again tomorrow.`,
+          rateLimited: true,
+          used: limit.used,
+          limit: limit.limit,
+        },
+        { status: 429 }
+      )
+    }
+    if (limit.used + list.length > limit.limit) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: `Daily submit limit would be exceeded. You have ${limit.remaining} remaining, but this request has ${list.length} URLs.`,
+          rateLimited: true,
+          used: limit.used,
+          remaining: limit.remaining,
+          limit: limit.limit,
+        },
+        { status: 429 }
       )
     }
 
@@ -219,6 +250,14 @@ export async function POST(req: NextRequest) {
         data: { totalHits: { increment: list.length } },
       })
     )
+
+    // ─── Log successful submit for rate limiting ─────────────────────
+    // Only counts ACTUALLY CREATED records (created.length).
+    // Rejected submissions are NOT logged → don't count toward limit.
+    if (created.length > 0) {
+      const clientIP = getClientIP(req)
+      await logSuccessfulSubmit(clientIP, created.length)
+    }
 
     // Invalidate Stat-table cache so the next /api/stats read sees fresh counts.
     await invalidateStatsCache()
