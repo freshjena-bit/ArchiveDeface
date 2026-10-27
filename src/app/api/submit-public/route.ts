@@ -214,8 +214,10 @@ export async function POST(req: NextRequest) {
 
     // ─── Log successful submit for rate limiting ─────────────────────
     // Only counts ACTUALLY CREATED records (not duplicates/rejected).
-    // Skipped for admin bypass (admin/script submits don't count).
-    if (createdCount > 0 && !isAdminBypass) {
+    // Admin bypass submits are ALSO logged (for tracking/stats) but
+    // the rate limit CHECK is still bypassed for admin (admin can
+    // submit unlimited, but submissions are still tracked).
+    if (createdCount > 0) {
       const clientIP = getClientIP(req)
       await logSuccessfulSubmit(clientIP, createdCount)
     }

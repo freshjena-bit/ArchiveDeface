@@ -253,7 +253,7 @@ export async function POST(req: NextRequest) {
 
     // ─── Log successful submit for rate limiting ─────────────────────
     // Only counts ACTUALLY CREATED records (created.length).
-    // Rejected submissions are NOT logged → don't count toward limit.
+    // All successful submissions are logged (for tracking/stats).
     if (created.length > 0) {
       const clientIP = getClientIP(req)
       await logSuccessfulSubmit(clientIP, created.length)
