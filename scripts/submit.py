@@ -28,13 +28,20 @@ import urllib.request
 import urllib.error
 
 
-def submit_batch(api_url, incidents):
-    """Submit a batch of incidents. Returns (result_dict, error_str_or_None)."""
+def submit_batch(api_url, incidents, admin_key=None):
+    """Submit a batch of incidents. Returns (result_dict, error_str_or_None).
+
+    If admin_key is provided, sends X-Admin-Key header to bypass rate
+    limiting + URL validation (for bulk script usage).
+    """
     data = json.dumps({'incidents': incidents}).encode('utf-8')
+    headers = {'Content-Type': 'application/json'}
+    if admin_key:
+        headers['X-Admin-Key'] = admin_key
     req = urllib.request.Request(
         f'{api_url}/api/submit-public',
         data=data,
-        headers={'Content-Type': 'application/json'},
+        headers=headers,
         method='POST',
     )
     try:
@@ -68,6 +75,10 @@ def main():
                         choices=['low', 'medium', 'high', 'critical'])
     parser.add_argument('--status', default=os.environ.get('STATUS', 'archived'),
                         choices=['archived', 'restored', 'live', 'onhold'])
+    parser.add_argument('--admin-key', default=os.environ.get('ADMIN_KEY'),
+                        help='Admin password (ADMIN_PASSWORD env var on server). '
+                             'When provided, sends X-Admin-Key header to bypass '
+                             'rate limiting + URL validation. For bulk script usage.')
     args = parser.parse_args()
 
     # Read URLs
@@ -122,7 +133,7 @@ def main():
         end = min(i + current_chunk, len(incidents))
         print(f'Batch {batch_num} (URLs {start}-{end}, chunk={current_chunk})... ', end='', flush=True)
 
-        result, error = submit_batch(args.api_url, chunk)
+        result, error = submit_batch(args.api_url, chunk, admin_key=args.admin_key)
 
         if error and '504' in error:
             # HTTP 504 — retry with smaller chunk

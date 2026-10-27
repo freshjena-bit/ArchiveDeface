@@ -49,48 +49,57 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // ─── Admin bypass: X-Admin-Key header matches ADMIN_PASSWORD ────
+    // Used by Python submit script / bulk migration tools.
+    // If valid → skip rate limit + URL validation.
+    const adminKey = req.headers.get('x-admin-key') ?? ''
+    const expectedKey = process.env.ADMIN_PASSWORD ?? ''
+    const isAdminBypass = expectedKey && adminKey === expectedKey
+
     // ─── URL validation: EVERY incident MUST have targetUrl ─────────
-    // If any incident has no targetUrl, reject the ENTIRE request.
-    // User must provide URLs for all incidents before submitting.
-    const missingUrl = incidents.find((inc) => !inc.targetUrl?.trim())
-    if (missingUrl) {
-      return NextResponse.json(
-        { ok: false, error: 'URL is required for every incident. Please provide a targetUrl for all entries.' },
-        { status: 400 }
-      )
+    // Skipped for admin bypass (script may submit partial data).
+    if (!isAdminBypass) {
+      const missingUrl = incidents.find((inc) => !inc.targetUrl?.trim())
+      if (missingUrl) {
+        return NextResponse.json(
+          { ok: false, error: 'URL is required for every incident. Please provide a targetUrl for all entries.' },
+          { status: 400 }
+        )
+      }
     }
 
     // ─── Rate limit check: max 1000 records per IP per 24h ──────────
-    // Only SUCCESSFUL submissions count (rejected/duplicate don't).
-    const clientIP = getClientIP(req)
-    const limit = await checkSubmitLimit(clientIP)
-    if (!limit.allowed) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: `Daily submit limit exceeded (${limit.limit}/day). You have used ${limit.used} submissions. Try again tomorrow.`,
-          rateLimited: true,
-          used: limit.used,
-          limit: limit.limit,
-        },
-        { status: 429 }
-      )
-    }
+    // Skipped for admin bypass.
+    if (!isAdminBypass) {
+      const clientIP = getClientIP(req)
+      const limit = await checkSubmitLimit(clientIP)
+      if (!limit.allowed) {
+        return NextResponse.json(
+          {
+            ok: false,
+            error: `Daily submit limit exceeded (${limit.limit}/day). You have used ${limit.used} submissions. Try again tomorrow.`,
+            rateLimited: true,
+            used: limit.used,
+            limit: limit.limit,
+          },
+          { status: 429 }
+        )
+      }
 
-    // Check if this batch would exceed the limit
-    const validCount = incidents.filter((inc) => inc.targetUrl?.trim() && inc.attacker?.trim()).length
-    if (limit.used + validCount > limit.limit) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: `Daily submit limit would be exceeded. You have ${limit.remaining} remaining, but this request has ${validCount} incidents. Reduce the batch size or try tomorrow.`,
-          rateLimited: true,
-          used: limit.used,
-          remaining: limit.remaining,
-          limit: limit.limit,
-        },
-        { status: 429 }
-      )
+      const validCount = incidents.filter((inc) => inc.targetUrl?.trim() && inc.attacker?.trim()).length
+      if (limit.used + validCount > limit.limit) {
+        return NextResponse.json(
+          {
+            ok: false,
+            error: `Daily submit limit would be exceeded. You have ${limit.remaining} remaining, but this request has ${validCount} incidents.`,
+            rateLimited: true,
+            used: limit.used,
+            remaining: limit.remaining,
+            limit: limit.limit,
+          },
+          { status: 429 }
+        )
+      }
     }
 
     // Validate + extract hostnames
@@ -205,8 +214,9 @@ export async function POST(req: NextRequest) {
 
     // ─── Log successful submit for rate limiting ─────────────────────
     // Only counts ACTUALLY CREATED records (not duplicates/rejected).
-    // Rejected submissions are NOT logged → don't count toward limit.
-    if (createdCount > 0) {
+    // Skipped for admin bypass (admin/script submits don't count).
+    if (createdCount > 0 && !isAdminBypass) {
+      const clientIP = getClientIP(req)
       await logSuccessfulSubmit(clientIP, createdCount)
     }
 
